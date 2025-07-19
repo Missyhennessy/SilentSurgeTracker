@@ -3,6 +3,12 @@ import Header from "@/components/dashboard/header";
 import Sidebar from "@/components/dashboard/sidebar";
 import AssetScanner from "@/components/dashboard/asset-scanner";
 import Watchlist from "@/components/dashboard/watchlist";
+import BehavioralHeatmap from "@/components/dashboard/behavioral-heatmap";
+import VelocityTracking from "@/components/dashboard/velocity-tracking";
+import CohesionAnalyzer from "@/components/dashboard/cohesion-analyzer";
+import AnchorPressure from "@/components/dashboard/anchor-pressure";
+import HHRComparator from "@/components/dashboard/hhr-comparator";
+import CompositeRating from "@/components/dashboard/composite-rating";
 import { useWebSocket } from "@/hooks/use-websocket";
 
 type DashboardModule = 
@@ -27,17 +33,17 @@ export default function Dashboard() {
       case "watchlist":
         return <Watchlist />;
       case "heatmap":
-        return <div className="p-6">Behavioral Heatmap - Coming Soon</div>;
+        return <BehavioralHeatmap />;
       case "velocity":
-        return <div className="p-6">Velocity Tracking - Coming Soon</div>;
+        return <VelocityTracking />;
       case "cohesion":
-        return <div className="p-6">Cohesion Analyzer - Coming Soon</div>;
+        return <CohesionAnalyzer />;
       case "anchor":
-        return <div className="p-6">Anchor Pressure - Coming Soon</div>;
+        return <AnchorPressure />;
       case "hhr":
-        return <div className="p-6">HHR Comparator - Coming Soon</div>;
+        return <HHRComparator />;
       case "composite":
-        return <div className="p-6">Composite Rating - Coming Soon</div>;
+        return <CompositeRating />;
       default:
         return <AssetScanner />;
     }
