@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+  
+  /* Custom crypto dashboard colors */
+  --dark-bg: hsl(218, 32%, 6%);
+  --dark-panel: hsl(216, 24%, 10%);
+  --dark-border: hsl(214, 19%, 18%);
+  --primary-blue: hsl(198, 100%, 50%);
+  --success-green: hsl(158, 100%, 50%);
+  --warning-amber: hsl(43, 100%, 50%);
+  --danger-red: hsl(348, 100%, 60%);
+  --text-primary: hsl(0, 0%, 100%);
+  --text-secondary: hsl(214, 32%, 64%);
+}
+
+.dark {
+  --background: hsl(218, 32%, 6%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(216, 24%, 10%);
+  --muted-foreground: hsl(214, 32%, 64%);
+  --popover: hsl(216, 24%, 10%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(216, 24%, 10%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(214, 19%, 18%);
+  --input: hsl(214, 19%, 18%);
+  --primary: hsl(198, 100%, 50%);
+  --primary-foreground: hsl(218, 32%, 6%);
+  --secondary: hsl(214, 19%, 18%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(214, 19%, 18%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(348, 86%, 31%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .metric-card {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  .metric-card:hover {
+    @apply transform -translate-y-0.5 shadow-lg;
+    box-shadow: 0 8px 25px hsl(198, 100%, 50%, 0.15);
+  }
+  
+  .glow-effect {
+    box-shadow: 0 0 20px hsl(198, 100%, 50%, 0.3);
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    @apply w-1;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: hsl(216, 24%, 10%);
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(214, 19%, 18%);
+    @apply rounded-sm;
+  }
+  
+  .chart-container {
+    @apply relative h-80;
+  }
+}
