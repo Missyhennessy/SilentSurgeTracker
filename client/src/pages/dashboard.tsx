@@ -9,6 +9,7 @@ import CohesionAnalyzer from "@/components/dashboard/cohesion-analyzer";
 import AnchorPressure from "@/components/dashboard/anchor-pressure";
 import HHRComparator from "@/components/dashboard/hhr-comparator";
 import CompositeRating from "@/components/dashboard/composite-rating";
+import { RealTimeIndicator } from "@/components/real-time-indicator";
 import { useWebSocket } from "@/hooks/use-websocket";
 
 type DashboardModule = 
@@ -52,6 +53,10 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-[var(--dark-bg)] text-[var(--text-primary)]">
       <Header alertCount={alertCount} />
+      
+      <div className="container mx-auto px-4 py-4">
+        <RealTimeIndicator />
+      </div>
       
       <div className="flex pt-16">
         <Sidebar 

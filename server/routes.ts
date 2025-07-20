@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
+import { cryptoDataService } from "./crypto-data-service";
 import { insertCryptoAssetSchema, insertAlertSchema, insertVelocityDataSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -38,6 +39,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
   };
+
+  // Start real-time crypto data updates
+  cryptoDataService.startRealTimeUpdates(2); // Update every 2 minutes
+  
+  // Set up periodic broadcasting of updated data
+  setInterval(async () => {
+    try {
+      const assets = await storage.getCryptoAssets();
+      broadcast({
+        type: 'crypto_update',
+        data: assets,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error broadcasting crypto updates:', error);
+    }
+  }, 30000); // Broadcast every 30 seconds
 
   // API Routes
   
@@ -161,6 +179,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(velocityData);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch velocity data" });
+    }
+  });
+
+  // Manual trigger for crypto data update
+  app.post("/api/update-crypto-data", async (req, res) => {
+    try {
+      await cryptoDataService.updateCryptoAssets();
+      const assets = await storage.getCryptoAssets();
+      
+      // Broadcast the update to all connected clients
+      broadcast({
+        type: 'crypto_update',
+        data: assets,
+        timestamp: new Date().toISOString()
+      });
+      
+      res.json({ 
+        success: true, 
+        message: "Crypto data updated successfully",
+        assetsCount: assets.length 
+      });
+    } catch (error) {
+      console.error('Manual crypto update error:', error);
+      res.status(500).json({ 
+        error: "Failed to update crypto data",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

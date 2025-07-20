@@ -53,6 +53,7 @@ export interface DashboardModule {
 }
 
 export interface WebSocketMessage {
-  type: 'asset_update' | 'bulk_update' | 'alert_triggered';
+  type: 'asset_update' | 'bulk_update' | 'crypto_update' | 'alert_triggered';
   data: any;
+  timestamp?: string;
 }
