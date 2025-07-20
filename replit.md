@@ -26,10 +26,12 @@ Preferred communication style: Simple, everyday language.
 - **Development**: Vite middleware integration for hot reloading
 
 ### Database Design
-The application uses Drizzle ORM with PostgreSQL, featuring three main tables:
+The application uses Drizzle ORM with PostgreSQL (Neon serverless), featuring three main tables:
 - `crypto_assets`: Core asset data including SSS scores and component metrics
 - `alerts`: User-defined threshold alerts for monitoring
 - `velocity_data`: Historical token velocity tracking data
+
+**Recent Update**: Migrated from in-memory storage to persistent PostgreSQL database with automatic sample data initialization and real-time data persistence.
 
 ## Key Components
 
