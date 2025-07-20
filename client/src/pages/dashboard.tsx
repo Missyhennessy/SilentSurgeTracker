@@ -10,17 +10,11 @@ import AnchorPressure from "@/components/dashboard/anchor-pressure";
 import HHRComparator from "@/components/dashboard/hhr-comparator";
 import CompositeRating from "@/components/dashboard/composite-rating";
 import { RealTimeIndicator } from "@/components/real-time-indicator";
+import HistoricalSSSTracker from "@/components/analytics/historical-sss-tracker";
+import PortfolioTracker from "@/components/analytics/portfolio-tracker";
+import BacktestingEngine from "@/components/analytics/backtesting-engine";
 import { useWebSocket } from "@/hooks/use-websocket";
-
-type DashboardModule = 
-  | "scanner"
-  | "watchlist" 
-  | "heatmap"
-  | "velocity"
-  | "cohesion"
-  | "anchor"
-  | "hhr"
-  | "composite";
+import { DashboardModule } from "@/types/dashboard";
 
 export default function Dashboard() {
   const [activeModule, setActiveModule] = useState<DashboardModule>("scanner");
@@ -45,6 +39,12 @@ export default function Dashboard() {
         return <HHRComparator />;
       case "composite":
         return <CompositeRating />;
+      case "analytics":
+        return <HistoricalSSSTracker />;
+      case "portfolio":
+        return <PortfolioTracker />;
+      case "backtest":
+        return <BacktestingEngine />;
       default:
         return <AssetScanner />;
     }
