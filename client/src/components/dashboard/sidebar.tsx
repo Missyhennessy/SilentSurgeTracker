@@ -8,20 +8,14 @@ import {
   Scale, 
   Star,
   Wifi,
-  WifiOff
+  WifiOff,
+  PieChart,
+  Target,
+  BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-type DashboardModule = 
-  | "scanner"
-  | "watchlist" 
-  | "heatmap"
-  | "velocity"
-  | "cohesion"
-  | "anchor"
-  | "hhr"
-  | "composite";
+import { DashboardModule } from "@/types/dashboard";
 
 interface SidebarProps {
   activeModule: DashboardModule;
@@ -40,6 +34,12 @@ const modules = [
   { id: "composite" as const, name: "Composite Rating", icon: Star },
 ];
 
+const analyticsModules = [
+  { id: "analytics" as const, name: "Historical SSS", icon: BarChart3 },
+  { id: "portfolio" as const, name: "Portfolio Tracker", icon: PieChart },
+  { id: "backtest" as const, name: "Backtesting", icon: Target },
+];
+
 export default function Sidebar({ activeModule, onModuleChange, isConnected }: SidebarProps) {
   return (
     <aside className="w-64 bg-[var(--dark-panel)] border-r border-[var(--dark-border)] h-screen sticky top-16 overflow-y-auto scrollbar-thin">
@@ -49,6 +49,32 @@ export default function Sidebar({ activeModule, onModuleChange, isConnected }: S
         </div>
         
         {modules.map((module) => {
+          const IconComponent = module.icon;
+          const isActive = activeModule === module.id;
+          
+          return (
+            <Button
+              key={module.id}
+              variant="ghost"
+              className={cn(
+                "w-full justify-start space-x-3 px-3 py-3 rounded-lg font-medium transition-all",
+                isActive 
+                  ? "bg-[var(--primary-blue)]/10 border border-[var(--primary-blue)]/20 text-[var(--primary-blue)]"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--dark-border)]/50"
+              )}
+              onClick={() => onModuleChange(module.id)}
+            >
+              <IconComponent className="w-4 h-4" />
+              <span>{module.name}</span>
+            </Button>
+          );
+        })}
+        
+        <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-4 mt-6">
+          Enhanced Analytics
+        </div>
+        
+        {analyticsModules.map((module) => {
           const IconComponent = module.icon;
           const isActive = activeModule === module.id;
           
