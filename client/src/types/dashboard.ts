@@ -9,4 +9,5 @@ export type DashboardModule =
   | "composite"
   | "analytics"
   | "portfolio"
-  | "backtest";
+  | "backtest"
+  | "ml";

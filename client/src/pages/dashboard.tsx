@@ -15,6 +15,7 @@ import { RealTimeIndicator } from "@/components/real-time-indicator";
 import HistoricalSSSTracker from "@/components/analytics/historical-sss-tracker";
 import PortfolioTracker from "@/components/analytics/portfolio-tracker";
 import BacktestingEngine from "@/components/analytics/backtesting-engine";
+import { ModelPerformance } from "@/components/ml/model-performance";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { DashboardModule } from "@/types/dashboard";
 
@@ -55,6 +56,8 @@ export default function Dashboard() {
         return <PortfolioTracker />;
       case "backtest":
         return <BacktestingEngine />;
+      case "ml":
+        return <ModelPerformance />;
       default:
         return <AssetScanner />;
     }
