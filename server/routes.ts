@@ -323,5 +323,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Backtesting endpoints
+  app.get("/api/backtest/results", async (req, res) => {
+    try {
+      // Simulate historical backtest results
+      const backtestResults = [
+        {
+          strategyId: 'high_sss_momentum',
+          startDate: '2024-01-01',
+          endDate: '2024-07-01',
+          initialCapital: 10000,
+          finalCapital: 12350,
+          totalReturn: 23.5,
+          totalTrades: 42,
+          winningTrades: 28,
+          losingTrades: 14,
+          winRate: 66.7,
+          averageReturn: 2.8,
+          maxDrawdown: -18.5,
+          sharpeRatio: 1.42,
+          profitFactor: 1.85,
+          trades: generateMockTrades(42),
+          dailyReturns: generateMockDailyReturns(180)
+        },
+        {
+          strategyId: 'medium_sss_swing',
+          startDate: '2024-01-01',
+          endDate: '2024-07-01',
+          initialCapital: 10000,
+          finalCapital: 11890,
+          totalReturn: 18.9,
+          totalTrades: 38,
+          winningTrades: 24,
+          losingTrades: 14,
+          winRate: 63.2,
+          averageReturn: 2.1,
+          maxDrawdown: -15.2,
+          sharpeRatio: 1.28,
+          profitFactor: 1.62,
+          trades: generateMockTrades(38),
+          dailyReturns: generateMockDailyReturns(180)
+        }
+      ];
+      
+      res.json(backtestResults);
+    } catch (error) {
+      console.error("Error fetching backtest results:", error);
+      res.status(500).json({ error: "Failed to fetch backtest results" });
+    }
+  });
+
+  app.post("/api/backtest/run", async (req, res) => {
+    try {
+      const { strategy, period, initialCapital } = req.body;
+      
+      console.log(`Running backtest for strategy: ${strategy.name}`);
+      console.log(`Period: ${period}, Initial Capital: $${initialCapital}`);
+      
+      // Simulate backtest execution delay
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Generate realistic backtest results based on strategy parameters
+      const periodMonths = period === '1m' ? 1 : period === '3m' ? 3 : period === '6m' ? 6 : period === '1y' ? 12 : 24;
+      const totalDays = periodMonths * 30;
+      const expectedTrades = Math.floor(totalDays / strategy.parameters.holdingPeriod) * strategy.parameters.maxPositions;
+      
+      // Calculate performance based on SSS threshold (higher threshold = better performance but fewer trades)
+      const baseReturn = strategy.parameters.sssThreshold >= 80 ? 25 : strategy.parameters.sssThreshold >= 70 ? 18 : 12;
+      const volatilityAdjustment = (100 - strategy.parameters.sssThreshold) * 0.2;
+      const finalReturn = baseReturn + (Math.random() - 0.5) * volatilityAdjustment;
+      
+      const winRate = Math.max(50, Math.min(85, 55 + (strategy.parameters.sssThreshold - 60) * 0.5));
+      const winningTrades = Math.floor(expectedTrades * (winRate / 100));
+      const losingTrades = expectedTrades - winningTrades;
+      
+      const result = {
+        strategyId: strategy.id,
+        startDate: new Date(Date.now() - totalDays * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date().toISOString(),
+        initialCapital,
+        finalCapital: initialCapital * (1 + finalReturn / 100),
+        totalReturn: finalReturn,
+        totalTrades: expectedTrades,
+        winningTrades,
+        losingTrades,
+        winRate,
+        averageReturn: finalReturn / expectedTrades,
+        maxDrawdown: -(Math.random() * 15 + 10),
+        sharpeRatio: Math.random() * 1.5 + 0.8,
+        profitFactor: Math.random() * 1.2 + 1.3,
+        trades: generateMockTrades(expectedTrades),
+        dailyReturns: generateMockDailyReturns(totalDays)
+      };
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error running backtest:", error);
+      res.status(500).json({ error: "Failed to run backtest" });
+    }
+  });
+
+  // Helper functions for generating mock data
+  function generateMockTrades(count: number) {
+    const assets = ['BTC', 'ETH', 'SOL', 'ADA', 'LINK', 'AVAX', 'DOT', 'NEAR'];
+    const trades = [];
+    
+    for (let i = 0; i < count; i++) {
+      const asset = assets[Math.floor(Math.random() * assets.length)];
+      const entryDate = new Date(Date.now() - Math.random() * 180 * 24 * 60 * 60 * 1000);
+      const exitDate = new Date(entryDate.getTime() + (Math.random() * 21 + 1) * 24 * 60 * 60 * 1000);
+      const entryPrice = Math.random() * 1000 + 10;
+      const returnPercent = (Math.random() - 0.35) * 50; // Slight positive bias
+      const exitPrice = entryPrice * (1 + returnPercent / 100);
+      
+      trades.push({
+        id: `trade_${i}`,
+        asset,
+        entryDate: entryDate.toISOString(),
+        exitDate: exitDate.toISOString(),
+        entryPrice,
+        exitPrice,
+        quantity: Math.random() * 10 + 0.1,
+        return: returnPercent,
+        sssAtEntry: Math.random() * 40 + 60,
+        reason: Math.random() > 0.7 ? 'take_profit' : Math.random() > 0.5 ? 'time_exit' : 'stop_loss'
+      });
+    }
+    
+    return trades.sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime());
+  }
+
+  function generateMockDailyReturns(days: number) {
+    const dailyReturns = [];
+    let portfolioValue = 10000;
+    let cumulativeReturn = 0;
+    
+    for (let i = 0; i < days; i++) {
+      const dailyReturn = (Math.random() - 0.48) * 3; // Slight positive bias
+      portfolioValue *= (1 + dailyReturn / 100);
+      cumulativeReturn = ((portfolioValue - 10000) / 10000) * 100;
+      
+      dailyReturns.push({
+        date: new Date(Date.now() - (days - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        portfolioValue: Math.round(portfolioValue),
+        dailyReturn: parseFloat(dailyReturn.toFixed(2)),
+        cumulativeReturn: parseFloat(cumulativeReturn.toFixed(2))
+      });
+    }
+    
+    return dailyReturns;
+  }
+
   return httpServer;
 }
