@@ -1,24 +1,64 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Filter, Download, Settings } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Search, Filter, Download, Settings, TrendingUp, Zap, Target } from "lucide-react";
+import { SearchBar } from "@/components/ui/search-bar";
+import { QuickStatsGrid } from "@/components/ui/quick-stats";
+import { AssetCardSkeleton } from "@/components/ui/loading-skeleton";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import AssetCard from "./asset-card";
 import SSSBreakdown from "./sss-breakdown";
 import VelocityChart from "./velocity-chart";
 import { CryptoAsset } from "@/types/crypto";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AssetScanner() {
   const [searchTerm, setSearchTerm] = useState("");
   const [marketFilter, setMarketFilter] = useState("all");
   const [scoreFilter, setScoreFilter] = useState("all");
   const [selectedAsset, setSelectedAsset] = useState<CryptoAsset | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const { toast } = useToast();
 
-  const { data: assets, isLoading } = useQuery<CryptoAsset[]>({
+  const { data: assets, isLoading, error } = useQuery<CryptoAsset[]>({
     queryKey: ["/api/assets"],
     refetchInterval: 30000, // Refetch every 30 seconds
   });
+
+  // Calculate quick stats
+  const quickStats = assets ? [
+    {
+      title: "Total Assets",
+      value: assets.length,
+      icon: Target,
+      trend: 'neutral' as const,
+      subtitle: "Monitored assets"
+    },
+    {
+      title: "High SSS (80+)",
+      value: assets.filter(a => a.sssScore >= 80).length,
+      icon: TrendingUp,
+      trend: 'up' as const,
+      subtitle: "Strong surge potential",
+      badge: "HOT"
+    },
+    {
+      title: "Avg SSS Score",
+      value: (assets.reduce((acc, a) => acc + a.sssScore, 0) / assets.length).toFixed(1),
+      icon: Zap,
+      trend: 'neutral' as const,
+      subtitle: "Market average"
+    },
+    {
+      title: "Top Performer",
+      value: `${assets.sort((a, b) => b.sssScore - a.sssScore)[0]?.symbol}`,
+      icon: TrendingUp,
+      trend: 'up' as const,
+      subtitle: `SSS: ${assets.sort((a, b) => b.sssScore - a.sssScore)[0]?.sssScore.toFixed(1)}`
+    }
+  ] : [];
 
   const filteredAssets = assets?.filter(asset => {
     const matchesSearch = asset.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -32,15 +72,28 @@ export default function AssetScanner() {
     return matchesSearch && matchesScore;
   }) || [];
 
+  if (error) {
+    toast({
+      title: "Error Loading Assets",
+      description: "Failed to fetch cryptocurrency data. Please try again.",
+      variant: "destructive",
+    });
+  }
+
   if (isLoading) {
     return (
       <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-[var(--dark-panel)] rounded w-1/4"></div>
-          <div className="h-20 bg-[var(--dark-panel)] rounded"></div>
+        <div className="space-y-6">
+          <div className="h-8 bg-gray-700 rounded w-1/4 animate-pulse"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-24 bg-gray-700 rounded-lg animate-pulse"></div>
+            ))}
+          </div>
+          <div className="h-16 bg-gray-700 rounded animate-pulse"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-48 bg-[var(--dark-panel)] rounded-xl"></div>
+              <AssetCardSkeleton key={i} />
             ))}
           </div>
         </div>
@@ -52,8 +105,24 @@ export default function AssetScanner() {
     <div className="p-6">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Asset Scanner</h2>
-        <p className="text-[var(--text-secondary)]">Search and analyze crypto assets with real-time NBSM scoring</p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-2">Asset Scanner</h2>
+            <p className="text-gray-400">Search and analyze crypto assets with real-time SSS scoring</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button variant="outline" size="sm">
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <QuickStatsGrid stats={quickStats} className="mb-6" />
       </div>
       
       {/* Search and Filters */}
@@ -61,12 +130,11 @@ export default function AssetScanner() {
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)]" />
-            <Input
-              type="text"
-              placeholder="Search tokens (BTC, ETH, DOGE...)"
-              className="pl-10 bg-[var(--dark-bg)] border-[var(--dark-border)]"
+            <SearchBar
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={setSearchTerm}
+              placeholder="Search tokens (BTC, ETH, DOGE...)"
+              onClear={() => setSearchTerm("")}
             />
           </div>
           
