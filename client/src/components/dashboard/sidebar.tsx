@@ -11,7 +11,8 @@ import {
   WifiOff,
   PieChart,
   Target,
-  BarChart3
+  BarChart3,
+  Brain
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ const analyticsModules = [
   { id: "analytics" as const, name: "Historical SSS", icon: BarChart3 },
   { id: "portfolio" as const, name: "Portfolio Tracker", icon: PieChart },
   { id: "backtest" as const, name: "Backtesting", icon: Target },
+  { id: "ml" as const, name: "ML Optimization", icon: Brain },
 ];
 
 export default function Sidebar({ activeModule, onModuleChange, isConnected }: SidebarProps) {

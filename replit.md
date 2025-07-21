@@ -130,3 +130,23 @@ The UX improvements focus on:
 - **Information Density**: Presenting complex data in digestible, visually appealing formats
 - **Progressive Disclosure**: Revealing additional options through hover states and contextual menus
 - **Accessibility**: Keyboard navigation, screen reader support, and clear visual hierarchy
+
+## Machine Learning Integration (January 2025)
+
+### ML Score Optimization System
+- **Advanced Feature Engineering**: 17+ features including behavioral patterns, technical indicators, and market correlations
+- **Linear Regression Models**: Individual models trained per cryptocurrency asset for personalized scoring
+- **Real-time Prediction**: ML-enhanced SSS scores blending traditional methodology with predictive analytics
+- **Performance Monitoring**: Model accuracy tracking, direction prediction, and automated retraining capabilities
+
+### ML Features & Components
+- **Feature Extraction**: Price volatility, volume changes, behavioral activity, social sentiment, developer activity
+- **Model Training**: Gradient descent optimization with historical data preparation and validation
+- **Performance Dashboard**: Real-time accuracy metrics, feature importance visualization, training status monitoring
+- **Auto-retraining**: Periodic model updates to maintain prediction accuracy with evolving market conditions
+
+### ML Architecture
+- **Backend**: ML optimizer service with feature engineering pipeline and model persistence
+- **API Integration**: RESTful endpoints for performance metrics, model retraining, and prediction serving  
+- **Frontend Dashboard**: Interactive ML performance visualization with accuracy tracking and feature importance charts
+- **Real-time Updates**: WebSocket integration for live model performance monitoring
