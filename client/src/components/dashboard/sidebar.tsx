@@ -12,7 +12,8 @@ import {
   PieChart,
   Target,
   BarChart3,
-  Brain
+  Brain,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,12 @@ const analyticsModules = [
   { id: "portfolio" as const, name: "Portfolio Tracker", icon: PieChart },
   { id: "backtest" as const, name: "Backtesting", icon: Target },
   { id: "ml" as const, name: "ML Optimization", icon: Brain },
+];
+
+const advancedModules = [
+  { id: "risk" as const, name: "Risk Management", icon: Shield },
+  { id: "sentiment" as const, name: "Market Sentiment", icon: TrendingUp },
+  { id: "optimization" as const, name: "Portfolio Optimizer", icon: Target },
 ];
 
 export default function Sidebar({ activeModule, onModuleChange, isConnected }: SidebarProps) {
@@ -77,6 +84,32 @@ export default function Sidebar({ activeModule, onModuleChange, isConnected }: S
         </div>
         
         {analyticsModules.map((module) => {
+          const IconComponent = module.icon;
+          const isActive = activeModule === module.id;
+          
+          return (
+            <Button
+              key={module.id}
+              variant="ghost"
+              className={cn(
+                "w-full justify-start space-x-3 px-3 py-3 rounded-lg font-medium transition-all",
+                isActive 
+                  ? "bg-[var(--primary-blue)]/10 border border-[var(--primary-blue)]/20 text-[var(--primary-blue)]"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--dark-border)]/50"
+              )}
+              onClick={() => onModuleChange(module.id)}
+            >
+              <IconComponent className="w-4 h-4" />
+              <span>{module.name}</span>
+            </Button>
+          );
+        })}
+
+        <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-4 mt-6">
+          Advanced Tools
+        </div>
+        
+        {advancedModules.map((module) => {
           const IconComponent = module.icon;
           const isActive = activeModule === module.id;
           
