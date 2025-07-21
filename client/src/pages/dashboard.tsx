@@ -1,5 +1,7 @@
 import { useState } from "react";
-import Header from "@/components/dashboard/header";
+import { useQuery } from "@tanstack/react-query";
+import { EnhancedHeader } from "@/components/enhanced-header";
+import { FloatingActionButton, defaultFABActions } from "@/components/ui/floating-action-button";
 import Sidebar from "@/components/dashboard/sidebar";
 import AssetScanner from "@/components/dashboard/asset-scanner";
 import Watchlist from "@/components/dashboard/watchlist";
@@ -20,6 +22,14 @@ export default function Dashboard() {
   const [activeModule, setActiveModule] = useState<DashboardModule>("scanner");
   const [alertCount] = useState(3);
   const { isConnected } = useWebSocket("/ws");
+
+  // Get total assets for header
+  const { data: assets } = useQuery<any[]>({
+    queryKey: ["/api/assets"],
+    refetchInterval: 30000,
+  });
+
+  const totalAssets = Array.isArray(assets) ? assets.length : 0;
 
   const renderModule = () => {
     switch (activeModule) {
@@ -51,14 +61,14 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--dark-bg)] text-[var(--text-primary)]">
-      <Header alertCount={alertCount} />
+    <div className="min-h-screen bg-gray-900">
+      <EnhancedHeader 
+        isConnected={isConnected} 
+        totalAssets={totalAssets}
+        activeAlerts={alertCount}
+      />
       
-      <div className="container mx-auto px-4 py-4">
-        <RealTimeIndicator />
-      </div>
-      
-      <div className="flex pt-16">
+      <div className="flex">
         <Sidebar 
           activeModule={activeModule}
           onModuleChange={setActiveModule}
@@ -69,6 +79,9 @@ export default function Dashboard() {
           {renderModule()}
         </main>
       </div>
+      
+      {/* Floating Action Button */}
+      <FloatingActionButton actions={defaultFABActions} />
     </div>
   );
 }

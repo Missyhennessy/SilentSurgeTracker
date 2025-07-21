@@ -1,8 +1,11 @@
-import { Star, TrendingUp, TrendingDown } from "lucide-react";
+import { Star, TrendingUp, TrendingDown, Plus, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ProgressRing } from "@/components/ui/progress-ring";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { CryptoAsset } from "@/types/crypto";
 import { getScoreColor, getTrendArrow } from "@/lib/sss-calculator";
+import { useToast } from "@/hooks/use-toast";
 
 interface AssetCardProps {
   asset: CryptoAsset;
@@ -10,6 +13,8 @@ interface AssetCardProps {
 }
 
 export default function AssetCard({ asset, onSelect }: AssetCardProps) {
+  const { toast } = useToast();
+  
   const getAssetIcon = (symbol: string) => {
     const iconMap: { [key: string]: string } = {
       'BTC': '₿',
@@ -18,6 +23,19 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
       'ADA': 'A',
     };
     return iconMap[symbol] || symbol[0];
+  };
+
+  const handleAddToWatchlist = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast({
+      title: "Added to Watchlist",
+      description: `${asset.symbol} has been added to your watchlist.`,
+    });
+  };
+
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onSelect(asset);
   };
 
   const getAssetGradient = (symbol: string) => {
@@ -31,24 +49,52 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
   };
 
   return (
-    <div className="bg-[var(--dark-panel)] rounded-xl border border-[var(--dark-border)] p-6 metric-card cursor-pointer"
+    <div className="relative bg-gray-800 rounded-xl border border-gray-700 p-6 hover:bg-gray-750 hover:border-gray-600 transition-all duration-200 cursor-pointer transform hover:scale-105 group"
          onClick={() => onSelect(asset)}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <div className={`w-10 h-10 bg-gradient-to-r ${getAssetGradient(asset.symbol)} rounded-full flex items-center justify-center text-white font-bold`}>
+          <div className={`w-12 h-12 bg-gradient-to-r ${getAssetGradient(asset.symbol)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
             {getAssetIcon(asset.symbol)}
           </div>
           <div>
-            <h3 className="font-semibold text-[var(--text-primary)]">{asset.symbol}</h3>
-            <p className="text-sm text-[var(--text-secondary)]">{asset.name}</p>
+            <h3 className="font-semibold text-white text-lg">{asset.symbol}</h3>
+            <p className="text-sm text-gray-400">{asset.name}</p>
           </div>
         </div>
-        <div className="text-right">
-          <div className={`text-xl font-bold ${getScoreColor(asset.sssScore)}`}>
-            {Math.round(asset.sssScore)}
+        
+        <div className="flex items-center gap-3">
+          <ProgressRing 
+            progress={asset.sssScore} 
+            size={50} 
+            color={asset.sssScore >= 80 ? '#10B981' : asset.sssScore >= 60 ? '#F59E0B' : '#EF4444'}
+          />
+          <div className="text-right">
+            <div className={`text-xl font-bold ${getScoreColor(asset.sssScore)}`}>
+              <AnimatedCounter value={asset.sssScore} decimals={1} />
+            </div>
+            <div className="text-xs text-gray-400">SSS Score</div>
           </div>
-          <div className="text-xs text-[var(--text-secondary)]">SSS Score</div>
         </div>
+      </div>
+
+      {/* Quick Actions - Only visible on hover */}
+      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={handleAddToWatchlist}
+          className="h-8 w-8 p-0 bg-gray-700 hover:bg-gray-600"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={handleQuickView}
+          className="h-8 w-8 p-0 bg-gray-700 hover:bg-gray-600"
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
       </div>
       
       <div className="space-y-2">
