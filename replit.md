@@ -150,3 +150,23 @@ The UX improvements focus on:
 - **API Integration**: RESTful endpoints for performance metrics, model retraining, and prediction serving  
 - **Frontend Dashboard**: Interactive ML performance visualization with accuracy tracking and feature importance charts
 - **Real-time Updates**: WebSocket integration for live model performance monitoring
+
+## Advanced Backtesting System (January 2025)
+
+### Comprehensive Strategy Testing
+- **Predefined Strategies**: High SSS Momentum, Medium SSS Swing, Conservative Surge trading approaches
+- **Custom Strategy Builder**: User-configurable parameters including SSS thresholds, holding periods, risk management
+- **Historical Performance Analysis**: Multi-timeframe backtesting (1m to 2y) with realistic trade simulation
+- **Risk Management**: Stop-loss, take-profit, position sizing, and portfolio allocation controls
+
+### Performance Analytics
+- **Portfolio Metrics**: Total return, Sharpe ratio, maximum drawdown, win rate calculation
+- **Trade Analysis**: Detailed trade-by-trade breakdown with entry/exit SSS scores and timing
+- **Visual Performance**: Interactive charts showing strategy vs market comparison over time
+- **Statistical Validation**: Trade distribution analysis, monthly returns breakdown, risk-adjusted metrics
+
+### Backtesting Features
+- **Realistic Simulation**: Account for transaction costs, slippage, and market impact in backtests
+- **Strategy Comparison**: Side-by-side analysis of different approaches and parameter sets
+- **Parameter Optimization**: Test multiple configurations to find optimal strategy settings
+- **Export Capabilities**: Download backtest results and performance reports for further analysis
