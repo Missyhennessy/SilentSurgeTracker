@@ -16,6 +16,9 @@ import HistoricalSSSTracker from "@/components/analytics/historical-sss-tracker"
 import PortfolioTracker from "@/components/analytics/portfolio-tracker";
 import BacktestingEngine from "@/components/analytics/backtesting-engine";
 import { ModelPerformance } from "@/components/ml/model-performance";
+import RiskManagement from "@/components/advanced/risk-management";
+import MarketSentiment from "@/components/advanced/market-sentiment";
+import PortfolioOptimization from "@/components/advanced/portfolio-optimization";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { DashboardModule } from "@/types/dashboard";
 
@@ -58,6 +61,12 @@ export default function Dashboard() {
         return <BacktestingEngine />;
       case "ml":
         return <ModelPerformance />;
+      case "risk":
+        return <RiskManagement />;
+      case "sentiment":
+        return <MarketSentiment />;
+      case "optimization":
+        return <PortfolioOptimization />;
       default:
         return <AssetScanner />;
     }

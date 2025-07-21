@@ -10,4 +10,7 @@ export type DashboardModule =
   | "analytics"
   | "portfolio"
   | "backtest"
-  | "ml";
+  | "ml"
+  | "risk"
+  | "sentiment"
+  | "optimization";
