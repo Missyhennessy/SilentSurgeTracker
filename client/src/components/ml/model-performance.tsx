@@ -63,7 +63,11 @@ export function ModelPerformance() {
   };
 
   if (isLoading) {
-    return <AssetCardSkeleton className="h-96" />;
+    return (
+      <div className="h-96">
+        <AssetCardSkeleton />
+      </div>
+    );
   }
 
   return (
