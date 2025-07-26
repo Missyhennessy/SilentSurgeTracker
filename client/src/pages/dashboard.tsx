@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { EnhancedHeader } from "@/components/enhanced-header";
 import { FloatingActionButton, defaultFABActions } from "@/components/ui/floating-action-button";
@@ -19,13 +19,25 @@ import { ModelPerformance } from "@/components/ml/model-performance";
 import RiskManagement from "@/components/advanced/risk-management";
 import MarketSentiment from "@/components/advanced/market-sentiment";
 import PortfolioOptimization from "@/components/advanced/portfolio-optimization";
+import AlertsManagement from "@/components/advanced/alerts-management";
+import TradingSignals from "@/components/advanced/trading-signals";
+import MarketScanner from "@/components/advanced/market-scanner";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { DashboardModule } from "@/types/dashboard";
+import { TourOverlay } from "@/components/onboarding/tour-overlay";
 
 export default function Dashboard() {
   const [activeModule, setActiveModule] = useState<DashboardModule>("scanner");
   const [alertCount] = useState(3);
+  const [showTour, setShowTour] = useState(false);
   const { isConnected } = useWebSocket("/ws");
+
+  useEffect(() => {
+    const hasSeenTour = localStorage.getItem('sst-tour-completed');
+    if (!hasSeenTour) {
+      setShowTour(true);
+    }
+  }, []);
 
   // Get total assets for header
   const { data: assets } = useQuery<any[]>({
@@ -67,6 +79,12 @@ export default function Dashboard() {
         return <MarketSentiment />;
       case "optimization":
         return <PortfolioOptimization />;
+      case "alerts":
+        return <AlertsManagement />;
+      case "signals":
+        return <TradingSignals />;
+      case "marketscan":
+        return <MarketScanner />;
       default:
         return <AssetScanner />;
     }
@@ -94,6 +112,12 @@ export default function Dashboard() {
       
       {/* Floating Action Button */}
       <FloatingActionButton actions={defaultFABActions} />
+      
+      <TourOverlay 
+        isOpen={showTour}
+        onClose={() => setShowTour(false)}
+        onComplete={() => setShowTour(false)}
+      />
     </div>
   );
 }
