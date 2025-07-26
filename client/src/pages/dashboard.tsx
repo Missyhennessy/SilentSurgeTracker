@@ -99,11 +99,23 @@ export default function Dashboard() {
       />
       
       <div className="flex">
-        <Sidebar 
-          activeModule={activeModule}
-          onModuleChange={setActiveModule}
-          isConnected={isConnected}
-        />
+        {/* Mobile overlay */}
+        <div className="lg:hidden">
+          <Sidebar 
+            activeModule={activeModule}
+            onModuleChange={setActiveModule}
+            isConnected={isConnected}
+          />
+        </div>
+        
+        {/* Desktop sidebar */}
+        <div className="hidden lg:block">
+          <Sidebar 
+            activeModule={activeModule}
+            onModuleChange={setActiveModule}
+            isConnected={isConnected}
+          />
+        </div>
         
         <main className="flex-1 overflow-y-auto scrollbar-thin">
           {renderModule()}

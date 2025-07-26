@@ -17,6 +17,7 @@ import {
   Bell,
   Zap
 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DashboardModule } from "@/types/dashboard";
@@ -55,6 +56,8 @@ const advancedModules = [
 ];
 
 export default function Sidebar({ activeModule, onModuleChange, isConnected }: SidebarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   return (
     <aside className="w-64 bg-[var(--dark-panel)] border-r border-[var(--dark-border)] h-screen sticky top-16 overflow-y-auto scrollbar-thin">
       <div className="p-4 space-y-2">
