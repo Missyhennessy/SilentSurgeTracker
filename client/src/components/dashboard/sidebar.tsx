@@ -13,7 +13,9 @@ import {
   Target,
   BarChart3,
   Brain,
-  Shield
+  Shield,
+  Bell,
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -47,6 +49,9 @@ const advancedModules = [
   { id: "risk" as const, name: "Risk Management", icon: Shield },
   { id: "sentiment" as const, name: "Market Sentiment", icon: TrendingUp },
   { id: "optimization" as const, name: "Portfolio Optimizer", icon: Target },
+  { id: "alerts" as const, name: "Alert Management", icon: Bell },
+  { id: "signals" as const, name: "Trading Signals", icon: Zap },
+  { id: "marketscan" as const, name: "Market Scanner", icon: Search },
 ];
 
 export default function Sidebar({ activeModule, onModuleChange, isConnected }: SidebarProps) {

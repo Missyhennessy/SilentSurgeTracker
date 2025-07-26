@@ -13,4 +13,7 @@ export type DashboardModule =
   | "ml"
   | "risk"
   | "sentiment"
-  | "optimization";
+  | "optimization"
+  | "alerts"
+  | "signals"
+  | "marketscan";
