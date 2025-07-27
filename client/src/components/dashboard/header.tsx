@@ -36,10 +36,10 @@ export default function Header({ alertCount }: HeaderProps) {
           </div>
           
           <nav className="hidden md:flex space-x-6">
-            <a href="#" className="text-[var(--primary-blue)] font-medium">Dashboard</a>
-            <a href="#" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">Reports</a>
-            <a href="#" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">Sandbox</a>
-            <a href="#" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">Settings</a>
+            <a href="/" className="text-[var(--primary-blue)] font-medium">Dashboard</a>
+            <a href="/phase1" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">Phase 1</a>
+            <a href="/phase2" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">Phase 2</a>
+            <a href="/profile" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">Profile</a>
           </nav>
         </div>
         
