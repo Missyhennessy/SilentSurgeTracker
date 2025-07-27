@@ -53,6 +53,7 @@ const advancedModules = [
   { id: "alerts" as const, name: "Alert Management", icon: Bell },
   { id: "signals" as const, name: "Trading Signals", icon: Zap },
   { id: "marketscan" as const, name: "Market Scanner", icon: Search },
+  { id: "cryptosearch" as const, name: "Crypto Search", icon: Search },
 ];
 
 export default function Sidebar({ activeModule, onModuleChange, isConnected }: SidebarProps) {
