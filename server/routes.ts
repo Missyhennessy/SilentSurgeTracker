@@ -6,6 +6,7 @@ import { cryptoDataService } from "./crypto-data-service";
 import { insertCryptoAssetSchema, insertAlertSchema, insertVelocityDataSchema } from "@shared/schema";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { registerAuthRoutes } from "./auth-routes";
+import { registerSecurityRoutes } from "./security-integrations";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -64,6 +65,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Authentication API endpoints
   registerAuthRoutes(app);
+  
+  // External Security API endpoints
+  registerSecurityRoutes(app);
 
   // API Routes
   
