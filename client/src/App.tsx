@@ -38,16 +38,33 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 function Router() {
-  // Temporarily disable auth for testing
-  // const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   return (
     <Switch>
-      <Route path="/" component={SimpleTest} />
-      <Route path="/test" component={SimpleTest} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/profile" component={Profile} />
-      <Route path="/phase1" component={Phase1Features} />
+      {isLoading || !isAuthenticated ? (
+        <Route path="/" component={Landing} />
+      ) : (
+        <>
+          <Route path="/" component={Dashboard} />
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/profile">
+            {() => (
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/phase1">
+            {() => (
+              <ProtectedRoute>
+                <Phase1Features />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/test" component={SimpleTest} />
+        </>
+      )}
       <Route component={NotFound} />
     </Switch>
   );
