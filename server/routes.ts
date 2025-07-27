@@ -93,6 +93,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     macroService.registerMacroEconomicRoutes(app);
   }
 
+  // Phase 2 Advanced Features API endpoints
+  const whaleService = await import('./whale-tracking-service');
+  const lstmService = await import('./lstm-prediction-service');
+  const defiService = await import('./defi-integration-service');
+  
+  // Register Phase 2 service routes
+  if (whaleService.registerWhaleTrackingRoutes) {
+    whaleService.registerWhaleTrackingRoutes(app);
+  }
+  if (lstmService.registerLSTMRoutes) {
+    lstmService.registerLSTMRoutes(app);
+  }
+  if (defiService.registerDeFiRoutes) {
+    defiService.registerDeFiRoutes(app);
+  }
+
   // API Routes
 
   // Health check endpoint (no auth required)
