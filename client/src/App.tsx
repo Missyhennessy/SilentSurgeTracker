@@ -6,8 +6,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 import Dashboard from "@/pages/dashboard";
 import Landing from "@/pages/landing";
+import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import { useAuth } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 
 function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<"light" | "dark">("dark");
@@ -44,6 +46,13 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/profile">
+            {() => (
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            )}
+          </Route>
         </>
       )}
       <Route component={NotFound} />
