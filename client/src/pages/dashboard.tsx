@@ -31,7 +31,8 @@ export default function Dashboard() {
   const [activeModule, setActiveModule] = useState<DashboardModule>("scanner");
   const [alertCount] = useState(3);
   const [showTour, setShowTour] = useState(false);
-  const { isConnected } = useWebSocket("/ws");
+  // Temporarily disable WebSocket for testing
+  const isConnected = false; // useWebSocket("/ws");
 
   useEffect(() => {
     const hasSeenTour = localStorage.getItem('sst-tour-completed');
