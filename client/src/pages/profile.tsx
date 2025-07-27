@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User as UserIcon, Mail, Calendar, Shield, Activity, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { EnhancedSecurityDashboard } from "@/components/auth/enhanced-security-dashboard";
 
 export default function Profile() {
   const { user } = useAuth() as { user?: User };
@@ -155,52 +156,56 @@ export default function Profile() {
         </TabsContent>
 
         <TabsContent value="security" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Account Security
-              </CardTitle>
-              <CardDescription>
-                Manage your account security and authentication settings
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h4 className="font-medium">Replit Authentication</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Your account is secured with Replit's authentication system
-                  </p>
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Account Security Overview
+                </CardTitle>
+                <CardDescription>
+                  Manage your account security and authentication settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">Replit Authentication</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Your account is secured with Replit's authentication system
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="text-green-600 border-green-600">
+                    Active
+                  </Badge>
                 </div>
-                <Badge variant="outline" className="text-green-600 border-green-600">
-                  Active
-                </Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h4 className="font-medium">Session Management</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Automatically expires after 7 days of inactivity
-                  </p>
+                
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">Session Management</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Automatically expires after 7 days of inactivity
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    View Sessions
+                  </Button>
                 </div>
-                <Button variant="outline" size="sm">
-                  View Sessions
-                </Button>
-              </div>
 
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h4 className="font-medium">Account Created</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {user.createdAt ? format(new Date(user.createdAt), 'MMMM d, yyyy') : 'Unknown'}
-                  </p>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">Account Created</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {user.createdAt ? format(new Date(user.createdAt), 'MMMM d, yyyy') : 'Unknown'}
+                    </p>
+                  </div>
+                  <Calendar className="h-5 w-5 text-gray-400" />
                 </div>
-                <Calendar className="h-5 w-5 text-gray-400" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            <EnhancedSecurityDashboard />
+          </div>
         </TabsContent>
 
         <TabsContent value="activity" className="space-y-6">
