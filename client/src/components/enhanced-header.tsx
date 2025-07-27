@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Bell, Settings, User, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Bell, Settings, User as UserIcon, TrendingUp, AlertTriangle, LogOut } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import type { User } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -21,6 +23,7 @@ interface EnhancedHeaderProps {
 
 export function EnhancedHeader({ isConnected, totalAssets = 0, activeAlerts = 0 }: EnhancedHeaderProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { user } = useAuth() as { user?: User };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -125,13 +128,24 @@ export function EnhancedHeader({ isConnected, totalAssets = 0, activeAlerts = 0 
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-blue-600 text-white">U</AvatarFallback>
+                  <AvatarFallback className="bg-blue-600 text-white">
+                    {user?.firstName?.[0] || user?.email?.[0] || 'U'}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {user && (
+                <>
+                  <div className="px-2 py-1.5 text-sm">
+                    <div className="font-medium">{user.firstName || 'User'} {user.lastName || ''}</div>
+                    <div className="text-gray-500">{user.email || 'No email'}</div>
+                  </div>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
+                <UserIcon className="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
               <DropdownMenuItem>
@@ -139,7 +153,8 @@ export function EnhancedHeader({ isConnected, totalAssets = 0, activeAlerts = 0 
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.location.href = '/api/logout'}>
+                <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
