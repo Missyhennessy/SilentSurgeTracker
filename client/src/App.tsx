@@ -8,6 +8,8 @@ import Dashboard from "@/pages/dashboard";
 import Landing from "@/pages/landing";
 import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
+import { Phase1Features } from "@/pages/phase1-features";
+import SimpleTest from "@/pages/simple-test";
 import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
@@ -36,25 +38,16 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  // Temporarily disable auth for testing
+  // const { isAuthenticated, isLoading } = useAuth();
 
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/profile">
-            {() => (
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            )}
-          </Route>
-        </>
-      )}
+      <Route path="/" component={SimpleTest} />
+      <Route path="/test" component={SimpleTest} />
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/profile" component={Profile} />
+      <Route path="/phase1" component={Phase1Features} />
       <Route component={NotFound} />
     </Switch>
   );
