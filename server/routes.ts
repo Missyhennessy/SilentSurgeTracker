@@ -474,5 +474,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return dailyReturns;
   }
 
+  // Trading Signals API
+  app.get("/api/trading/signals", async (req, res) => {
+    try {
+      const signals = [
+        {
+          id: 1,
+          asset: "SOL",
+          type: "BUY",
+          confidence: 87.5,
+          price: 187.14,
+          targetPrice: 210.50,
+          stopLoss: 175.80,
+          reasoning: "Strong SSS surge detected with high community cohesion",
+          timestamp: new Date().toISOString(),
+          status: "active"
+        },
+        {
+          id: 2,
+          asset: "ETH",
+          type: "HOLD",
+          confidence: 72.3,
+          price: 3757.84,
+          targetPrice: 4200.00,
+          stopLoss: 3500.00,
+          reasoning: "Moderate SSS with stable anchor pressure",
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          status: "active"
+        },
+        {
+          id: 3,
+          asset: "LINK",
+          type: "SELL",
+          confidence: 65.8,
+          price: 18.32,
+          targetPrice: 15.50,
+          stopLoss: 19.80,
+          reasoning: "Declining SSS with weakening behavioral activity",
+          timestamp: new Date(Date.now() - 7200000).toISOString(),
+          status: "completed"
+        }
+      ];
+      res.json(signals);
+    } catch (error) {
+      console.error("Error fetching trading signals:", error);
+      res.status(500).json({ error: "Failed to fetch trading signals" });
+    }
+  });
+
+  app.get("/api/signals", async (req, res) => {
+    try {
+      const signalPerformance = {
+        totalSignals: 156,
+        accuracy: 78.2,
+        avgReturn: 12.5,
+        winRate: 68.4,
+        activeSignals: 8,
+        recentSignals: [
+          { asset: "SOL", type: "BUY", confidence: 87.5, timestamp: new Date().toISOString() },
+          { asset: "ETH", type: "HOLD", confidence: 72.3, timestamp: new Date().toISOString() },
+          { asset: "LINK", type: "SELL", confidence: 65.8, timestamp: new Date().toISOString() }
+        ]
+      };
+      res.json(signalPerformance);
+    } catch (error) {
+      console.error("Error fetching signals:", error);
+      res.status(500).json({ error: "Failed to fetch signals" });
+    }
+  });
+
+  // Market Scanner API
+  app.get("/api/market-scan", async (req, res) => {
+    try {
+      const scanResults = {
+        totalScanned: 2847,
+        anomaliesDetected: 23,
+        highPotential: 8,
+        lastScan: new Date().toISOString(),
+        results: [
+          {
+            symbol: "NEAR",
+            name: "NEAR Protocol",
+            anomalyType: "volume_surge",
+            severity: "high",
+            description: "400% volume increase with SSS spike",
+            confidence: 92.3,
+            timestamp: new Date().toISOString()
+          },
+          {
+            symbol: "ATOM",
+            name: "Cosmos Hub",
+            anomalyType: "whale_activity",
+            severity: "medium",
+            description: "Large wallet accumulation detected",
+            confidence: 78.9,
+            timestamp: new Date().toISOString()
+          }
+        ]
+      };
+      res.json(scanResults);
+    } catch (error) {
+      console.error("Error in market scan:", error);
+      res.status(500).json({ error: "Failed to perform market scan" });
+    }
+  });
+
   return httpServer;
 }
