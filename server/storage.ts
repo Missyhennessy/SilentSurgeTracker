@@ -1,5 +1,5 @@
-import { CryptoAsset, InsertCryptoAsset, Alert, InsertAlert, VelocityData, InsertVelocityData } from "@shared/schema";
-import { cryptoAssets, alerts, velocityData } from "@shared/schema";
+import { CryptoAsset, InsertCryptoAsset, Alert, InsertAlert, VelocityData, InsertVelocityData, User, UpsertUser } from "@shared/schema";
+import { cryptoAssets, alerts, velocityData, users } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 
@@ -22,6 +22,10 @@ export interface IStorage {
   // Velocity Data
   getVelocityData(assetId: number, limit?: number): Promise<VelocityData[]>;
   createVelocityData(data: InsertVelocityData): Promise<VelocityData>;
+  
+  // User management for authentication
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -248,6 +252,37 @@ export class DatabaseStorage implements IStorage {
       .values(data)
       .returning();
     return newData;
+  }
+
+  // User management methods for authentication
+  async getUser(id: string): Promise<User | undefined> {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user;
+    } catch (error) {
+      console.error('Error getting user:', error);
+      return undefined;
+    }
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    try {
+      const [user] = await db
+        .insert(users)
+        .values(userData)
+        .onConflictDoUpdate({
+          target: users.id,
+          set: {
+            ...userData,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+      return user;
+    } catch (error) {
+      console.error('Error upserting user:', error);
+      throw error;
+    }
   }
 }
 
