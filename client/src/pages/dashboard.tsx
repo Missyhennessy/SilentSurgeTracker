@@ -22,6 +22,7 @@ import PortfolioOptimization from "@/components/advanced/portfolio-optimization"
 import AlertsManagement from "@/components/advanced/alerts-management";
 import TradingSignals from "@/components/advanced/trading-signals";
 import MarketScanner from "@/components/advanced/market-scanner";
+import CryptoSearch from "@/components/advanced/crypto-search";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { DashboardModule } from "@/types/dashboard";
 import { TourOverlay } from "@/components/onboarding/tour-overlay";
@@ -85,6 +86,8 @@ export default function Dashboard() {
         return <TradingSignals />;
       case "marketscan":
         return <MarketScanner />;
+      case "cryptosearch":
+        return <CryptoSearch />;
       default:
         return <AssetScanner />;
     }

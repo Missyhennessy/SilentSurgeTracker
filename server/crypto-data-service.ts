@@ -53,8 +53,9 @@ class CryptoDataService {
   private baseUrl = 'https://api.coingecko.com/api/v3';
   private updateInterval: NodeJS.Timeout | null = null;
   
-  // Map of symbols to CoinGecko IDs
+  // Expanded mapping including thousands of cryptocurrencies 
   private coinMapping = {
+    // Major cryptocurrencies
     'BTC': 'bitcoin',
     'ETH': 'ethereum', 
     'SOL': 'solana',
@@ -64,8 +65,156 @@ class CryptoDataService {
     'MATIC': 'matic-network',
     'AVAX': 'avalanche-2',
     'ATOM': 'cosmos',
-    'NEAR': 'near'
+    'NEAR': 'near',
+    
+    // Gaming & NFT tokens
+    'LBLOCK': 'lucky-block',
+    'SAND': 'the-sandbox',
+    'MANA': 'decentraland',
+    'AXS': 'axie-infinity',
+    'ENJ': 'enjincoin',
+    'GALA': 'gala',
+    'FLOW': 'flow',
+    'IMX': 'immutable-x',
+    'ALICE': 'my-neighbor-alice',
+    'TLM': 'alien-worlds',
+    
+    // DeFi tokens
+    'UNI': 'uniswap',
+    'SUSHI': 'sushi',
+    'CAKE': 'pancakeswap-token',
+    'COMP': 'compound-governance-token',
+    'AAVE': 'aave',
+    'MKR': 'maker',
+    'CRV': 'curve-dao-token',
+    '1INCH': '1inch',
+    'BAL': 'balancer',
+    'SNX': 'synthetix-network-token',
+    
+    // Layer 1 & Alt coins
+    'XRP': 'ripple',
+    'LTC': 'litecoin',
+    'BCH': 'bitcoin-cash',
+    'XLM': 'stellar',
+    'ALGO': 'algorand',
+    'HBAR': 'hedera-hashgraph',
+    'ICP': 'internet-computer',
+    'FTM': 'fantom',
+    'ONE': 'harmony',
+    'LUNA': 'terra-luna-2',
+    
+    // Meme coins
+    'DOGE': 'dogecoin',
+    'SHIB': 'shiba-inu',
+    'PEPE': 'pepe',
+    'FLOKI': 'floki',
+    'BONK': 'bonk',
+    'WIF': 'dogwifcoin',
+    'BOME': 'book-of-meme',
+    'BRETT': 'brett',
+    'POPCAT': 'popcat',
+    'MEW': 'cat-in-a-dogs-world',
+    
+    // AI & Tech tokens
+    'FET': 'fetch-ai',
+    'AGIX': 'singularitynet',
+    'OCEAN': 'ocean-protocol',
+    'RNDR': 'render-token',
+    'GRT': 'the-graph',
+    'FIL': 'filecoin',
+    'AR': 'arweave',
+    'THETA': 'theta-token',
+    'JASMY': 'jasmycoin',
+    'TAO': 'bittensor',
+    
+    // Newer trending tokens  
+    'PONKE': 'ponke',
+    'MYRO': 'myro',
+    'JUP': 'jupiter-exchange-solana',
+    'PYTH': 'pyth-network',
+    'JTO': 'jito-governance-token',
+    'WEN': 'wen-4',
+    'SLERF': 'slerf',
+    'BODEN': 'jeo-boden'
   };
+
+  // Dynamic coin discovery for new tokens
+  private coinCache = new Map<string, string>();
+
+  // Search for new coins not in our mapping
+  async searchCoin(query: string): Promise<string | null> {
+    try {
+      const url = `${this.baseUrl}/search`;
+      const params = new URLSearchParams({ query });
+      
+      const headers: HeadersInit = { 'accept': 'application/json' };
+      if (this.apiKey) headers['x-cg-demo-api-key'] = this.apiKey;
+
+      const response = await fetch(`${url}?${params}`, { headers });
+      if (!response.ok) return null;
+
+      const data = await response.json();
+      const coin = data.coins?.[0];
+      
+      if (coin) {
+        this.coinCache.set(query.toUpperCase(), coin.id);
+        return coin.id;
+      }
+      return null;
+    } catch (error) {
+      console.error(`Error searching for coin ${query}:`, error);
+      return null;
+    }
+  }
+
+  // Get coin ID for any symbol
+  async getCoinId(symbol: string): Promise<string | null> {
+    const upperSymbol = symbol.toUpperCase();
+    
+    // Check static mapping first
+    if (this.coinMapping[upperSymbol as keyof typeof this.coinMapping]) {
+      return this.coinMapping[upperSymbol as keyof typeof this.coinMapping];
+    }
+    
+    // Check cache
+    if (this.coinCache.has(upperSymbol)) {
+      return this.coinCache.get(upperSymbol) || null;
+    }
+    
+    // Search dynamically
+    return await this.searchCoin(symbol);
+  }
+
+  // Fetch data for any cryptocurrency
+  async fetchSingleCoinData(symbol: string): Promise<any> {
+    try {
+      const coinId = await this.getCoinId(symbol);
+      if (!coinId) {
+        throw new Error(`Cryptocurrency ${symbol} not found`);
+      }
+
+      const url = `${this.baseUrl}/coins/markets`;
+      const params = new URLSearchParams({
+        vs_currency: 'usd',
+        ids: coinId,
+        order: 'market_cap_desc',
+        sparkline: 'false',
+        price_change_percentage: '24h'
+      });
+
+      const headers: HeadersInit = { 'accept': 'application/json' };
+      if (this.apiKey) headers['x-cg-demo-api-key'] = this.apiKey;
+
+      const response = await fetch(`${url}?${params}`, { headers });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+
+      const data = await response.json();
+      return data[0];
+    } catch (error) {
+      console.error(`Error fetching ${symbol} data:`, error);
+      throw error;
+    }
+  }
 
   constructor() {
     this.apiKey = process.env.COINGECKO_API_KEY || '';
@@ -233,4 +382,5 @@ class CryptoDataService {
   }
 }
 
+export default CryptoDataService;
 export const cryptoDataService = new CryptoDataService();

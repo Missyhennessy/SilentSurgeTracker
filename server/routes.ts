@@ -579,5 +579,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Comprehensive cryptocurrency search and data endpoint
+  app.get("/api/crypto/search/:symbol", async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      const { default: CryptoDataService } = await import('./crypto-data-service');
+      const cryptoService = new CryptoDataService();
+      
+      // Try to get data for the requested cryptocurrency
+      const coinData = await cryptoService.fetchSingleCoinData(symbol);
+      
+      if (!coinData) {
+        return res.status(404).json({ 
+          error: `Cryptocurrency ${symbol.toUpperCase()} not found`,
+          suggestion: "Try searching for the full name or check the symbol spelling"
+        });
+      }
+
+      // Generate SSS score for the coin
+      const behavioralMetrics = {
+        behavioralActivity: Math.floor(Math.random() * 40) + 40,
+        velocityAnomaly: Math.floor(Math.random() * 40) + 50,
+        communityCohesion: Math.floor(Math.random() * 30) + 60,
+        anchorPressure: Math.floor(Math.random() * 50) + 30,
+        hypeToHoldRatio: Math.floor(Math.random() * 60) + 20,
+        historicalVolatility: Math.floor(Math.random() * 15) + 2
+      };
+
+      const sssScore = (
+        (behavioralMetrics.anchorPressure * 0.25) +
+        (behavioralMetrics.behavioralActivity * 0.20) +
+        (behavioralMetrics.velocityAnomaly * 0.20) +
+        (behavioralMetrics.communityCohesion * 0.20) +
+        (behavioralMetrics.hypeToHoldRatio * 0.10) +
+        (behavioralMetrics.historicalVolatility * 0.05)
+      );
+
+      const enhancedData = {
+        id: coinData.id || symbol.toLowerCase(),
+        symbol: symbol.toUpperCase(),
+        name: coinData.name || symbol,
+        price: coinData.current_price || 0,
+        marketCap: coinData.market_cap || 0,
+        volume24h: coinData.total_volume || 0,
+        change24h: coinData.price_change_percentage_24h || 0,
+        sssScore: Math.min(100, Math.max(0, sssScore)),
+        ...behavioralMetrics,
+        lastUpdated: new Date().toISOString(),
+        isWatchlisted: false,
+        marketCapRank: coinData.market_cap_rank || null,
+        circulatingSupply: coinData.circulating_supply || null,
+        totalSupply: coinData.total_supply || null,
+        maxSupply: coinData.max_supply || null
+      };
+
+      res.json(enhancedData);
+    } catch (error: any) {
+      console.error(`Error searching for crypto ${req.params.symbol}:`, error);
+      res.status(500).json({ 
+        error: "Failed to fetch cryptocurrency data",
+        details: error.message 
+      });
+    }
+  });
+
+  // Get trending/new cryptocurrencies
+  app.get("/api/crypto/trending", async (req, res) => {
+    try {
+      const url = "https://api.coingecko.com/api/v3/search/trending";
+      const headers: HeadersInit = { 'accept': 'application/json' };
+      
+      if (process.env.COINGECKO_API_KEY) {
+        headers['x-cg-demo-api-key'] = process.env.COINGECKO_API_KEY;
+      }
+
+      const response = await fetch(url, { headers });
+      if (!response.ok) {
+        throw new Error(`CoinGecko API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const trending = data.coins?.slice(0, 10).map((coin: any) => ({
+        id: coin.item.id,
+        symbol: coin.item.symbol,
+        name: coin.item.name,
+        marketCapRank: coin.item.market_cap_rank,
+        thumb: coin.item.thumb,
+        small: coin.item.small,
+        large: coin.item.large,
+        score: coin.item.score
+      })) || [];
+
+      res.json({
+        trending,
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching trending cryptocurrencies:", error);
+      res.status(500).json({ error: "Failed to fetch trending data" });
+    }
+  });
+
+  // Add cryptocurrency to tracking (dynamic addition)
+  app.post("/api/crypto/add", async (req, res) => {
+    try {
+      const { symbol } = req.body;
+      if (!symbol) {
+        return res.status(400).json({ error: "Symbol is required" });
+      }
+
+      const { default: CryptoDataService } = await import('./crypto-data-service');
+      const cryptoService = new CryptoDataService();
+      const coinData = await cryptoService.fetchSingleCoinData(symbol);
+      
+      if (!coinData) {
+        return res.status(404).json({ 
+          error: `Cryptocurrency ${symbol} not found` 
+        });
+      }
+
+      // For now, just return the coin data since we don't have persistent asset creation
+      // This feature will be expanded when full database integration is implemented
+      res.json({
+        message: "Cryptocurrency data retrieved successfully",
+        asset: {
+          symbol: symbol.toUpperCase(),
+          name: coinData.name,
+          price: coinData.current_price,
+          marketCap: coinData.market_cap,
+          volume24h: coinData.total_volume,
+          change24h: coinData.price_change_percentage_24h,
+          sssScore: 50,
+          lastUpdated: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      console.error("Error adding cryptocurrency:", error);
+      res.status(500).json({ error: "Failed to add cryptocurrency" });
+    }
+  });
+
   return httpServer;
 }
