@@ -37,7 +37,7 @@ export function Phase1Features() {
                 Advanced Alerts
               </TabsTrigger>
               <TabsTrigger value="exchanges" className="flex items-center gap-2">
-                <Exchange className="h-4 w-4" />
+                <ArrowRightLeft className="h-4 w-4" />
                 Cross-Exchange
               </TabsTrigger>
               <TabsTrigger value="macro" className="flex items-center gap-2">

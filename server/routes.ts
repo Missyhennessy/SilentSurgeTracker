@@ -11,8 +11,12 @@ import { registerSecurityRoutes } from "./security-integrations";
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
-  // Temporarily disable auth for testing
-  // await setupAuth(app);
+  // Re-enable authentication
+  await setupAuth(app);
+
+  // Register additional auth and security routes
+  registerAuthRoutes(app);
+  registerSecurityRoutes(app);
 
   // WebSocket server for real-time updates
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
@@ -69,16 +73,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // External Security API endpoints
   registerSecurityRoutes(app);
 
-  // Phase 1 Advanced Features API endpoints (temporarily commented out for testing)
-  // const { registerSentimentRoutes } = await import('./sentiment-analysis-service');
-  // const { registerAdvancedAlertsRoutes } = await import('./advanced-alerts-service');
-  // const { registerCrossExchangeRoutes } = await import('./cross-exchange-service');
-  // const { registerMacroEconomicRoutes } = await import('./macro-economic-service');
+  // Phase 1 Advanced Features API endpoints
+  const sentimentService = await import('./sentiment-analysis-service');
+  const alertsService = await import('./advanced-alerts-service');
+  const exchangeService = await import('./cross-exchange-service');
+  const macroService = await import('./macro-economic-service');
   
-  // registerSentimentRoutes(app);
-  // registerAdvancedAlertsRoutes(app);
-  // registerCrossExchangeRoutes(app);
-  // registerMacroEconomicRoutes(app);
+  // Register Phase 1 service routes
+  if (sentimentService.registerSentimentRoutes) {
+    sentimentService.registerSentimentRoutes(app);
+  }
+  if (alertsService.registerAdvancedAlertsRoutes) {
+    alertsService.registerAdvancedAlertsRoutes(app);
+  }
+  if (exchangeService.registerCrossExchangeRoutes) {
+    exchangeService.registerCrossExchangeRoutes(app);
+  }
+  if (macroService.registerMacroEconomicRoutes) {
+    macroService.registerMacroEconomicRoutes(app);
+  }
 
   // API Routes
 
