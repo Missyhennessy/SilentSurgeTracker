@@ -144,7 +144,7 @@ export function EnhancedHeader({ isConnected, totalAssets = 0, activeAlerts = 0 
                   <DropdownMenuSeparator />
                 </>
               )}
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => window.location.href = '/profile'}>
                 <UserIcon className="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
