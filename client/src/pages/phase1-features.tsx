@@ -8,7 +8,7 @@ import {
   Globe,
   Zap,
   MessageSquare,
-  Exchange,
+  ArrowRightLeft,
   LineChart
 } from "lucide-react";
 
@@ -121,7 +121,7 @@ export function Phase1Features() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Exchange className="h-5 w-5" />
+                    <ArrowRightLeft className="h-5 w-5" />
                     Cross-Exchange Price Monitoring
                   </CardTitle>
                   <CardDescription>
