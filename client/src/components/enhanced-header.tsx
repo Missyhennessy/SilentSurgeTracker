@@ -118,6 +118,34 @@ export function EnhancedHeader({ isConnected, totalAssets = 0, activeAlerts = 0 
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Phase Navigation */}
+          <div className="hidden md:flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => window.location.href = '/phase1'}
+              className="text-xs"
+            >
+              Phase 1
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => window.location.href = '/phase2'}
+              className="text-xs"
+            >
+              Phase 2
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => window.location.href = '/phase3'}
+              className="text-xs bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              Phase 3
+            </Button>
+          </div>
+
           {/* Settings */}
           <Button variant="ghost" size="sm">
             <Settings className="h-5 w-5" />

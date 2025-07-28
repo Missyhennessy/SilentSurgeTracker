@@ -10,6 +10,7 @@ import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import { Phase1Features } from "@/pages/phase1-features";
 import { Phase2Features } from "@/pages/phase2-features";
+import Phase3Features from "@/pages/phase3-features";
 import SimpleTest from "@/pages/simple-test";
 import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/protected-route";
@@ -67,6 +68,13 @@ function Router() {
             {() => (
               <ProtectedRoute>
                 <Phase2Features />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/phase3">
+            {() => (
+              <ProtectedRoute>
+                <Phase3Features />
               </ProtectedRoute>
             )}
           </Route>
