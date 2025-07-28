@@ -31,6 +31,7 @@ export default function Dashboard() {
   const [activeModule, setActiveModule] = useState<DashboardModule>("scanner");
   const [alertCount] = useState(3);
   const [showTour, setShowTour] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { isConnected } = useWebSocket("/ws");
 
   useEffect(() => {
@@ -101,9 +102,9 @@ export default function Dashboard() {
         activeAlerts={alertCount}
       />
       
-      <div className="flex">
-        {/* Mobile overlay */}
-        <div className="lg:hidden">
+      <div className="flex h-[calc(100vh-80px)]">
+        {/* Sidebar - responsive design */}
+        <div className="w-64 flex-shrink-0 hidden md:block">
           <Sidebar 
             activeModule={activeModule}
             onModuleChange={setActiveModule}
@@ -111,17 +112,41 @@ export default function Dashboard() {
           />
         </div>
         
-        {/* Desktop sidebar */}
-        <div className="hidden lg:block">
-          <Sidebar 
-            activeModule={activeModule}
-            onModuleChange={setActiveModule}
-            isConnected={isConnected}
-          />
+        {/* Mobile Menu Button */}
+        <div className="md:hidden fixed top-20 left-4 z-50">
+          <button 
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="bg-gray-800 text-white p-2 rounded-lg border border-gray-700 hover:bg-gray-700"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
         </div>
+
+        {/* Mobile Sidebar Overlay */}
+        {showMobileMenu && (
+          <div className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50" onClick={() => setShowMobileMenu(false)}>
+            <div className="fixed left-0 top-0 h-full w-64 bg-gray-900 transform transition-transform duration-200 ease-in-out" onClick={(e) => e.stopPropagation()}>
+              <div className="pt-20">
+                <Sidebar 
+                  activeModule={activeModule}
+                  onModuleChange={(module) => {
+                    setActiveModule(module);
+                    setShowMobileMenu(false);
+                  }}
+                  isConnected={isConnected}
+                />
+              </div>
+            </div>
+          </div>
+        )}
         
-        <main className="flex-1 overflow-y-auto scrollbar-thin">
-          {renderModule()}
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto bg-gray-900 p-4 md:p-6 min-h-0">
+          <div className="w-full h-full">
+            {renderModule()}
+          </div>
         </main>
       </div>
       
