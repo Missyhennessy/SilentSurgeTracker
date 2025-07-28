@@ -60,7 +60,7 @@ export default function Sidebar({ activeModule, onModuleChange, isConnected }: S
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   return (
-    <aside className="w-64 bg-[var(--dark-panel)] border-r border-[var(--dark-border)] h-screen sticky top-16 overflow-y-auto scrollbar-thin">
+    <aside className="w-full h-full bg-gray-800 border-r border-gray-700 overflow-y-auto scrollbar-thin">
       <div className="p-4 space-y-2">
         <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-4">
           Analysis Modules

@@ -72,6 +72,46 @@
   .metric-card {
     @apply transition-all duration-300 ease-in-out;
   }
+
+  /* Ensure proper responsive layout */
+  .dashboard-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dashboard-content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .sidebar-container {
+    flex-shrink: 0;
+  }
+
+  .main-content {
+    flex: 1;
+    overflow-y: auto;
+    min-width: 0; /* Prevents flex item from overflowing */
+  }
+
+  /* Mobile responsive fixes */
+  @media (max-width: 768px) {
+    .main-content {
+      padding: 1rem;
+    }
+    
+    .asset-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .asset-grid {
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+  }
   
   .metric-card:hover {
     @apply transform -translate-y-0.5 shadow-lg;
