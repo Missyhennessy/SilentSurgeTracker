@@ -32,16 +32,21 @@ export function TwoFactorAuth({ isEnabled, onToggle }: TwoFactorAuthProps) {
   const handleEnable2FA = async () => {
     setIsLoading(true);
     try {
-      // Simulate API call to generate 2FA secret
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call server to generate unique 2FA secret for this user
+      const response = await fetch('/api/auth/2fa/enable', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
       
-      // Generate QR code URL (in real implementation, this would come from the server)
-      const secret = 'JBSWY3DPEHPK3PXP'; // Example secret
-      const appName = 'Silent Surge Tracker';
-      const userEmail = 'user@example.com';
-      const qrUrl = `otpauth://totp/${appName}:${userEmail}?secret=${secret}&issuer=${appName}`;
+      if (!response.ok) {
+        throw new Error('Failed to setup 2FA');
+      }
       
-      setQrCode(qrUrl);
+      const { qrCodeUrl } = await response.json();
+      setQrCode(qrCodeUrl);
       setSetupStep('qr');
       
       toast({
