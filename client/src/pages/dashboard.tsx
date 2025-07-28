@@ -26,6 +26,7 @@ import CryptoSearch from "@/components/advanced/crypto-search";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { DashboardModule } from "@/types/dashboard";
 import { TourOverlay } from "@/components/onboarding/tour-overlay";
+import LayoutOptimizer from "@/components/layout/layout-optimizer";
 
 export default function Dashboard() {
   const [activeModule, setActiveModule] = useState<DashboardModule>("scanner");
@@ -89,6 +90,12 @@ export default function Dashboard() {
         return <MarketScanner />;
       case "cryptosearch":
         return <CryptoSearch />;
+      case "layoutopt":
+        return <LayoutOptimizer 
+          onLayoutChange={(layout) => console.log('Layout changed:', layout)}
+          onFullscreenToggle={(isFullscreen) => console.log('Fullscreen:', isFullscreen)}
+          onSidebarToggle={(isVisible) => console.log('Sidebar:', isVisible)}
+        />;
       default:
         return <AssetScanner />;
     }

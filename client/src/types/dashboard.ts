@@ -17,4 +17,5 @@ export type DashboardModule =
   | "alerts"
   | "signals"
   | "marketscan"
-  | "cryptosearch";
+  | "cryptosearch"
+  | "layoutopt";

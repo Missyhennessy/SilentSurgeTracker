@@ -112,6 +112,110 @@
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     }
   }
+
+  /* Layout Optimizer Styles */
+  
+  /* Density Classes */
+  .density-compact {
+    --spacing-scale: 0.75;
+    --text-scale: 0.9;
+  }
+  
+  .density-comfortable {
+    --spacing-scale: 1;
+    --text-scale: 1;
+  }
+  
+  .density-spacious {
+    --spacing-scale: 1.25;
+    --text-scale: 1.1;
+  }
+  
+  /* Grid Density */
+  .grid-loose .asset-grid {
+    gap: calc(var(--card-spacing, 16px) * 1.5);
+  }
+  
+  .grid-normal .asset-grid {
+    gap: var(--card-spacing, 16px);
+  }
+  
+  .grid-dense .asset-grid {
+    gap: calc(var(--card-spacing, 16px) * 0.75);
+  }
+  
+  /* Fullscreen Modes */
+  .fullscreen-content {
+    --header-height: 60px;
+  }
+  
+  .fullscreen-immersive {
+    --header-height: 0px;
+  }
+  
+  .fullscreen-immersive .enhanced-header {
+    display: none;
+  }
+  
+  .fullscreen-zen {
+    --header-height: 0px;
+    --sidebar-width: 0px;
+  }
+  
+  .fullscreen-zen .enhanced-header,
+  .fullscreen-zen .sidebar-container {
+    display: none;
+  }
+  
+  /* Focus Mode */
+  .focus-mode {
+    --animation-speed: 0ms;
+  }
+  
+  .focus-mode .floating-action-button,
+  .focus-mode .tour-overlay {
+    display: none;
+  }
+  
+  /* No Animations */
+  .no-animations * {
+    animation-duration: 0ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
+  }
+  
+  /* Dynamic Layout Variables */
+  :root {
+    --sidebar-width: 256px;
+    --header-height: 80px;
+    --card-spacing: 16px;
+    --animation-speed: 200ms;
+    --font-size-base: 14px;
+    --spacing-scale: 1;
+    --text-scale: 1;
+  }
+  
+  /* Responsive adjustments */
+  .sidebar-container {
+    width: var(--sidebar-width);
+    transition: width var(--animation-speed) ease;
+  }
+  
+  .enhanced-header {
+    height: var(--header-height);
+    transition: height var(--animation-speed) ease;
+  }
+  
+  .main-content {
+    font-size: calc(var(--font-size-base) * var(--text-scale));
+  }
+  
+  .metric-card,
+  .asset-card {
+    margin: calc(var(--card-spacing) * var(--spacing-scale) * 0.5);
+    transition: all var(--animation-speed) ease;
+  }
   
   .metric-card:hover {
     @apply transform -translate-y-0.5 shadow-lg;
