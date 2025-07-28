@@ -205,18 +205,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertCryptoAsset(asset: InsertCryptoAsset): Promise<CryptoAsset> {
-    const [upsertedAsset] = await db
-      .insert(cryptoAssets)
-      .values(asset)
-      .onConflictDoUpdate({
-        target: cryptoAssets.symbol,
-        set: {
+    // Try to find existing asset first
+    const existing = await this.getCryptoAssetBySymbol(asset.symbol);
+    
+    if (existing) {
+      // Update existing asset
+      const [updatedAsset] = await db
+        .update(cryptoAssets)
+        .set({
           ...asset,
           lastUpdated: new Date(),
-        },
-      })
-      .returning();
-    return upsertedAsset;
+        })
+        .where(eq(cryptoAssets.id, existing.id))
+        .returning();
+      return updatedAsset;
+    } else {
+      // Create new asset
+      const [newAsset] = await db
+        .insert(cryptoAssets)
+        .values(asset)
+        .returning();
+      return newAsset;
+    }
   }
 
   async getCryptoAssetsCount(): Promise<number> {
