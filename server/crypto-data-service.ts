@@ -159,28 +159,7 @@ class CryptoDataService {
     return calculateSSS(metrics);
   }
 
-  // Generate behavioral metrics for a coin
-  calculateBehavioralMetrics(coinData: any): {
-    behavioralActivity: number;
-    velocityAnomaly: number;
-    communityCohesion: number;
-    anchorPressure: number;
-    hypeToHoldRatio: number;
-    historicalVolatility: number;
-  } {
-    // Simulated behavioral metrics based on market data
-    const volumeToMarketCapRatio = coinData.total_volume / coinData.market_cap;
-    const priceVolatility = Math.abs(coinData.price_change_percentage_24h || 0);
-    
-    return {
-      behavioralActivity: Math.min(100, Math.max(0, 50 + (volumeToMarketCapRatio * 100) + Math.random() * 20 - 10)),
-      velocityAnomaly: Math.min(100, Math.max(0, 45 + (volumeToMarketCapRatio * 80) + Math.random() * 25 - 12.5)),
-      communityCohesion: Math.min(100, Math.max(0, 60 + Math.random() * 30 - 15)),
-      anchorPressure: Math.min(100, Math.max(0, 70 - (priceVolatility * 2) + Math.random() * 20 - 10)),
-      hypeToHoldRatio: Math.min(100, Math.max(0, 40 + (priceVolatility * 1.5) + Math.random() * 30 - 15)),
-      historicalVolatility: Math.min(100, Math.max(0, priceVolatility + Math.random() * 10 - 5))
-    };
-  }
+
 
   // Search for new coins not in our mapping
   async searchCoin(query: string): Promise<string | null> {
@@ -442,6 +421,141 @@ class CryptoDataService {
       console.log('Crypto data update completed');
     } catch (error) {
       console.error('Error updating crypto assets:', error);
+    }
+  }
+
+  // Fetch new cryptocurrency listings (recently added)
+  async fetchNewListings(): Promise<any[]> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/coins/markets?vs_currency=usd&order=date_added_desc&per_page=50&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d&x_cg_demo_api_key=${this.apiKey}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch new listings: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching new listings:', error);
+      return [];
+    }
+  }
+
+  // Fetch emerging tokens (low market cap with high volume)
+  async fetchEmergingTokens(): Promise<any[]> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/coins/markets?vs_currency=usd&order=volume_desc&per_page=100&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d&x_cg_demo_api_key=${this.apiKey}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch emerging tokens: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      // Filter for low market cap (under $50M) with significant volume
+      return data.filter((coin: any) => 
+        coin.market_cap && coin.market_cap < 50000000 && 
+        coin.total_volume && coin.total_volume > 100000
+      );
+    } catch (error) {
+      console.error('Error fetching emerging tokens:', error);
+      return [];
+    }
+  }
+
+  // Fetch GameFi and NFT tokens
+  async fetchGameFiTokens(): Promise<any[]> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/coins/markets?vs_currency=usd&category=gaming&order=market_cap_desc&per_page=50&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d&x_cg_demo_api_key=${this.apiKey}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch GameFi tokens: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching GameFi tokens:', error);
+      return [];
+    }
+  }
+
+  // Fetch meme tokens
+  async fetchMemeTokens(): Promise<any[]> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/coins/markets?vs_currency=usd&category=meme-token&order=volume_desc&per_page=50&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d&x_cg_demo_api_key=${this.apiKey}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch meme tokens: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching meme tokens:', error);
+      return [];
+    }
+  }
+
+  // Enhanced method to add newer cryptocurrencies
+  async addNewerCryptocurrencies(): Promise<void> {
+    try {
+      console.log('Fetching newer and emerging cryptocurrencies...');
+      
+      // Fetch multiple categories of newer tokens
+      const [newListings, emergingTokens, gameFiTokens, memeTokens] = await Promise.all([
+        this.fetchNewListings(),
+        this.fetchEmergingTokens(), 
+        this.fetchGameFiTokens(),
+        this.fetchMemeTokens()
+      ]);
+
+      const allNewTokens = [
+        ...newListings.slice(0, 25),  // Top 25 new listings
+        ...emergingTokens.slice(0, 25), // Top 25 emerging tokens
+        ...gameFiTokens.slice(0, 15),   // Top 15 GameFi tokens  
+        ...memeTokens.slice(0, 15)      // Top 15 meme tokens
+      ];
+
+      let addedCount = 0;
+      for (const coinData of allNewTokens) {
+        try {
+          // Check if we already have this token
+          const existing = await storage.getCryptoAssetBySymbol(coinData.symbol.toUpperCase());
+          if (existing) continue;
+
+          const behavioralMetrics = this.calculateBehavioralMetrics(coinData);
+          const sssScore = calculateSSS(behavioralMetrics);
+
+          await storage.createCryptoAsset({
+            symbol: coinData.symbol.toUpperCase(),
+            name: coinData.name,
+            price: coinData.current_price,
+            marketCap: coinData.market_cap || 0,
+            volume24h: coinData.total_volume || 0,
+            change24h: coinData.price_change_percentage_24h || 0,
+            sssScore,
+            ...behavioralMetrics,
+            isWatchlisted: false
+          });
+
+          addedCount++;
+          console.log(`Added newer token ${coinData.symbol.toUpperCase()}: ${coinData.name} (SSS: ${sssScore.toFixed(1)})`);
+          
+        } catch (error) {
+          console.error(`Error adding ${coinData.symbol}:`, error);
+          continue;
+        }
+      }
+
+      console.log(`Successfully added ${addedCount} newer cryptocurrencies to the platform`);
+      
+    } catch (error) {
+      console.error('Error adding newer cryptocurrencies:', error);
     }
   }
 
