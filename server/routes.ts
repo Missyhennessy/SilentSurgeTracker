@@ -950,5 +950,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Comprehensive Cryptocurrency Expansion APIs
+  
+  // Search any cryptocurrency and add to tracking
+  app.get("/api/crypto/search/:symbol", async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      const CryptoDataService = (await import("./crypto-data-service")).default;
+      const cryptoService = new CryptoDataService();
+      
+      // Try to find in database first
+      const existing = await storage.getCryptoAssetBySymbol(symbol.toUpperCase());
+      if (existing) {
+        return res.json(existing);
+      }
+      
+      // Search via CoinGecko API
+      const coinData = await cryptoService.fetchSingleCoinData(symbol);
+      if (!coinData) {
+        return res.status(404).json({ error: `Cryptocurrency ${symbol} not found` });
+      }
+      
+      // Calculate SSS metrics
+      const behavioralMetrics = cryptoService.calculateBehavioralMetrics(coinData);
+      const sssScore = cryptoService.calculateSSS(behavioralMetrics);
+      
+      // Add to database
+      const newAsset = await storage.upsertCryptoAsset({
+        symbol: symbol.toUpperCase(),
+        name: coinData.name,
+        price: coinData.current_price,
+        marketCap: coinData.market_cap || 0,
+        volume24h: coinData.total_volume || 0,
+        change24h: coinData.price_change_percentage_24h || 0,
+        sssScore,
+        ...behavioralMetrics,
+      });
+      
+      res.json(newAsset);
+    } catch (error) {
+      console.error('Search crypto error:', error);
+      res.status(500).json({ error: 'Failed to search cryptocurrency' });
+    }
+  });
+
+  // Get trending cryptocurrencies
+  app.get("/api/crypto/trending", async (req, res) => {
+    try {
+      const CryptoDataService = (await import("./crypto-data-service")).default;
+      const cryptoService = new CryptoDataService();
+      const trending = await cryptoService.getTrendingCoins();
+      res.json(trending);
+    } catch (error) {
+      console.error('Trending crypto error:', error);
+      res.status(500).json({ error: 'Failed to fetch trending cryptocurrencies' });
+    }
+  });
+
+  // Batch update cryptocurrency database (expand to thousands)
+  app.post("/api/crypto/batch-update", async (req, res) => {
+    try {
+      const CryptoDataService = (await import("./crypto-data-service")).default;
+      const cryptoService = new CryptoDataService();
+      await cryptoService.updateAllCryptocurrencies();
+      
+      const totalAssets = await storage.getCryptoAssetsCount();
+      res.json({ 
+        success: true, 
+        message: `Comprehensive cryptocurrency database updated: ${totalAssets} total assets now tracked` 
+      });
+    } catch (error) {
+      console.error('Batch update error:', error);
+      res.status(500).json({ error: 'Failed to update cryptocurrency database' });
+    }
+  });
+
+  // Get cryptocurrency count and statistics
+  app.get("/api/crypto/stats", async (req, res) => {
+    try {
+      const totalAssets = await storage.getCryptoAssetsCount();
+      const topAssets = await storage.getCryptoAssets();
+      const topSSS = topAssets
+        .sort((a, b) => b.sssScore - a.sssScore)
+        .slice(0, 10)
+        .map(asset => ({ symbol: asset.symbol, sssScore: asset.sssScore }));
+      
+      res.json({
+        totalCryptocurrencies: totalAssets,
+        topSSSPerformers: topSSS,
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Crypto stats error:', error);
+      res.status(500).json({ error: 'Failed to fetch cryptocurrency statistics' });
+    }
+  });
+
   return httpServer;
 }
