@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { isAuthenticated } from "./replitAuth";
 import { storage } from "./storage";
+import { randomBytes } from "crypto";
 
 export function registerAuthRoutes(app: Express) {
   // Get current user information
@@ -159,8 +160,8 @@ export function registerAuthRoutes(app: Express) {
   // Two-factor authentication endpoints (demonstration)
   app.post('/api/auth/2fa/enable', isAuthenticated, async (req: any, res) => {
     try {
-      // In a real implementation, this would generate a TOTP secret
-      const secret = 'JBSWY3DPEHPK3PXP'; // Example secret
+      // Generate a unique TOTP secret for this user  
+      const secret = randomBytes(20).toString('hex').toUpperCase().slice(0, 32);
       const qrCodeUrl = `otpauth://totp/Silent%20Surge%20Tracker:${req.user.claims.email}?secret=${secret}&issuer=Silent%20Surge%20Tracker`;
       
       res.json({
