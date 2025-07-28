@@ -109,6 +109,180 @@ export async function registerRoutes(app: Express): Promise<Server> {
     defiService.registerDeFiRoutes(app);
   }
 
+  // Phase 3 Advanced Features API endpoints
+  const { blockchainForensicsService } = await import('./blockchain-forensics-service');
+  const { regulatoryComplianceService } = await import('./regulatory-compliance-service');
+  const { institutionalAPIService } = await import('./institutional-api-service');
+  
+  // Blockchain Forensics API endpoints
+  app.get("/api/forensics/trace/:hash", async (req, res) => {
+    try {
+      const hash = req.params.hash;
+      const trace = blockchainForensicsService.generateTransactionTrace(hash);
+      res.json(trace);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to trace transaction" });
+    }
+  });
+
+  app.get("/api/forensics/address/:address", async (req, res) => {
+    try {
+      const address = req.params.address;
+      const risk = blockchainForensicsService.generateAddressRisk(address);
+      res.json(risk);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to analyze address" });
+    }
+  });
+
+  app.get("/api/forensics/address/:address/traces", async (req, res) => {
+    try {
+      const address = req.params.address;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+      const traces = blockchainForensicsService.getTransactionTraces(address, limit);
+      res.json(traces);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get transaction traces" });
+    }
+  });
+
+  app.get("/api/forensics/cluster/:address", async (req, res) => {
+    try {
+      const address = req.params.address;
+      const cluster = blockchainForensicsService.getAddressCluster(address);
+      res.json(cluster);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to analyze address cluster" });
+    }
+  });
+
+  app.post("/api/forensics/sanction-check", async (req, res) => {
+    try {
+      const { addresses } = req.body;
+      if (!Array.isArray(addresses)) {
+        return res.status(400).json({ error: "Addresses must be an array" });
+      }
+      const results = blockchainForensicsService.batchSanctionCheck(addresses);
+      res.json(results);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to perform sanction checks" });
+    }
+  });
+
+  // Regulatory Compliance API endpoints
+  app.get("/api/compliance/rules", async (req, res) => {
+    try {
+      const rules = regulatoryComplianceService.generateComplianceRules();
+      res.json(rules);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch compliance rules" });
+    }
+  });
+
+  app.get("/api/compliance/alerts", async (req, res) => {
+    try {
+      const count = req.query.count ? parseInt(req.query.count as string) : 20;
+      const alerts = regulatoryComplianceService.generateComplianceAlerts(count);
+      res.json(alerts);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch compliance alerts" });
+    }
+  });
+
+  app.get("/api/compliance/reports/:type/:jurisdiction", async (req, res) => {
+    try {
+      const { type, jurisdiction } = req.params;
+      const report = regulatoryComplianceService.generateRegulatoryReport(type, jurisdiction);
+      res.json(report);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to generate regulatory report" });
+    }
+  });
+
+  app.get("/api/compliance/jurisdictions", async (req, res) => {
+    try {
+      const requirements = regulatoryComplianceService.getJurisdictionRequirements();
+      res.json(requirements);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch jurisdiction requirements" });
+    }
+  });
+
+  app.post("/api/compliance/risk-assessment", async (req, res) => {
+    try {
+      const { amount, addresses, jurisdiction } = req.body;
+      const assessment = regulatoryComplianceService.assessTransactionRisk(amount, addresses, jurisdiction);
+      res.json(assessment);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to assess transaction risk" });
+    }
+  });
+
+  // Institutional API endpoints
+  app.get("/api/institutional/clients", async (req, res) => {
+    try {
+      const clients = institutionalAPIService.generateInstitutionalClients();
+      res.json(clients);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch institutional clients" });
+    }
+  });
+
+  app.get("/api/institutional/metrics", async (req, res) => {
+    try {
+      const metrics = institutionalAPIService.generateAPIMetrics();
+      res.json(metrics);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch API metrics" });
+    }
+  });
+
+  app.get("/api/institutional/indicators", async (req, res) => {
+    try {
+      const indicators = institutionalAPIService.generateCustomIndicators();
+      res.json(indicators);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch custom indicators" });
+    }
+  });
+
+  app.get("/api/institutional/data-feeds", async (req, res) => {
+    try {
+      const feeds = institutionalAPIService.generateMarketDataFeeds();
+      res.json(feeds);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch market data feeds" });
+    }
+  });
+
+  app.get("/api/institutional/risk-models", async (req, res) => {
+    try {
+      const models = institutionalAPIService.generateRiskModels();
+      res.json(models);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch risk models" });
+    }
+  });
+
+  app.get("/api/institutional/client/:id/usage", async (req, res) => {
+    try {
+      const clientId = req.params.id;
+      const usage = institutionalAPIService.getClientUsageAnalytics(clientId);
+      res.json(usage);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch client usage analytics" });
+    }
+  });
+
+  app.get("/api/institutional/revenue", async (req, res) => {
+    try {
+      const revenue = institutionalAPIService.getRevenueAnalytics();
+      res.json(revenue);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch revenue analytics" });
+    }
+  });
+
   // API Routes
 
   // Health check endpoint (no auth required)
