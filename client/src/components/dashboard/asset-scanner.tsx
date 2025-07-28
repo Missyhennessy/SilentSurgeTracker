@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Filter, Download, Settings, TrendingUp, Zap, Target } from "lucide-react";
 import { SearchBar } from "@/components/ui/search-bar";
@@ -26,6 +26,17 @@ export default function AssetScanner() {
     queryKey: ["/api/assets"],
     refetchInterval: 30000, // Refetch every 30 seconds
   });
+
+  // Handle error toast in useEffect to avoid infinite re-renders
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error Loading Assets",
+        description: "Failed to fetch cryptocurrency data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   // Calculate quick stats
   const quickStats = assets ? [
@@ -72,13 +83,7 @@ export default function AssetScanner() {
     return matchesSearch && matchesScore;
   }) || [];
 
-  if (error) {
-    toast({
-      title: "Error Loading Assets",
-      description: "Failed to fetch cryptocurrency data. Please try again.",
-      variant: "destructive",
-    });
-  }
+
 
   if (isLoading) {
     return (
