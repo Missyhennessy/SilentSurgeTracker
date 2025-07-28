@@ -23,11 +23,11 @@ export function registerAuthRoutes(app: Express) {
       const updates = req.body;
       
       // Only allow updating certain fields
-      const allowedUpdates = ['firstName', 'lastName'];
+      const allowedUpdates = ['firstName', 'lastName'] as const;
       const filteredUpdates: any = {};
       
       for (const key of allowedUpdates) {
-        if (updates[key] !== undefined) {
+        if (Object.prototype.hasOwnProperty.call(updates, key) && updates[key] !== undefined) {
           filteredUpdates[key] = updates[key];
         }
       }
