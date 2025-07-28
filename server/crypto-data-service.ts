@@ -52,9 +52,15 @@ class CryptoDataService {
   private apiKey: string;
   private baseUrl = 'https://api.coingecko.com/api/v3';
   private updateInterval: NodeJS.Timeout | null = null;
+  private totalPages = 50; // CoinGecko supports up to 50 pages (250 coins per page = 12,500+ cryptocurrencies)
+  private coinsPerPage = 250;
+  private currentPage = 1;
+  private allCoinsCache: Map<string, string> = new Map(); // symbol -> id mapping
+  private lastCacheUpdate = 0;
+  private cacheValidTime = 24 * 60 * 60 * 1000; // 24 hours
   
-  // Expanded mapping including thousands of cryptocurrencies 
-  private coinMapping = {
+  // Core mapping for essential cryptocurrencies (fallback)
+  private coreMapping = {
     // Major cryptocurrencies
     'BTC': 'bitcoin',
     'ETH': 'ethereum', 
@@ -141,6 +147,41 @@ class CryptoDataService {
   // Dynamic coin discovery for new tokens
   private coinCache = new Map<string, string>();
 
+  // Calculate SSS score
+  calculateSSS(metrics: {
+    behavioralActivity: number;
+    velocityAnomaly: number;
+    communityCohesion: number;
+    anchorPressure: number;
+    hypeToHoldRatio: number;
+    historicalVolatility: number;
+  }): number {
+    return calculateSSS(metrics);
+  }
+
+  // Generate behavioral metrics for a coin
+  calculateBehavioralMetrics(coinData: any): {
+    behavioralActivity: number;
+    velocityAnomaly: number;
+    communityCohesion: number;
+    anchorPressure: number;
+    hypeToHoldRatio: number;
+    historicalVolatility: number;
+  } {
+    // Simulated behavioral metrics based on market data
+    const volumeToMarketCapRatio = coinData.total_volume / coinData.market_cap;
+    const priceVolatility = Math.abs(coinData.price_change_percentage_24h || 0);
+    
+    return {
+      behavioralActivity: Math.min(100, Math.max(0, 50 + (volumeToMarketCapRatio * 100) + Math.random() * 20 - 10)),
+      velocityAnomaly: Math.min(100, Math.max(0, 45 + (volumeToMarketCapRatio * 80) + Math.random() * 25 - 12.5)),
+      communityCohesion: Math.min(100, Math.max(0, 60 + Math.random() * 30 - 15)),
+      anchorPressure: Math.min(100, Math.max(0, 70 - (priceVolatility * 2) + Math.random() * 20 - 10)),
+      hypeToHoldRatio: Math.min(100, Math.max(0, 40 + (priceVolatility * 1.5) + Math.random() * 30 - 15)),
+      historicalVolatility: Math.min(100, Math.max(0, priceVolatility + Math.random() * 10 - 5))
+    };
+  }
+
   // Search for new coins not in our mapping
   async searchCoin(query: string): Promise<string | null> {
     try {
@@ -172,8 +213,8 @@ class CryptoDataService {
     const upperSymbol = symbol.toUpperCase();
     
     // Check static mapping first
-    if (this.coinMapping[upperSymbol as keyof typeof this.coinMapping]) {
-      return this.coinMapping[upperSymbol as keyof typeof this.coinMapping];
+    if (this.coreMapping[upperSymbol as keyof typeof this.coreMapping]) {
+      return this.coreMapping[upperSymbol as keyof typeof this.coreMapping];
     }
     
     // Check cache
@@ -216,6 +257,99 @@ class CryptoDataService {
     }
   }
 
+  // Get trending cryptocurrencies
+  async getTrendingCoins(): Promise<any[]> {
+    try {
+      const url = `${this.baseUrl}/search/trending`;
+      const headers: HeadersInit = { 'accept': 'application/json' };
+      if (this.apiKey) headers['x-cg-demo-api-key'] = this.apiKey;
+      
+      const response = await fetch(url, { headers });
+      if (!response.ok) {
+        throw new Error(`CoinGecko API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data.coins || [];
+    } catch (error) {
+      console.error('Error fetching trending coins:', error);
+      return [];
+    }
+  }
+
+  // Fetch comprehensive market data in batches
+  async fetchMarketDataBatch(page: number = 1, perPage: number = 250): Promise<CoinGeckoMarketData[]> {
+    try {
+      const url = `${this.baseUrl}/coins/markets`;
+      const params = new URLSearchParams({
+        vs_currency: 'usd',
+        order: 'market_cap_desc',
+        per_page: perPage.toString(),
+        page: page.toString(),
+        sparkline: 'false',
+        price_change_percentage: '24h'
+      });
+      
+      const headers: HeadersInit = { 'accept': 'application/json' };
+      if (this.apiKey) headers['x-cg-demo-api-key'] = this.apiKey;
+      
+      const response = await fetch(`${url}?${params}`, { headers });
+      if (!response.ok) {
+        throw new Error(`CoinGecko API error: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error(`Error fetching market data page ${page}:`, error);
+      return [];
+    }
+  }
+
+  // Update all cryptocurrencies in comprehensive batches
+  async updateAllCryptocurrencies(): Promise<void> {
+    try {
+      console.log('Starting comprehensive cryptocurrency database update...');
+      
+      // Fetch top 2,500 cryptocurrencies (10 pages × 250 per page)
+      for (let page = 1; page <= 10; page++) {
+        try {
+          const marketData = await this.fetchMarketDataBatch(page, 250);
+          
+          for (const coinData of marketData) {
+            const behavioralMetrics = this.calculateBehavioralMetrics(coinData);
+            const sssScore = this.calculateSSS(behavioralMetrics);
+            
+            await storage.upsertCryptoAsset({
+              symbol: coinData.symbol.toUpperCase(),
+              name: coinData.name,
+              price: coinData.current_price,
+              marketCap: coinData.market_cap || 0,
+              volume24h: coinData.total_volume || 0,
+              change24h: coinData.price_change_percentage_24h || 0,
+              sssScore,
+              ...behavioralMetrics,
+            });
+          }
+          
+          console.log(`Updated page ${page}/10 (${marketData.length} cryptocurrencies)`);
+          
+          // Rate limiting: wait between requests
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+        } catch (error) {
+          console.error(`Error updating page ${page}:`, error);
+          continue;
+        }
+      }
+      
+      const totalAssets = await storage.getCryptoAssetsCount();
+      console.log(`Comprehensive cryptocurrency database updated: ${totalAssets} total assets`);
+      
+    } catch (error) {
+      console.error('Error in comprehensive cryptocurrency update:', error);
+    }
+  }
+
   constructor() {
     this.apiKey = process.env.COINGECKO_API_KEY || '';
     if (!this.apiKey) {
@@ -225,7 +359,7 @@ class CryptoDataService {
 
   async fetchMarketData(): Promise<CoinGeckoMarketData[]> {
     try {
-      const coinIds = Object.values(this.coinMapping).join(',');
+      const coinIds = Object.values(this.coreMapping).join(',');
       const url = `${this.baseUrl}/coins/markets?vs_currency=usd&ids=${coinIds}&order=market_cap_desc&per_page=50&page=1&sparkline=false&price_change_percentage=24h`;
       
       const headers: Record<string, string> = {
@@ -257,8 +391,8 @@ class CryptoDataService {
       
       for (const coinData of marketData) {
         // Find matching symbol in our coin mapping
-        const symbol = Object.keys(this.coinMapping).find(
-          key => this.coinMapping[key as keyof typeof this.coinMapping] === coinData.id
+        const symbol = Object.keys(this.coreMapping).find(
+          key => this.coreMapping[key as keyof typeof this.coreMapping] === coinData.id
         );
         
         if (!symbol) continue;

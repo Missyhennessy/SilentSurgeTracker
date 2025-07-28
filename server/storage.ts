@@ -1,7 +1,7 @@
 import { CryptoAsset, InsertCryptoAsset, Alert, InsertAlert, VelocityData, InsertVelocityData, User, UpsertUser } from "@shared/schema";
 import { cryptoAssets, alerts, velocityData, users } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, count, ilike, or } from "drizzle-orm";
 
 export interface IStorage {
   // Crypto Assets
@@ -10,6 +10,9 @@ export interface IStorage {
   getCryptoAssetBySymbol(symbol: string): Promise<CryptoAsset | undefined>;
   createCryptoAsset(asset: InsertCryptoAsset): Promise<CryptoAsset>;
   updateCryptoAsset(id: number, updates: Partial<InsertCryptoAsset>): Promise<CryptoAsset | undefined>;
+  upsertCryptoAsset(asset: InsertCryptoAsset): Promise<CryptoAsset>;
+  getCryptoAssetsCount(): Promise<number>;
+  searchCryptoAssets(query: string): Promise<CryptoAsset[]>;
   
   // Alerts
   getAlerts(): Promise<Alert[]>;
@@ -199,6 +202,38 @@ export class DatabaseStorage implements IStorage {
       .where(eq(cryptoAssets.id, id))
       .returning();
     return updatedAsset || undefined;
+  }
+
+  async upsertCryptoAsset(asset: InsertCryptoAsset): Promise<CryptoAsset> {
+    const [upsertedAsset] = await db
+      .insert(cryptoAssets)
+      .values(asset)
+      .onConflictDoUpdate({
+        target: cryptoAssets.symbol,
+        set: {
+          ...asset,
+          lastUpdated: new Date(),
+        },
+      })
+      .returning();
+    return upsertedAsset;
+  }
+
+  async getCryptoAssetsCount(): Promise<number> {
+    const [result] = await db.select({ count: count() }).from(cryptoAssets);
+    return result.count;
+  }
+
+  async searchCryptoAssets(query: string): Promise<CryptoAsset[]> {
+    return await db.select().from(cryptoAssets)
+      .where(
+        or(
+          ilike(cryptoAssets.symbol, `%${query}%`),
+          ilike(cryptoAssets.name, `%${query}%`)
+        )
+      )
+      .orderBy(desc(cryptoAssets.sssScore))
+      .limit(50);
   }
 
   async getAlerts(): Promise<Alert[]> {
