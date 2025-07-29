@@ -22,13 +22,17 @@ export function registerAuthRoutes(app: Express) {
       const userId = req.user.claims.sub;
       const updates = req.body;
       
-      // Only allow updating certain fields
+      // Only allow updating certain fields - using safe property access
       const allowedUpdates = ['firstName', 'lastName'] as const;
       const filteredUpdates: any = {};
       
+      // Safe property extraction to prevent prototype pollution
       for (const key of allowedUpdates) {
-        if (Object.prototype.hasOwnProperty.call(updates, key) && updates[key] !== undefined) {
-          filteredUpdates[key] = updates[key];
+        if (updates && typeof updates === 'object' && Object.prototype.hasOwnProperty.call(updates, key)) {
+          const value = updates[key];
+          if (value !== undefined && value !== null) {
+            filteredUpdates[key] = value;
+          }
         }
       }
 
