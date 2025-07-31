@@ -3,8 +3,13 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// Security: Limit request size to prevent DoS attacks
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+
+// Security: Set trust proxy for accurate IP addresses
+app.set('trust proxy', 1);
 
 app.use((req, res, next) => {
   const start = Date.now();
