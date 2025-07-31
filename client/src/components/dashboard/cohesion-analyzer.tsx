@@ -135,7 +135,7 @@ export default function CohesionAnalyzer() {
               <SelectValue placeholder="Select Asset" />
             </SelectTrigger>
             <SelectContent>
-              {assets?.map(asset => (
+              {assets?.filter(asset => asset.symbol && asset.symbol.trim()).map(asset => (
                 <SelectItem key={asset.symbol} value={asset.symbol}>
                   {asset.symbol} - {asset.name}
                 </SelectItem>

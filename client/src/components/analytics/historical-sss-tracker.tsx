@@ -152,7 +152,7 @@ export default function HistoricalSSSTracker() {
                 <SelectValue placeholder="Select asset" />
               </SelectTrigger>
               <SelectContent>
-                {assets?.map(asset => (
+                {assets?.filter(asset => asset.symbol && asset.symbol.trim()).map(asset => (
                   <SelectItem key={asset.id} value={asset.symbol}>
                     {asset.symbol}
                   </SelectItem>
