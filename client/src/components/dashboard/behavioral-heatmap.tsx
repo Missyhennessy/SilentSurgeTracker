@@ -68,10 +68,10 @@ export default function BehavioralHeatmap() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Behavioral Heatmap</h2>
-        <p className="text-[var(--text-secondary)]">Micro-influencer wallet activity and behavioral deviations</p>
+    <div className="p-3 md:p-4 lg:p-6">
+      <div className="mb-4 md:mb-6">
+        <h2 className="text-xl md:text-2xl font-bold text-[var(--text-primary)] mb-2">Behavioral Heatmap</h2>
+        <p className="text-sm md:text-base text-[var(--text-secondary)]">Micro-influencer wallet activity and behavioral deviations</p>
       </div>
 
       {/* Controls */}

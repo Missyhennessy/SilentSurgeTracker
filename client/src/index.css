@@ -96,21 +96,79 @@
     min-width: 0; /* Prevents flex item from overflowing */
   }
 
-  /* Mobile responsive fixes */
+  /* Enhanced Mobile responsive fixes */
   @media (max-width: 768px) {
     .main-content {
-      padding: 1rem;
+      padding: 0.75rem;
     }
     
     .asset-grid {
       grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+    
+    /* Card spacing on mobile */
+    .card-container {
+      margin-bottom: 1rem;
+    }
+    
+    /* Better text sizing on mobile */
+    .mobile-text-sm {
+      font-size: 0.875rem;
+    }
+    
+    .mobile-text-xs {
+      font-size: 0.75rem;
+    }
+    
+    /* Improved button sizing */
+    .mobile-btn {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+    }
+    
+    /* Better chart sizing */
+    .mobile-chart {
+      height: 200px;
     }
   }
 
   @media (min-width: 768px) {
     .asset-grid {
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
     }
+  }
+
+  @media (min-width: 1024px) {
+    .asset-grid {
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 2rem;
+    }
+  }
+
+  /* Scrolling improvements */
+  .scroll-container {
+    overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+  
+  /* Custom scrollbar for better experience */
+  .scroll-container::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scroll-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.3);
+    border-radius: 3px;
+  }
+  
+  .scroll-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.5);
   }
 
   /* Layout Optimizer Styles */

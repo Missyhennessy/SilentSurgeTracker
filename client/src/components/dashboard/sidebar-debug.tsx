@@ -75,8 +75,8 @@ export default function SidebarDebug({ activeModule, onModuleChange, isConnected
   };
 
   return (
-    <aside className="w-full h-full bg-gray-800 border-r border-gray-700 overflow-y-auto scrollbar-thin">
-      <div className="p-4 space-y-2">
+    <aside className="w-full h-full bg-gray-800 border-r border-gray-700 overflow-y-auto scroll-container">
+      <div className="p-3 md:p-4 space-y-2">
         <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-4">
           Analysis Modules
         </div>

@@ -107,32 +107,32 @@ export default function AssetScanner() {
   }
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div className="p-3 md:p-4 lg:p-6">
+      {/* Header - Mobile Optimized */}
+      <div className="mb-4 md:mb-6">
+        <div className="flex flex-col space-y-3 md:flex-row md:justify-between md:items-center md:space-y-0 md:gap-4 mb-4 md:mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-2">Asset Scanner</h2>
-            <p className="text-gray-400">Search and analyze crypto assets with real-time SSS scoring</p>
+            <h2 className="text-xl md:text-2xl font-bold text-white mb-1 md:mb-2">Asset Scanner</h2>
+            <p className="text-sm md:text-base text-gray-400">Search and analyze crypto assets with real-time SSS scoring</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
+          <div className="flex gap-2 self-start md:self-auto">
+            <Button variant="outline" size="sm" className="mobile-btn">
+              <Download className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Export</span>
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="mobile-btn">
               <Settings className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
         {/* Quick Stats */}
-        <QuickStatsGrid stats={quickStats} className="mb-6" />
+        <QuickStatsGrid stats={quickStats} className="mb-4 md:mb-6" />
       </div>
       
-      {/* Search and Filters */}
-      <div className="bg-[var(--dark-panel)] rounded-xl border border-[var(--dark-border)] p-6 mb-6">
-        <div className="flex flex-col lg:flex-row gap-4">
+      {/* Search and Filters - Mobile Optimized */}
+      <div className="bg-[var(--dark-panel)] rounded-xl border border-[var(--dark-border)] p-3 md:p-4 lg:p-6 mb-4 md:mb-6">
+        <div className="flex flex-col space-y-3 lg:flex-row lg:space-y-0 lg:gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)]" />
             <SearchBar
@@ -143,9 +143,9 @@ export default function AssetScanner() {
             />
           </div>
           
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 lg:gap-3">
             <Select value={marketFilter} onValueChange={setMarketFilter}>
-              <SelectTrigger className="w-40 bg-[var(--dark-bg)] border-[var(--dark-border)]">
+              <SelectTrigger className="w-full sm:w-40 bg-[var(--dark-bg)] border-[var(--dark-border)]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -157,7 +157,7 @@ export default function AssetScanner() {
             </Select>
             
             <Select value={scoreFilter} onValueChange={setScoreFilter}>
-              <SelectTrigger className="w-40 bg-[var(--dark-bg)] border-[var(--dark-border)]">
+              <SelectTrigger className="w-full sm:w-40 bg-[var(--dark-bg)] border-[var(--dark-border)]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -168,16 +168,16 @@ export default function AssetScanner() {
               </SelectContent>
             </Select>
             
-            <Button className="bg-[var(--primary-blue)] hover:bg-[var(--primary-blue)]/80 text-[var(--dark-bg)]">
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
+            <Button className="bg-[var(--primary-blue)] hover:bg-[var(--primary-blue)]/80 text-[var(--dark-bg)] mobile-btn">
+              <Filter className="w-4 h-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Filter</span>
             </Button>
           </div>
         </div>
       </div>
       
-      {/* Asset Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+      {/* Asset Cards Grid - Mobile Optimized */}
+      <div className="asset-grid mb-6 md:mb-8">
         {filteredAssets.map((asset) => (
           <AssetCard 
             key={asset.id} 
@@ -187,8 +187,8 @@ export default function AssetScanner() {
         ))}
       </div>
       
-      {/* Detailed Analysis Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Detailed Analysis Panel - Mobile Optimized */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 lg:gap-6">
         <SSSBreakdown asset={selectedAsset || filteredAssets[0]} />
         <VelocityChart asset={selectedAsset || filteredAssets[0]} />
       </div>
