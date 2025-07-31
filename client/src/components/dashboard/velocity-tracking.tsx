@@ -11,7 +11,7 @@ import { generateVelocityData, generateMetricTimeSeries } from "@/lib/mock-data"
 import { calculateVelocityAnomaly } from "@/lib/sss-calculator";
 
 export default function VelocityTracking() {
-  const [selectedAsset, setSelectedAsset] = useState<string>("");
+  const [selectedAsset, setSelectedAsset] = useState<string>("BTC");
   const [timeframe, setTimeframe] = useState("24h");
   const [viewMode, setViewMode] = useState("overview");
 
@@ -72,7 +72,7 @@ export default function VelocityTracking() {
       <div className="bg-[var(--dark-panel)] rounded-xl border border-[var(--dark-border)] p-6 mb-6">
         <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
           <div className="flex gap-4">
-            <Select value={selectedAsset || assets?.[0]?.symbol || ""} onValueChange={setSelectedAsset}>
+            <Select value={selectedAsset || assets?.[0]?.symbol || "BTC"} onValueChange={setSelectedAsset}>
               <SelectTrigger className="w-40 bg-[var(--dark-bg)] border-[var(--dark-border)]">
                 <SelectValue placeholder="Select Asset" />
               </SelectTrigger>

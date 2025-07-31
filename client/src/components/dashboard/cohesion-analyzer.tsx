@@ -22,7 +22,7 @@ interface CohesionData {
 }
 
 export default function CohesionAnalyzer() {
-  const [selectedAsset, setSelectedAsset] = useState<string>("");
+  const [selectedAsset, setSelectedAsset] = useState<string>("BTC");
   const [platform, setPlatform] = useState("all");
   const [timeframe, setTimeframe] = useState("24h");
 
@@ -130,7 +130,7 @@ export default function CohesionAnalyzer() {
       {/* Controls */}
       <div className="bg-[var(--dark-panel)] rounded-xl border border-[var(--dark-border)] p-6 mb-6">
         <div className="flex flex-col lg:flex-row gap-4">
-          <Select value={selectedAsset || assets?.[0]?.symbol || ""} onValueChange={setSelectedAsset}>
+          <Select value={selectedAsset || assets?.[0]?.symbol || "BTC"} onValueChange={setSelectedAsset}>
             <SelectTrigger className="w-40 bg-[var(--dark-bg)] border-[var(--dark-border)]">
               <SelectValue placeholder="Select Asset" />
             </SelectTrigger>
