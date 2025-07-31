@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { EnhancedHeader } from "@/components/enhanced-header";
 import { FloatingActionButton, defaultFABActions } from "@/components/ui/floating-action-button";
-import Sidebar from "@/components/dashboard/sidebar";
+import SidebarDebug from "@/components/dashboard/sidebar-debug";
 import AssetScanner from "@/components/dashboard/asset-scanner";
 import Watchlist from "@/components/dashboard/watchlist";
 import BehavioralHeatmap from "@/components/dashboard/behavioral-heatmap";
@@ -51,53 +51,81 @@ export default function Dashboard() {
   const totalAssets = Array.isArray(assets) ? assets.length : 0;
 
   const renderModule = () => {
-    switch (activeModule) {
-      case "scanner":
-        return <AssetScanner />;
-      case "watchlist":
-        return <Watchlist />;
-      case "heatmap":
-        return <BehavioralHeatmap />;
-      case "velocity":
-        return <VelocityTracking />;
-      case "cohesion":
-        return <CohesionAnalyzer />;
-      case "anchor":
-        return <AnchorPressure />;
-      case "hhr":
-        return <HHRComparator />;
-      case "composite":
-        return <CompositeRating />;
-      case "analytics":
-        return <HistoricalSSSTracker />;
-      case "portfolio":
-        return <PortfolioTracker />;
-      case "backtest":
-        return <BacktestingEngine />;
-      case "ml":
-        return <ModelPerformance />;
-      case "risk":
-        return <RiskManagement />;
-      case "sentiment":
-        return <MarketSentiment />;
-      case "optimization":
-        return <PortfolioOptimization />;
-      case "alerts":
-        return <AlertsManagement />;
-      case "signals":
-        return <TradingSignals />;
-      case "marketscan":
-        return <MarketScanner />;
-      case "cryptosearch":
-        return <CryptoSearch />;
-      case "layoutopt":
-        return <LayoutOptimizer 
-          onLayoutChange={(layout) => console.log('Layout changed:', layout)}
-          onFullscreenToggle={(isFullscreen) => console.log('Fullscreen:', isFullscreen)}
-          onSidebarToggle={(isVisible) => console.log('Sidebar:', isVisible)}
-        />;
-      default:
-        return <AssetScanner />;
+    console.log('Rendering module:', activeModule);
+    
+    try {
+      switch (activeModule) {
+        case "scanner":
+          console.log('Loading AssetScanner');
+          return <AssetScanner />;
+        case "watchlist":
+          console.log('Loading Watchlist');
+          return <Watchlist />;
+        case "heatmap":
+          console.log('Loading BehavioralHeatmap');
+          return <BehavioralHeatmap />;
+        case "velocity":
+          console.log('Loading VelocityTracking');
+          return <VelocityTracking />;
+        case "cohesion":
+          console.log('Loading CohesionAnalyzer');
+          return <CohesionAnalyzer />;
+        case "anchor":
+          console.log('Loading AnchorPressure');
+          return <AnchorPressure />;
+        case "hhr":
+          console.log('Loading HHRComparator');
+          return <HHRComparator />;
+        case "composite":
+          console.log('Loading CompositeRating');
+          return <CompositeRating />;
+        case "analytics":
+          console.log('Loading HistoricalSSSTracker');
+          return <HistoricalSSSTracker />;
+        case "portfolio":
+          console.log('Loading PortfolioTracker');
+          return <PortfolioTracker />;
+        case "backtest":
+          console.log('Loading BacktestingEngine');
+          return <BacktestingEngine />;
+        case "ml":
+          console.log('Loading ModelPerformance');
+          return <ModelPerformance />;
+        case "risk":
+          console.log('Loading RiskManagement');
+          return <RiskManagement />;
+        case "sentiment":
+          console.log('Loading MarketSentiment');
+          return <MarketSentiment />;
+        case "optimization":
+          console.log('Loading PortfolioOptimization');
+          return <PortfolioOptimization />;
+        case "alerts":
+          console.log('Loading AlertsManagement');
+          return <AlertsManagement />;
+        case "signals":
+          console.log('Loading TradingSignals');
+          return <TradingSignals />;
+        case "marketscan":
+          console.log('Loading MarketScanner');
+          return <MarketScanner />;
+        case "cryptosearch":
+          console.log('Loading CryptoSearch');
+          return <CryptoSearch />;
+        case "layoutopt":
+          console.log('Loading LayoutOptimizer');
+          return <LayoutOptimizer 
+            onLayoutChange={(layout) => console.log('Layout changed:', layout)}
+            onFullscreenToggle={(isFullscreen) => console.log('Fullscreen:', isFullscreen)}
+            onSidebarToggle={(isVisible) => console.log('Sidebar:', isVisible)}
+          />;
+        default:
+          console.log('Loading default AssetScanner');
+          return <AssetScanner />;
+      }
+    } catch (error) {
+      console.error('Error rendering module:', activeModule, error);
+      return <div className="p-6 text-red-500">Error loading module: {activeModule}</div>;
     }
   };
 
@@ -112,7 +140,7 @@ export default function Dashboard() {
       <div className="flex h-[calc(100vh-80px)]">
         {/* Sidebar - responsive design */}
         <div className="w-64 flex-shrink-0 hidden md:block">
-          <Sidebar 
+          <SidebarDebug 
             activeModule={activeModule}
             onModuleChange={setActiveModule}
             isConnected={isConnected}
@@ -136,9 +164,9 @@ export default function Dashboard() {
           <div className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50" onClick={() => setShowMobileMenu(false)}>
             <div className="fixed left-0 top-0 h-full w-64 bg-gray-900 transform transition-transform duration-200 ease-in-out" onClick={(e) => e.stopPropagation()}>
               <div className="pt-20">
-                <Sidebar 
+                <SidebarDebug 
                   activeModule={activeModule}
-                  onModuleChange={(module) => {
+                  onModuleChange={(module: DashboardModule) => {
                     setActiveModule(module);
                     setShowMobileMenu(false);
                   }}
