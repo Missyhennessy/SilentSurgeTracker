@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,7 +22,7 @@ interface AnchorData {
 }
 
 export default function AnchorPressure() {
-  const [selectedAsset, setSelectedAsset] = useState<string>("");
+  const [selectedAsset, setSelectedAsset] = useState<string>("BTC");
   const [timeframe, setTimeframe] = useState("90d");
   const [viewMode, setViewMode] = useState("overview");
 
@@ -32,6 +32,13 @@ export default function AnchorPressure() {
   });
 
   const selectedAssetData = assets?.find(asset => asset.symbol === selectedAsset) || assets?.[0];
+
+  // Auto-select first asset when assets load
+  React.useEffect(() => {
+    if (assets && assets.length > 0 && !selectedAsset) {
+      setSelectedAsset(assets[0].symbol);
+    }
+  }, [assets, selectedAsset]);
 
   // Generate anchor pressure data for all assets
   const anchorData: AnchorData[] = (assets || []).map(asset => {
@@ -128,7 +135,7 @@ export default function AnchorPressure() {
       {/* Controls */}
       <div className="bg-[var(--dark-panel)] rounded-xl border border-[var(--dark-border)] p-6 mb-6">
         <div className="flex flex-col lg:flex-row gap-4">
-          <Select value={selectedAsset || assets?.[0]?.symbol || ""} onValueChange={setSelectedAsset}>
+          <Select value={selectedAsset || assets?.[0]?.symbol || "BTC"} onValueChange={setSelectedAsset}>
             <SelectTrigger className="w-40 bg-[var(--dark-bg)] border-[var(--dark-border)]">
               <SelectValue placeholder="Select Asset" />
             </SelectTrigger>
