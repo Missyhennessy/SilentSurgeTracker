@@ -38,7 +38,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       maxAge: sessionTtl,
     },
   });
@@ -73,6 +73,8 @@ export async function setupAuth(app: Express) {
   app.use(passport.session());
 
   const config = await getOidcConfig();
+  console.log("OIDC Config loaded successfully");
+  console.log("Available domains:", process.env.REPLIT_DOMAINS);
 
   const verify: VerifyFunction = async (
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
@@ -86,9 +88,11 @@ export async function setupAuth(app: Express) {
 
   for (const domain of process.env
     .REPLIT_DOMAINS!.split(",")) {
+    const strategyName = `replitauth:${domain}`;
+    console.log(`Registering auth strategy: ${strategyName}`);
     const strategy = new Strategy(
       {
-        name: `replitauth:${domain}`,
+        name: strategyName,
         config,
         scope: "openid email profile offline_access",
         callbackURL: `https://${domain}/api/callback`,
@@ -96,20 +100,49 @@ export async function setupAuth(app: Express) {
       verify,
     );
     passport.use(strategy);
+    console.log(`Auth strategy registered: ${strategyName}`);
   }
 
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    // Determine which domain to use for auth strategy
+    const requestHost = req.hostname;
+    const replitDomains = process.env.REPLIT_DOMAINS!.split(",");
+    
+    // Check if request is from a known Replit domain
+    const matchingDomain = replitDomains.find(domain => 
+      requestHost === domain || requestHost.includes(domain.split('.')[0])
+    );
+    
+    const authDomain = matchingDomain || replitDomains[0];
+    const strategyName = `replitauth:${authDomain}`;
+    
+    console.log(`Login request from: ${requestHost}, using strategy: ${strategyName}`);
+    
+    passport.authenticate(strategyName, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    // Determine which domain to use for auth strategy
+    const requestHost = req.hostname;
+    const replitDomains = process.env.REPLIT_DOMAINS!.split(",");
+    
+    // Check if request is from a known Replit domain
+    const matchingDomain = replitDomains.find(domain => 
+      requestHost === domain || requestHost.includes(domain.split('.')[0])
+    );
+    
+    const authDomain = matchingDomain || replitDomains[0];
+    const strategyName = `replitauth:${authDomain}`;
+    
+    console.log(`Callback from: ${requestHost}, using strategy: ${strategyName}`);
+    
+    passport.authenticate(strategyName, {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
     })(req, res, next);
