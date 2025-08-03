@@ -6,6 +6,7 @@ import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { CryptoAsset } from "@/types/crypto";
 import { getScoreColor, getTrendArrow } from "@/lib/sss-calculator";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 interface AssetCardProps {
   asset: CryptoAsset;
@@ -14,6 +15,7 @@ interface AssetCardProps {
 
 export default function AssetCard({ asset, onSelect }: AssetCardProps) {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   
   const getAssetIcon = (symbol: string) => {
     const iconMap: { [key: string]: string } = {
@@ -36,6 +38,11 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
   const handleQuickView = (e: React.MouseEvent) => {
     e.stopPropagation();
     onSelect(asset);
+  };
+
+  const handleViewDetails = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/crypto/${asset.symbol}`);
   };
 
   const getAssetGradient = (symbol: string) => {
@@ -120,10 +127,15 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
       
       <div className="mt-4 pt-4 border-t border-[var(--dark-border)]">
         <div className="flex justify-between items-center">
-          <Button variant="ghost" size="sm" className="text-[var(--primary-blue)] hover:text-[var(--primary-blue)]/80">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleViewDetails}
+            className="text-[var(--primary-blue)] hover:text-[var(--primary-blue)]/80"
+          >
             View Details
           </Button>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={handleAddToWatchlist}>
             <Star className="w-4 h-4" />
           </Button>
         </div>

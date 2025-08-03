@@ -388,6 +388,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
+
+  // Mock endpoints for crypto detail page data
+  app.get('/api/assets/:symbol/price-history', async (req, res) => {
+    try {
+      const symbol = req.params.symbol.toUpperCase();
+      const timeframe = req.query.timeframe || '7d';
+      
+      // Generate mock price history data based on current price
+      const asset = await storage.getAssetBySymbol(symbol);
+      if (!asset) {
+        return res.status(404).json({ message: 'Asset not found' });
+      }
+
+      const points = timeframe === '24h' ? 24 : timeframe === '7d' ? 7 : timeframe === '30d' ? 30 : timeframe === '90d' ? 90 : 365;
+      const interval = timeframe === '24h' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // hours or days
+      
+      const priceHistory = Array.from({ length: points }, (_, i) => {
+        const timestamp = new Date(Date.now() - (points - 1 - i) * interval).toISOString();
+        const variance = (Math.random() - 0.5) * 0.1; // 10% variance
+        const price = asset.price * (1 + variance);
+        return {
+          timestamp,
+          price: Math.max(0, price),
+          volume: Math.random() * 1000000,
+          marketCap: price * 1000000,
+        };
+      });
+
+      res.json(priceHistory);
+    } catch (error) {
+      console.error('Error fetching price history:', error);
+      res.status(500).json({ message: 'Failed to fetch price history' });
+    }
+  });
+
+  app.get('/api/assets/:symbol/details', async (req, res) => {
+    try {
+      const symbol = req.params.symbol.toUpperCase();
+      const asset = await storage.getAssetBySymbol(symbol);
+      if (!asset) {
+        return res.status(404).json({ message: 'Asset not found' });
+      }
+
+      // Generate mock details
+      const details = {
+        description: `${asset.name} is a leading cryptocurrency that leverages blockchain technology to provide decentralized financial solutions. It aims to revolutionize the traditional financial system by offering faster, cheaper, and more transparent transactions.`,
+        website: `https://${symbol.toLowerCase()}.org`,
+        whitepaper: `https://${symbol.toLowerCase()}.org/whitepaper.pdf`,
+        github: `https://github.com/${symbol.toLowerCase()}`,
+        twitter: `https://twitter.com/${symbol.toLowerCase()}`,
+        marketCap: asset.price * 1000000,
+        circulatingSupply: 1000000,
+        totalSupply: 1000000,
+        maxSupply: 2000000,
+        allTimeHigh: asset.price * 1.5,
+        allTimeLow: asset.price * 0.1,
+        ath24hChange: -15.2,
+        atl24hChange: 45.8,
+        marketCapRank: Math.floor(Math.random() * 100) + 1,
+      };
+
+      res.json(details);
+    } catch (error) {
+      console.error('Error fetching asset details:', error);
+      res.status(500).json({ message: 'Failed to fetch asset details' });
+    }
+  });
+
+  app.get('/api/assets/:symbol/news', async (req, res) => {
+    try {
+      const symbol = req.params.symbol.toUpperCase();
+      
+      // Generate mock news data
+      const news = [
+        {
+          id: '1',
+          title: `${symbol} Partnership Announcement with Major Financial Institution`,
+          summary: 'Strategic partnership aims to enhance blockchain adoption in traditional finance sector.',
+          source: 'CoinDesk',
+          publishedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          sentiment: 'positive',
+          impact: 'high',
+          url: '#',
+          category: 'partnership'
+        },
+        {
+          id: '2',
+          title: 'New Regulatory Framework Could Impact Cryptocurrency Trading',
+          summary: 'Proposed regulations may require additional compliance measures for crypto exchanges.',
+          source: 'Reuters',
+          publishedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+          sentiment: 'negative',
+          impact: 'medium',
+          url: '#',
+          category: 'regulatory'
+        },
+        {
+          id: '3',
+          title: `${symbol} Technical Upgrade Improves Network Efficiency`,
+          summary: 'Latest protocol update reduces transaction fees and increases throughput.',
+          source: 'CoinTelegraph',
+          publishedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+          sentiment: 'positive',
+          impact: 'medium',
+          url: '#',
+          category: 'technical'
+        }
+      ];
+
+      res.json(news);
+    } catch (error) {
+      console.error('Error fetching news:', error);
+      res.status(500).json({ message: 'Failed to fetch news' });
+    }
+  });
   
   // Get all crypto assets
   app.get("/api/assets", async (req, res) => {
