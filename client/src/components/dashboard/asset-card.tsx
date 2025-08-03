@@ -41,9 +41,16 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
   };
 
   const handleViewDetails = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     console.log(`Navigating to crypto detail page for ${asset.symbol}`);
-    navigate(`/crypto/${asset.symbol}`);
+    console.log(`Current URL: ${window.location.href}`);
+    
+    // Force navigation with a small delay to avoid conflicts
+    setTimeout(() => {
+      navigate(`/crypto/${asset.symbol}`);
+      console.log(`Navigation triggered for /crypto/${asset.symbol}`);
+    }, 10);
   };
 
   const getAssetGradient = (symbol: string) => {
