@@ -504,6 +504,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get asset by symbol
+  app.get("/api/assets/symbol/:symbol", async (req, res) => {
+    try {
+      const symbol = req.params.symbol.toUpperCase();
+      const asset = await storage.getAssetBySymbol(symbol);
+      if (!asset) {
+        return res.status(404).json({ error: "Asset not found" });
+      }
+      res.json(asset);
+    } catch (error) {
+      console.error('Error fetching asset by symbol:', error);
+      res.status(500).json({ error: "Failed to fetch asset" });
+    }
+  });
+
   // Get all crypto assets
   app.get("/api/assets", async (req, res) => {
     try {
