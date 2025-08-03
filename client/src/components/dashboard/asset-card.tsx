@@ -132,7 +132,7 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
             variant="ghost" 
             size="sm" 
             onClick={handleViewDetails}
-            className="text-[var(--primary-blue)] hover:text-[var(--primary-blue)]/80"
+            className="text-[var(--primary-blue)] hover:text-[var(--primary-blue)]/80 z-10 relative"
           >
             View Details
           </Button>
