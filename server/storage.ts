@@ -187,6 +187,10 @@ export class DatabaseStorage implements IStorage {
     return asset || undefined;
   }
 
+  async getAssetBySymbol(symbol: string): Promise<CryptoAsset | undefined> {
+    return this.getCryptoAssetBySymbol(symbol);
+  }
+
   async createCryptoAsset(asset: InsertCryptoAsset): Promise<CryptoAsset> {
     const [newAsset] = await db
       .insert(cryptoAssets)
