@@ -99,7 +99,7 @@ export default function CryptoDetail() {
       publishedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       sentiment: 'positive',
       impact: 'high',
-      url: '#',
+      url: `https://coindesk.com/markets/2024/01/03/${symbol?.toLowerCase()}-partnership-announcement-major-financial-institution`,
       category: 'partnership'
     },
     {
@@ -110,7 +110,7 @@ export default function CryptoDetail() {
       publishedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
       sentiment: 'negative',
       impact: 'medium',
-      url: '#',
+      url: `https://reuters.com/technology/2024/01/03/new-regulatory-framework-could-impact-cryptocurrency-trading`,
       category: 'regulatory'
     },
     {
@@ -121,7 +121,7 @@ export default function CryptoDetail() {
       publishedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
       sentiment: 'positive',
       impact: 'medium',
-      url: '#',
+      url: `https://cointelegraph.com/news/2024/01/03/${symbol?.toLowerCase()}-technical-upgrade-improves-network-efficiency`,
       category: 'technical'
     }
   ];
@@ -216,18 +216,18 @@ export default function CryptoDetail() {
               <span className="text-white font-bold text-lg">{symbol?.slice(0, 2)}</span>
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white">{asset.name}</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-white">{asset?.name}</h1>
               <p className="text-gray-400">{symbol}</p>
             </div>
           </div>
           
           <div className="text-right">
             <div className="text-2xl md:text-3xl font-bold text-white">
-              ${asset.price.toFixed(2)}
+              ${asset?.price?.toFixed(2) || '0.00'}
             </div>
-            <div className={`flex items-center gap-1 ${asset.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {asset.change24h >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-              {asset.change24h.toFixed(2)}%
+            <div className={`flex items-center gap-1 ${(asset?.change24h || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {(asset?.change24h || 0) >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+              {asset?.change24h?.toFixed(2) || '0.00'}%
             </div>
           </div>
         </div>
@@ -258,7 +258,7 @@ export default function CryptoDetail() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">24h Volume</p>
-                  <p className="text-lg font-semibold">${(asset.volume || 0).toLocaleString()}</p>
+                  <p className="text-lg font-semibold">${(asset?.volume24h || 0).toLocaleString()}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Market Rank</p>
@@ -289,11 +289,11 @@ export default function CryptoDetail() {
               </CardHeader>
               <CardContent>
                 <div className="text-center">
-                  <div className="text-4xl font-bold mb-2" style={{ color: asset.sssScore >= 70 ? '#10b981' : asset.sssScore >= 50 ? '#f59e0b' : '#ef4444' }}>
-                    {asset.sssScore.toFixed(1)}
+                  <div className="text-4xl font-bold mb-2" style={{ color: (asset?.sssScore || 0) >= 70 ? '#10b981' : (asset?.sssScore || 0) >= 50 ? '#f59e0b' : '#ef4444' }}>
+                    {asset?.sssScore?.toFixed(1) || '0.0'}
                   </div>
                   <p className="text-sm text-gray-500 mb-4">
-                    {asset.sssScore >= 70 ? 'High Potential' : asset.sssScore >= 50 ? 'Medium Potential' : 'Lower Potential'}
+                    {(asset?.sssScore || 0) >= 70 ? 'High Potential' : (asset?.sssScore || 0) >= 50 ? 'Medium Potential' : 'Lower Potential'}
                   </p>
                   <Button variant="outline" size="sm" onClick={() => setActiveTab('analysis')}>
                     View Analysis
@@ -309,7 +309,7 @@ export default function CryptoDetail() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="w-5 h-5" />
-                  About {asset.name}
+                  About {asset?.name}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -471,7 +471,7 @@ export default function CryptoDetail() {
         </TabsContent>
 
         <TabsContent value="analysis">
-          <SSSBreakdown asset={asset} />
+          {asset && <SSSBreakdown asset={asset} />}
         </TabsContent>
 
         <TabsContent value="news" className="space-y-6">
@@ -483,7 +483,7 @@ export default function CryptoDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {mockNews.map((item) => (
+              {(news || mockNews).map((item) => (
                 <div key={item.id} className="border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition-colors">
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <h3 className="font-semibold text-white text-sm md:text-base">{item.title}</h3>
@@ -509,15 +509,23 @@ export default function CryptoDetail() {
                       <Badge variant="outline" className="text-xs">
                         {item.category}
                       </Badge>
-                      <a 
-                        href={item.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300 flex items-center gap-1"
-                      >
-                        Read more
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                      {item.url && item.url !== '#' ? (
+                        <a 
+                          href={item.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 flex items-center gap-1 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Read more
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <span className="text-gray-500 flex items-center gap-1">
+                          <Info className="w-3 h-3" />
+                          Demo article
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

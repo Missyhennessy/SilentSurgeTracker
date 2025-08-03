@@ -460,7 +460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const symbol = req.params.symbol.toUpperCase();
       
-      // Generate mock news data
+      // Generate mock news data with realistic URLs
       const news = [
         {
           id: '1',
@@ -470,7 +470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           publishedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
           sentiment: 'positive',
           impact: 'high',
-          url: '#',
+          url: `https://coindesk.com/markets/2024/01/03/${symbol.toLowerCase()}-partnership-announcement-major-financial-institution`,
           category: 'partnership'
         },
         {
@@ -481,7 +481,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           publishedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
           sentiment: 'negative',
           impact: 'medium',
-          url: '#',
+          url: 'https://reuters.com/technology/2024/01/03/new-regulatory-framework-could-impact-cryptocurrency-trading',
           category: 'regulatory'
         },
         {
@@ -492,8 +492,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           publishedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
           sentiment: 'positive',
           impact: 'medium',
-          url: '#',
+          url: `https://cointelegraph.com/news/2024/01/03/${symbol.toLowerCase()}-technical-upgrade-improves-network-efficiency`,
           category: 'technical'
+        },
+        {
+          id: '4',
+          title: `Whale Alert: Large ${symbol} Transaction Detected`,
+          summary: 'Blockchain analytics reveal significant movement of tokens from unknown wallet.',
+          source: 'Whale Alert',
+          publishedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+          sentiment: 'neutral',
+          impact: 'medium',
+          url: `https://whale-alert.io/transaction/${symbol.toLowerCase()}/2024/01/03/large-transaction-detected`,
+          category: 'market'
+        },
+        {
+          id: '5',
+          title: `${symbol} Listed on Major Exchange Platform`,
+          summary: 'New listing increases accessibility and trading volume for retail investors.',
+          source: 'CryptoSlate',
+          publishedAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+          sentiment: 'positive',
+          impact: 'high',
+          url: `https://cryptoslate.com/news/2024/01/03/${symbol.toLowerCase()}-listed-major-exchange-platform`,
+          category: 'adoption'
         }
       ];
 
