@@ -42,6 +42,7 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
 
   const handleViewDetails = (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log(`Navigating to crypto detail page for ${asset.symbol}`);
     navigate(`/crypto/${asset.symbol}`);
   };
 
