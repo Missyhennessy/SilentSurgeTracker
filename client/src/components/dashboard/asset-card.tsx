@@ -7,6 +7,7 @@ import { CryptoAsset } from "@/types/crypto";
 import { getScoreColor, getTrendArrow } from "@/lib/sss-calculator";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { useEffect } from "react";
 
 interface AssetCardProps {
   asset: CryptoAsset;
@@ -16,6 +17,18 @@ interface AssetCardProps {
 export default function AssetCard({ asset, onSelect }: AssetCardProps) {
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  
+  // Test if React is working at all
+  console.log(`AssetCard rendering for ${asset.symbol}`);
+  
+  // Add a test to check if JavaScript is working
+  useEffect(() => {
+    console.log(`useEffect running for ${asset.symbol}`);
+    // Try to create a simple DOM element test
+    const testDiv = document.createElement('div');
+    testDiv.id = `test-${asset.symbol}`;
+    console.log(`Created test div:`, testDiv);
+  }, [asset.symbol]);
   
   const getAssetIcon = (symbol: string) => {
     const iconMap: { [key: string]: string } = {
@@ -123,11 +136,15 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
       <div className="mt-4 pt-4 border-t border-[var(--dark-border)]">
         <div className="flex justify-between items-center gap-2">
           <button 
+            onMouseDown={() => console.log('MOUSE DOWN DETECTED')}
+            onMouseUp={() => console.log('MOUSE UP DETECTED')}
+            onPointerDown={() => console.log('POINTER DOWN DETECTED')}
+            onTouchStart={() => console.log('TOUCH START DETECTED')}
             onClick={(e) => {
+              console.log('=== CLICK EVENT FIRED ===');
+              window.alert(`BUTTON CLICKED! ${asset.symbol}`);
               e.preventDefault();
               e.stopPropagation();
-              alert(`DETAILS BUTTON WORKS! ${asset.symbol}`);
-              console.log('Details button clicked - this should work now');
               navigate(`/crypto/${asset.symbol}`);
             }}
             className="px-4 py-2 bg-red-600 text-white font-bold rounded cursor-pointer"
@@ -137,7 +154,9 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
               zIndex: 9999,
               pointerEvents: 'auto',
               backgroundColor: '#dc2626 !important',
-              border: '2px solid #ffffff'
+              border: '2px solid #ffffff',
+              minHeight: '40px',
+              minWidth: '120px'
             }}
           >
             CLICK ME - Details
