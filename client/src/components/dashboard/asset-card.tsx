@@ -28,11 +28,17 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
   };
 
   const handleAddToWatchlist = () => {
+    console.log(`=== STAR BUTTON CLICKED ===`);
     console.log(`Adding ${asset.symbol} to watchlist`);
-    toast({
-      title: "Added to Watchlist",
-      description: `${asset.symbol} has been added to your watchlist.`,
-    });
+    try {
+      toast({
+        title: "Added to Watchlist",
+        description: `${asset.symbol} has been added to your watchlist.`,
+      });
+      console.log(`Toast notification triggered successfully`);
+    } catch (error) {
+      console.error(`Toast error:`, error);
+    }
   };
 
   const handleQuickView = (e: React.MouseEvent) => {
@@ -41,8 +47,15 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
   };
 
   const handleViewDetails = () => {
+    console.log(`=== BUTTON CLICKED ===`);
     console.log(`Navigating to crypto detail page for ${asset.symbol}`);
-    navigate(`/crypto/${asset.symbol}`);
+    console.log(`Current location:`, window.location.href);
+    try {
+      navigate(`/crypto/${asset.symbol}`);
+      console.log(`Navigate function called successfully`);
+    } catch (error) {
+      console.error(`Navigation error:`, error);
+    }
   };
 
   const getAssetGradient = (symbol: string) => {
@@ -109,16 +122,24 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
       <div className="mt-4 pt-4 border-t border-[var(--dark-border)]">
         <div className="flex justify-between items-center gap-2">
           <button 
-            onClick={handleViewDetails}
-            className="px-3 py-2 text-sm text-[var(--primary-blue)] hover:text-[var(--primary-blue)]/80 hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
+            onClick={() => {
+              alert(`Button clicked for ${asset.symbol}!`);
+              handleViewDetails();
+            }}
+            className="px-3 py-2 text-sm text-[var(--primary-blue)] hover:text-[var(--primary-blue)]/80 hover:bg-gray-700 rounded-md transition-colors cursor-pointer bg-red-500"
             data-testid={`button-view-details-${asset.symbol}`}
+            style={{ position: 'relative', zIndex: 1000 }}
           >
             View Details
           </button>
           <button 
-            onClick={handleAddToWatchlist}
-            className="p-2 text-gray-400 hover:text-yellow-400 hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
+            onClick={() => {
+              alert(`Star clicked for ${asset.symbol}!`);
+              handleAddToWatchlist();
+            }}
+            className="p-2 text-gray-400 hover:text-yellow-400 hover:bg-gray-700 rounded-md transition-colors cursor-pointer bg-green-500"
             data-testid={`button-favorite-${asset.symbol}`}
+            style={{ position: 'relative', zIndex: 1000 }}
           >
             <Star className="w-4 h-4" />
           </button>
