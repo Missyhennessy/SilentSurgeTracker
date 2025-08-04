@@ -83,25 +83,7 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
         </div>
       </div>
 
-      {/* Quick Actions - Only visible on hover */}
-      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={handleAddToWatchlist}
-          className="h-8 w-8 p-0 bg-gray-700 hover:bg-gray-600"
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={handleQuickView}
-          className="h-8 w-8 p-0 bg-gray-700 hover:bg-gray-600"
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-      </div>
+
       
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
@@ -125,24 +107,21 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
       </div>
       
       <div className="mt-4 pt-4 border-t border-[var(--dark-border)]">
-        <div className="flex justify-between items-center">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+        <div className="flex justify-between items-center gap-2">
+          <button 
             onClick={handleViewDetails}
-            className="text-[var(--primary-blue)] hover:text-[var(--primary-blue)]/80"
+            className="px-3 py-2 text-sm text-[var(--primary-blue)] hover:text-[var(--primary-blue)]/80 hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
             data-testid={`button-view-details-${asset.symbol}`}
           >
             View Details
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          </button>
+          <button 
             onClick={handleAddToWatchlist}
+            className="p-2 text-gray-400 hover:text-yellow-400 hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
             data-testid={`button-favorite-${asset.symbol}`}
           >
             <Star className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
       </div>
     </div>
