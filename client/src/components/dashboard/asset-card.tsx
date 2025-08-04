@@ -69,7 +69,8 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
   };
 
   return (
-    <div className="relative bg-gray-800 rounded-xl border border-gray-700 p-6 hover:bg-gray-750 hover:border-gray-600 transition-all duration-200 transform hover:scale-105 group">
+    <div className="relative bg-gray-800 rounded-xl border border-gray-700 p-6 hover:bg-gray-750 hover:border-gray-600 transition-all duration-200 group"
+         style={{ pointerEvents: 'auto' }}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className={`w-12 h-12 bg-gradient-to-r ${getAssetGradient(asset.symbol)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
@@ -122,26 +123,47 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
       <div className="mt-4 pt-4 border-t border-[var(--dark-border)]">
         <div className="flex justify-between items-center gap-2">
           <button 
-            onClick={() => {
-              alert(`Button clicked for ${asset.symbol}!`);
-              handleViewDetails();
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              alert(`DETAILS BUTTON WORKS! ${asset.symbol}`);
+              console.log('Details button clicked - this should work now');
+              navigate(`/crypto/${asset.symbol}`);
             }}
-            className="px-3 py-2 text-sm text-[var(--primary-blue)] hover:text-[var(--primary-blue)]/80 hover:bg-gray-700 rounded-md transition-colors cursor-pointer bg-red-500"
+            className="px-4 py-2 bg-red-600 text-white font-bold rounded cursor-pointer"
             data-testid={`button-view-details-${asset.symbol}`}
-            style={{ position: 'relative', zIndex: 1000 }}
+            style={{ 
+              position: 'relative', 
+              zIndex: 9999,
+              pointerEvents: 'auto',
+              backgroundColor: '#dc2626 !important',
+              border: '2px solid #ffffff'
+            }}
           >
-            View Details
+            CLICK ME - Details
           </button>
           <button 
-            onClick={() => {
-              alert(`Star clicked for ${asset.symbol}!`);
-              handleAddToWatchlist();
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              alert(`STAR BUTTON WORKS! ${asset.symbol}`);
+              console.log('Star button clicked - this should work now');
+              toast({
+                title: "Added to Watchlist",
+                description: `${asset.symbol} added to watchlist.`,
+              });
             }}
-            className="p-2 text-gray-400 hover:text-yellow-400 hover:bg-gray-700 rounded-md transition-colors cursor-pointer bg-green-500"
+            className="px-4 py-2 bg-green-600 text-white font-bold rounded cursor-pointer"
             data-testid={`button-favorite-${asset.symbol}`}
-            style={{ position: 'relative', zIndex: 1000 }}
+            style={{ 
+              position: 'relative', 
+              zIndex: 9999,
+              pointerEvents: 'auto',
+              backgroundColor: '#16a34a !important',
+              border: '2px solid #ffffff'
+            }}
           >
-            <Star className="w-4 h-4" />
+            CLICK ME - Star
           </button>
         </div>
       </div>
