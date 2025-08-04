@@ -27,8 +27,8 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
     return iconMap[symbol] || symbol[0];
   };
 
-  const handleAddToWatchlist = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleAddToWatchlist = () => {
+    console.log(`Adding ${asset.symbol} to watchlist`);
     toast({
       title: "Added to Watchlist",
       description: `${asset.symbol} has been added to your watchlist.`,
@@ -40,17 +40,9 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
     onSelect(asset);
   };
 
-  const handleViewDetails = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleViewDetails = () => {
     console.log(`Navigating to crypto detail page for ${asset.symbol}`);
-    console.log(`Current URL: ${window.location.href}`);
-    
-    // Force navigation with a small delay to avoid conflicts
-    setTimeout(() => {
-      navigate(`/crypto/${asset.symbol}`);
-      console.log(`Navigation triggered for /crypto/${asset.symbol}`);
-    }, 10);
+    navigate(`/crypto/${asset.symbol}`);
   };
 
   const getAssetGradient = (symbol: string) => {
@@ -64,8 +56,7 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
   };
 
   return (
-    <div className="relative bg-gray-800 rounded-xl border border-gray-700 p-6 hover:bg-gray-750 hover:border-gray-600 transition-all duration-200 cursor-pointer transform hover:scale-105 group"
-         onClick={() => onSelect(asset)}>
+    <div className="relative bg-gray-800 rounded-xl border border-gray-700 p-6 hover:bg-gray-750 hover:border-gray-600 transition-all duration-200 transform hover:scale-105 group">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className={`w-12 h-12 bg-gradient-to-r ${getAssetGradient(asset.symbol)} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
@@ -139,11 +130,17 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
             variant="ghost" 
             size="sm" 
             onClick={handleViewDetails}
-            className="text-[var(--primary-blue)] hover:text-[var(--primary-blue)]/80 z-10 relative"
+            className="text-[var(--primary-blue)] hover:text-[var(--primary-blue)]/80"
+            data-testid={`button-view-details-${asset.symbol}`}
           >
             View Details
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleAddToWatchlist}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleAddToWatchlist}
+            data-testid={`button-favorite-${asset.symbol}`}
+          >
             <Star className="w-4 h-4" />
           </Button>
         </div>
