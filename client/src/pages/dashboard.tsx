@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { EnhancedHeader } from "@/components/enhanced-header";
 import { SimplifiedNav } from "@/components/navigation/simplified-nav";
+import { RealTimeIndicator } from "@/components/real-time-indicator";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
+import { TrendingUp, Bell } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { FloatingActionButton, defaultFABActions } from "@/components/ui/floating-action-button";
 import AssetScanner from "@/components/dashboard/asset-scanner";
 import Watchlist from "@/components/dashboard/watchlist";
@@ -11,7 +15,6 @@ import CohesionAnalyzer from "@/components/dashboard/cohesion-analyzer";
 import AnchorPressure from "@/components/dashboard/anchor-pressure";
 import HHRComparator from "@/components/dashboard/hhr-comparator";
 import CompositeRating from "@/components/dashboard/composite-rating";
-import { RealTimeIndicator } from "@/components/real-time-indicator";
 import HistoricalSSSTracker from "@/components/analytics/historical-sss-tracker";
 import PortfolioTracker from "@/components/analytics/portfolio-tracker";
 import BacktestingEngine from "@/components/analytics/backtesting-engine";
@@ -124,19 +127,69 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
-      <EnhancedHeader 
-        isConnected={isConnected} 
-        totalAssets={totalAssets}
-        activeAlerts={alertCount}
-      />
-      
-      {/* Navigation Bar */}
-      <div className="bg-gray-800 border-b border-gray-700 px-6 py-4">
-        <SimplifiedNav 
-          activeModule={activeModule}
-          setActiveModule={setActiveModule}
-          alertCount={alertCount}
-        />
+      {/* Combined Header and Navigation */}
+      <div className="bg-gray-900 border-b border-gray-700 sticky top-0 z-30">
+        {/* Top Header Row */}
+        <div className="px-6 py-3 border-b border-gray-700/50">
+          <div className="flex items-center justify-between">
+            {/* Left section */}
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-white">Silent Surge Tracker</h1>
+                  <p className="text-xs text-gray-400">
+                    {new Date().toLocaleTimeString()} • Real-time Analysis
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="hidden lg:flex items-center gap-4 ml-6">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-white">
+                    <AnimatedCounter value={totalAssets} />
+                  </div>
+                  <div className="text-xs text-gray-400">Assets</div>
+                </div>
+                <div className="w-px h-8 bg-gray-700"></div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-yellow-400">
+                    <AnimatedCounter value={alertCount} />
+                  </div>
+                  <div className="text-xs text-gray-400">Alerts</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right section */}
+            <div className="flex items-center gap-4">
+              <RealTimeIndicator />
+              <Button variant="ghost" size="sm" className="relative">
+                <Bell className="h-5 w-5" />
+                {alertCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                  >
+                    {alertCount > 9 ? '9+' : alertCount}
+                  </Badge>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Navigation Bar Row */}
+        <div className="px-6 py-3">
+          <SimplifiedNav 
+            activeModule={activeModule}
+            setActiveModule={setActiveModule}
+            alertCount={alertCount}
+          />
+        </div>
       </div>
       
       <div className="flex flex-1 overflow-hidden">
