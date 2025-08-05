@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { EnhancedHeader } from "@/components/enhanced-header";
+import { SimplifiedNav } from "@/components/navigation/simplified-nav";
 import { FloatingActionButton, defaultFABActions } from "@/components/ui/floating-action-button";
-import SidebarDebug from "@/components/dashboard/sidebar-debug";
 import AssetScanner from "@/components/dashboard/asset-scanner";
 import Watchlist from "@/components/dashboard/watchlist";
 import BehavioralHeatmap from "@/components/dashboard/behavioral-heatmap";
@@ -26,13 +26,13 @@ import CryptoSearch from "@/components/advanced/crypto-search";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { DashboardModule } from "@/types/dashboard";
 import { TourOverlay } from "@/components/onboarding/tour-overlay";
-import LayoutOptimizer from "@/components/layout/layout-optimizer";
+
 
 export default function Dashboard() {
   const [activeModule, setActiveModule] = useState<DashboardModule>("scanner");
   const [alertCount] = useState(3);
   const [showTour, setShowTour] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
   const { isConnected } = useWebSocket("/ws");
 
   useEffect(() => {
@@ -106,19 +106,12 @@ export default function Dashboard() {
         case "signals":
           console.log('Loading TradingSignals');
           return <TradingSignals />;
-        case "marketscan":
+        case "market-scanner":
           console.log('Loading MarketScanner');
           return <MarketScanner />;
-        case "cryptosearch":
+        case "search":
           console.log('Loading CryptoSearch');
           return <CryptoSearch />;
-        case "layoutopt":
-          console.log('Loading LayoutOptimizer');
-          return <LayoutOptimizer 
-            onLayoutChange={(layout) => console.log('Layout changed:', layout)}
-            onFullscreenToggle={(isFullscreen) => console.log('Fullscreen:', isFullscreen)}
-            onSidebarToggle={(isVisible) => console.log('Sidebar:', isVisible)}
-          />;
         default:
           console.log('Loading default AssetScanner');
           return <AssetScanner />;
@@ -137,62 +130,18 @@ export default function Dashboard() {
         activeAlerts={alertCount}
       />
       
+      {/* Navigation Bar */}
+      <div className="bg-gray-800 border-b border-gray-700 px-6 py-4">
+        <SimplifiedNav 
+          activeModule={activeModule}
+          setActiveModule={setActiveModule}
+          alertCount={alertCount}
+        />
+      </div>
+      
       <div className="flex flex-1 overflow-hidden">
-        {/* Desktop Sidebar */}
-        <div className="w-64 flex-shrink-0 hidden md:block border-r border-gray-700">
-          <div className="h-full overflow-y-auto">
-            <SidebarDebug 
-              activeModule={activeModule}
-              onModuleChange={setActiveModule}
-              isConnected={isConnected}
-            />
-          </div>
-        </div>
-        
-        {/* Mobile Menu Button */}
-        <div className="md:hidden fixed top-20 left-4 z-50">
-          <button 
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="bg-gray-800 text-white p-3 rounded-lg border border-gray-600 hover:bg-gray-700 shadow-lg"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
 
-        {/* Mobile Sidebar Overlay - Enhanced */}
-        {showMobileMenu && (
-          <div className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-60" onClick={() => setShowMobileMenu(false)}>
-            <div className="fixed left-0 top-0 h-full w-80 bg-gray-900 transform transition-transform duration-300 ease-in-out shadow-2xl border-r border-gray-700" 
-                 onClick={(e) => e.stopPropagation()}>
-              {/* Mobile Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-700">
-                <h2 className="text-lg font-semibold text-white">Navigation</h2>
-                <button 
-                  onClick={() => setShowMobileMenu(false)}
-                  className="text-gray-400 hover:text-white p-1"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              {/* Mobile Navigation Content */}
-              <div className="h-full overflow-y-auto pb-20">
-                <SidebarDebug 
-                  activeModule={activeModule}
-                  onModuleChange={(module: DashboardModule) => {
-                    setActiveModule(module);
-                    setShowMobileMenu(false);
-                  }}
-                  isConnected={isConnected}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+
         
         {/* Main Content Area - Enhanced Scrolling */}
         <main className="flex-1 overflow-hidden flex flex-col">
