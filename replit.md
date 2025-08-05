@@ -39,6 +39,13 @@ The platform's core innovation is the Silent Surge Score (SSS), a weighted algor
 ### UI/UX Decisions
 The platform features a professional UI with a dark theme, utilizing Shadcn/ui components for a consistent and modern look. Key UX principles include immediate feedback, information density, progressive disclosure, and accessibility. Enhancements include skeleton loading, animated counters, progress rings, hover effects, toast notifications, and mobile responsiveness.
 
+**Navigation System**: Replaced complex sidebar with simplified navigation bar featuring:
+- 5 logical feature sections: Market Discovery, Analysis & Insights, Portfolio & Trading, Risk & Security, Advanced Tools
+- Smart dropdown with feature descriptions for better user understanding
+- Quick access buttons for most-used tools (Scanner, Watchlist, Portfolio, Alerts)
+- Mobile-responsive design without sidebar complexity
+- Maintains all existing micro-animations and functionality
+
 ## External Dependencies
 
 - **Database**: Neon serverless PostgreSQL (`@neondatabase/serverless`)
