@@ -13,6 +13,7 @@ import { Phase2Features } from "@/pages/phase2-features";
 import Phase3Features from "@/pages/phase3-features";
 import SimpleTest from "@/pages/simple-test";
 import CryptoDetail from "@/pages/crypto-detail";
+import PythonEnginePage from "@/pages/python-engine";
 import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
@@ -76,6 +77,13 @@ function Router() {
             {() => (
               <ProtectedRoute>
                 <Phase3Features />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/python-engine">
+            {() => (
+              <ProtectedRoute>
+                <PythonEnginePage />
               </ProtectedRoute>
             )}
           </Route>

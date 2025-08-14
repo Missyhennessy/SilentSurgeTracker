@@ -151,6 +151,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { regulatoryComplianceService } = await import('./regulatory-compliance-service');
   const { institutionalAPIService } = await import('./institutional-api-service');
   
+  // Python Engine Integration
+  const { registerPythonEngineRoutes } = await import('./python-engine-service');
+  registerPythonEngineRoutes(app);
+  
   // Blockchain Forensics API endpoints
   app.get("/api/forensics/trace/:hash", async (req, res) => {
     try {
