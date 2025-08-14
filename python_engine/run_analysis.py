@@ -10,6 +10,7 @@ import argparse
 from datetime import datetime
 import logging
 import os
+from typing import Dict, List
 
 # Import our modules
 from surge_engine import SilentSurgeEngine
