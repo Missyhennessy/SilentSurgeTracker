@@ -115,6 +115,10 @@ export default function Dashboard() {
         case "search":
           console.log('Loading CryptoSearch');
           return <CryptoSearch />;
+        case "python-engine":
+          console.log('Navigating to Python Engine');
+          window.location.href = '/python-engine';
+          return <div className="p-6">Redirecting to Python Engine...</div>;
         default:
           console.log('Loading default AssetScanner');
           return <AssetScanner />;
