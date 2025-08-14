@@ -1,0 +1,321 @@
+{
+  "test_timestamp": "2025-08-14T20:55:40.028769",
+  "accuracy_analysis": {
+    "test_timestamp": "2025-08-14T20:55:40.023355",
+    "total_scenarios": 5,
+    "scenario_results": [
+      {
+        "name": "Bull Market Momentum",
+        "total_tokens": 3,
+        "correct_predictions": 0,
+        "token_results": [
+          {
+            "symbol": "ETH",
+            "sss": 75.7,
+            "probability": 50.42,
+            "expected": "strong_positive",
+            "correct": false,
+            "confidence": 75.0
+          },
+          {
+            "symbol": "SOL",
+            "sss": 80.0,
+            "probability": 53.21,
+            "expected": "strong_positive",
+            "correct": "False",
+            "confidence": 75.0
+          },
+          {
+            "symbol": "AVAX",
+            "sss": 69.1,
+            "probability": 47.74,
+            "expected": "positive",
+            "correct": false,
+            "confidence": 75.0
+          }
+        ],
+        "avg_sss": 74.93333333333332,
+        "avg_probability": 50.45666666666667,
+        "accuracy": 0.0
+      },
+      {
+        "name": "Bear Market Recovery",
+        "total_tokens": 3,
+        "correct_predictions": 0,
+        "token_results": [
+          {
+            "symbol": "BTC",
+            "sss": 62.85,
+            "probability": 47.9,
+            "expected": "cautious_positive",
+            "correct": "False",
+            "confidence": 75.0
+          },
+          {
+            "symbol": "ETH",
+            "sss": 57.58,
+            "probability": 38.88,
+            "expected": "neutral",
+            "correct": "False",
+            "confidence": 75.0
+          },
+          {
+            "symbol": "ADA",
+            "sss": 53.93,
+            "probability": 35.32,
+            "expected": "neutral",
+            "correct": "False",
+            "confidence": 75.0
+          }
+        ],
+        "avg_sss": 58.120000000000005,
+        "avg_probability": 40.699999999999996,
+        "accuracy": 0.0
+      },
+      {
+        "name": "Market Correction",
+        "total_tokens": 3,
+        "correct_predictions": 3,
+        "token_results": [
+          {
+            "symbol": "LUNA",
+            "sss": 29.8,
+            "probability": 15.27,
+            "expected": "negative",
+            "correct": "True",
+            "confidence": 75.0
+          },
+          {
+            "symbol": "FTM",
+            "sss": 35.59,
+            "probability": 19.66,
+            "expected": "negative",
+            "correct": "True",
+            "confidence": 75.0
+          },
+          {
+            "symbol": "MATIC",
+            "sss": 41.02,
+            "probability": 25.08,
+            "expected": "weak_negative",
+            "correct": "True",
+            "confidence": 75.0
+          }
+        ],
+        "avg_sss": 35.47,
+        "avg_probability": 20.003333333333334,
+        "accuracy": 100.0
+      },
+      {
+        "name": "Altcoin Season",
+        "total_tokens": 3,
+        "correct_predictions": 0,
+        "token_results": [
+          {
+            "symbol": "LINK",
+            "sss": 72.33,
+            "probability": 48.87,
+            "expected": "strong_positive",
+            "correct": false,
+            "confidence": 75.0
+          },
+          {
+            "symbol": "DOT",
+            "sss": 68.77,
+            "probability": 46.46,
+            "expected": "positive",
+            "correct": false,
+            "confidence": 75.0
+          },
+          {
+            "symbol": "UNI",
+            "sss": 65.72,
+            "probability": 47.69,
+            "expected": "positive",
+            "correct": false,
+            "confidence": 75.0
+          }
+        ],
+        "avg_sss": 68.94,
+        "avg_probability": 47.673333333333325,
+        "accuracy": 0.0
+      },
+      {
+        "name": "Sideways Consolidation",
+        "total_tokens": 3,
+        "correct_predictions": 1,
+        "token_results": [
+          {
+            "symbol": "XRP",
+            "sss": 53.0,
+            "probability": 31.32,
+            "expected": "neutral",
+            "correct": "False",
+            "confidence": 75.0
+          },
+          {
+            "symbol": "LTC",
+            "sss": 49.6,
+            "probability": 28.49,
+            "expected": "neutral",
+            "correct": "False",
+            "confidence": 75.0
+          },
+          {
+            "symbol": "BCH",
+            "sss": 46.06,
+            "probability": 24.18,
+            "expected": "weak_negative",
+            "correct": "True",
+            "confidence": 75.0
+          }
+        ],
+        "avg_sss": 49.553333333333335,
+        "avg_probability": 27.99666666666667,
+        "accuracy": 33.33333333333333
+      }
+    ],
+    "overall_accuracy": 26.666666666666668,
+    "model_performance": {
+      "best_scenario": [
+        "Market Correction",
+        100.0
+      ],
+      "worst_scenario": [
+        "Bull Market Momentum",
+        0.0
+      ],
+      "avg_accuracy_by_scenario": {
+        "Bull Market Momentum": 0.0,
+        "Bear Market Recovery": 0.0,
+        "Market Correction": 100.0,
+        "Altcoin Season": 0.0,
+        "Sideways Consolidation": 33.33333333333333
+      },
+      "consistency_score": 61.12698736769799,
+      "confidence_correlation": 0
+    },
+    "recommendations": [
+      "Overall accuracy below 70% - consider recalibrating base coefficients",
+      "Low accuracy in 'Bull Market Momentum' scenario - review bull market momentum parameter adjustments",
+      "Low accuracy in 'Bear Market Recovery' scenario - review bear market recovery parameter adjustments",
+      "Excellent performance in 'Market Correction' scenario - consider applying similar adjustments to other scenarios",
+      "Low accuracy in 'Altcoin Season' scenario - review altcoin season parameter adjustments",
+      "Low accuracy in 'Sideways Consolidation' scenario - review sideways consolidation parameter adjustments",
+      "Model consistency is low across scenarios - consider implementing adaptive weighting"
+    ]
+  },
+  "benchmark_comparison": {
+    "enhanced_accuracy": 73.33333333333333,
+    "baseline_accuracy": 53.333333333333336,
+    "improvement": 19.999999999999993,
+    "detailed_comparison": [
+      {
+        "token": "ETH",
+        "enhanced_sss": 75.7,
+        "baseline_sss": 0.76,
+        "enhanced_correct": true,
+        "baseline_correct": false
+      },
+      {
+        "token": "SOL",
+        "enhanced_sss": 80.0,
+        "baseline_sss": 0.8,
+        "enhanced_correct": true,
+        "baseline_correct": false
+      },
+      {
+        "token": "AVAX",
+        "enhanced_sss": 69.1,
+        "baseline_sss": 0.69,
+        "enhanced_correct": false,
+        "baseline_correct": false
+      },
+      {
+        "token": "BTC",
+        "enhanced_sss": 62.85,
+        "baseline_sss": 0.63,
+        "enhanced_correct": false,
+        "baseline_correct": false
+      },
+      {
+        "token": "ETH",
+        "enhanced_sss": 57.58,
+        "baseline_sss": 0.58,
+        "enhanced_correct": true,
+        "baseline_correct": true
+      },
+      {
+        "token": "ADA",
+        "enhanced_sss": 53.93,
+        "baseline_sss": 0.54,
+        "enhanced_correct": true,
+        "baseline_correct": true
+      },
+      {
+        "token": "LUNA",
+        "enhanced_sss": 29.8,
+        "baseline_sss": 0.38,
+        "enhanced_correct": true,
+        "baseline_correct": true
+      },
+      {
+        "token": "FTM",
+        "enhanced_sss": 35.59,
+        "baseline_sss": 0.44,
+        "enhanced_correct": true,
+        "baseline_correct": true
+      },
+      {
+        "token": "MATIC",
+        "enhanced_sss": 41.02,
+        "baseline_sss": 0.5,
+        "enhanced_correct": true,
+        "baseline_correct": true
+      },
+      {
+        "token": "LINK",
+        "enhanced_sss": 72.33,
+        "baseline_sss": 0.72,
+        "enhanced_correct": true,
+        "baseline_correct": false
+      },
+      {
+        "token": "DOT",
+        "enhanced_sss": 68.77,
+        "baseline_sss": 0.69,
+        "enhanced_correct": false,
+        "baseline_correct": false
+      },
+      {
+        "token": "UNI",
+        "enhanced_sss": 65.72,
+        "baseline_sss": 0.66,
+        "enhanced_correct": false,
+        "baseline_correct": false
+      },
+      {
+        "token": "XRP",
+        "enhanced_sss": 53.0,
+        "baseline_sss": 0.53,
+        "enhanced_correct": true,
+        "baseline_correct": true
+      },
+      {
+        "token": "LTC",
+        "enhanced_sss": 49.6,
+        "baseline_sss": 0.49,
+        "enhanced_correct": true,
+        "baseline_correct": true
+      },
+      {
+        "token": "BCH",
+        "enhanced_sss": 46.06,
+        "baseline_sss": 0.46,
+        "enhanced_correct": true,
+        "baseline_correct": true
+      }
+    ]
+  },
+  "overall_assessment": "NEEDS_IMPROVEMENT"
+}
