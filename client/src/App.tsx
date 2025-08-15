@@ -14,6 +14,7 @@ import Phase3Features from "@/pages/phase3-features";
 import SimpleTest from "@/pages/simple-test";
 import CryptoDetail from "@/pages/crypto-detail";
 import PythonEnginePage from "@/pages/python-engine";
+import { MLDashboard } from "@/components/MLDashboard";
 import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
@@ -84,6 +85,13 @@ function Router() {
             {() => (
               <ProtectedRoute>
                 <PythonEnginePage />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/ml-dashboard">
+            {() => (
+              <ProtectedRoute>
+                <MLDashboard />
               </ProtectedRoute>
             )}
           </Route>
