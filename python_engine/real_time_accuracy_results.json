@@ -1,0 +1,140 @@
+{
+  "timestamp": "2025-08-15T05:00:18.193374",
+  "accuracy_metrics": {
+    "total_tested": 10,
+    "successful_predictions": 10,
+    "success_rate": 100.0,
+    "average_accuracy_delta": 6.965000000000001,
+    "median_accuracy_delta": 4.345000000000002,
+    "accuracy_std": 5.902489728919483,
+    "excellent_predictions": 6,
+    "good_predictions": 0,
+    "average_ml_confidence": 0.7962999999999999,
+    "average_response_time": 277.9529809951782,
+    "p95_response_time": 295.38557529449463,
+    "overall_accuracy_percentage": 86.07
+  },
+  "detailed_results": [
+    {
+      "symbol": "BTC",
+      "current_market_sss": 67.0,
+      "ml_enhanced_sss": 64.57,
+      "traditional_sss": 62.64,
+      "ml_confidence": 0.736,
+      "recommendation": "ACCUMULATE",
+      "confidence_level": "MEDIUM",
+      "breakout_probability": 65.6,
+      "response_time_ms": 267.4858570098877,
+      "accuracy_delta": 2.430000000000007
+    },
+    {
+      "symbol": "ETH",
+      "current_market_sss": 83.8,
+      "ml_enhanced_sss": 72.65,
+      "traditional_sss": 76.41,
+      "ml_confidence": 0.813,
+      "recommendation": "BUY",
+      "confidence_level": "MEDIUM_HIGH",
+      "breakout_probability": 77.09,
+      "response_time_ms": 282.7799320220947,
+      "accuracy_delta": 11.149999999999991
+    },
+    {
+      "symbol": "SOL",
+      "current_market_sss": 84.8,
+      "ml_enhanced_sss": 69.3,
+      "traditional_sss": 70.02,
+      "ml_confidence": 0.729,
+      "recommendation": "ACCUMULATE",
+      "confidence_level": "MEDIUM",
+      "breakout_probability": 75.77,
+      "response_time_ms": 297.1470355987549,
+      "accuracy_delta": 15.5
+    },
+    {
+      "symbol": "XRP",
+      "current_market_sss": 72.5,
+      "ml_enhanced_sss": 72.34,
+      "traditional_sss": 73.17,
+      "ml_confidence": 0.881,
+      "recommendation": "BUY",
+      "confidence_level": "MEDIUM_HIGH",
+      "breakout_probability": 76.76,
+      "response_time_ms": 293.23267936706543,
+      "accuracy_delta": 0.1599999999999966
+    },
+    {
+      "symbol": "DOGE",
+      "current_market_sss": 81.4,
+      "ml_enhanced_sss": 70.26,
+      "traditional_sss": 70.5,
+      "ml_confidence": 0.86,
+      "recommendation": "BUY",
+      "confidence_level": "MEDIUM_HIGH",
+      "breakout_probability": 91.24,
+      "response_time_ms": 279.0417671203613,
+      "accuracy_delta": 11.14
+    },
+    {
+      "symbol": "ADA",
+      "current_market_sss": 78.5,
+      "ml_enhanced_sss": 61.46,
+      "traditional_sss": 63.95,
+      "ml_confidence": 0.835,
+      "recommendation": "ACCUMULATE",
+      "confidence_level": "MEDIUM",
+      "breakout_probability": 72.29,
+      "response_time_ms": 257.965087890625,
+      "accuracy_delta": 17.04
+    },
+    {
+      "symbol": "LINK",
+      "current_market_sss": 68.3,
+      "ml_enhanced_sss": 68.57,
+      "traditional_sss": 66,
+      "ml_confidence": 0.86,
+      "recommendation": "ACCUMULATE",
+      "confidence_level": "MEDIUM",
+      "breakout_probability": 90.4,
+      "response_time_ms": 268.95761489868164,
+      "accuracy_delta": 0.269999999999996
+    },
+    {
+      "symbol": "AVAX",
+      "current_market_sss": 64.0,
+      "ml_enhanced_sss": 68.44,
+      "traditional_sss": 66.26,
+      "ml_confidence": 0.606,
+      "recommendation": "ACCUMULATE",
+      "confidence_level": "MEDIUM",
+      "breakout_probability": 80.85,
+      "response_time_ms": 288.9227867126465,
+      "accuracy_delta": 4.439999999999998
+    },
+    {
+      "symbol": "UNI",
+      "current_market_sss": 64.4,
+      "ml_enhanced_sss": 60.15,
+      "traditional_sss": 59.2,
+      "ml_confidence": 0.81,
+      "recommendation": "WATCHLIST",
+      "confidence_level": "LOW_MEDIUM",
+      "breakout_probability": 70.02,
+      "response_time_ms": 292.91319847106934,
+      "accuracy_delta": 4.250000000000007
+    },
+    {
+      "symbol": "DOT",
+      "current_market_sss": 61.1,
+      "ml_enhanced_sss": 57.83,
+      "traditional_sss": 59.55,
+      "ml_confidence": 0.833,
+      "recommendation": "WATCHLIST",
+      "confidence_level": "LOW_MEDIUM",
+      "breakout_probability": 81.04,
+      "response_time_ms": 251.0838508605957,
+      "accuracy_delta": 3.270000000000003
+    }
+  ],
+  "performance_rating": "\ud83c\udfc6 OUTSTANDING"
+}

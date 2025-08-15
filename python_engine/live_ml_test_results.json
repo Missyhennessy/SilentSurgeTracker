@@ -1,0 +1,218 @@
+{
+  "timestamp": "2025-08-15T04:59:08.368940",
+  "test_summary": {
+    "total_tests": 12,
+    "successful_tests": 12,
+    "success_rate": 100.0,
+    "ml_system_status": "OPERATIONAL"
+  },
+  "detailed_results": {
+    "ml_models": {
+      "endpoint": "ml-models",
+      "status": "SUCCESS",
+      "response_time_ms": 156.942,
+      "data": {
+        "timestamp": "2025-08-15T04:59:08.528Z",
+        "ml_capabilities": {
+          "timestamp": "2025-08-15T04:59:08.496525",
+          "ml_capabilities": {
+            "status": "active",
+            "ml_ensemble": {
+              "trained": true,
+              "status": "active",
+              "models_trained": 5,
+              "average_accuracy": 73.2,
+              "best_model": {
+                "name": "random_forest",
+                "accuracy_percentage": 78.5
+              }
+            },
+            "lstm_models": {
+              "trained": true,
+              "status": "active",
+              "total_models": 4,
+              "sequence_length": 30
+            },
+            "enhanced_algorithm": {
+              "status": "active",
+              "version": "2.0"
+            }
+          },
+          "performance_improvements": {
+            "accuracy_boost": "+15.3%",
+            "prediction_confidence": "+22.1%",
+            "false_positive_reduction": "+18.7%",
+            "overall_enhancement": "+18.9%"
+          },
+          "initialization": {
+            "ml_ready": true,
+            "lstm_ready": true,
+            "training_complete": true
+          }
+        },
+        "status": "active"
+      },
+      "ml_ready": true,
+      "accuracy": 0
+    },
+    "enhanced_sss": [
+      {
+        "scenario": "Bullish Breakout",
+        "status": "SUCCESS",
+        "response_time_ms": 230.02100000000002,
+        "traditional_sss": 95.4,
+        "ml_enhanced_sss": 95.34,
+        "ml_confidence": 0.642,
+        "improvement": -0.06289308176100868
+      },
+      {
+        "scenario": "Bearish Correction",
+        "status": "SUCCESS",
+        "response_time_ms": 173.816,
+        "traditional_sss": 42,
+        "ml_enhanced_sss": 44.8,
+        "ml_confidence": 0.871,
+        "improvement": 6.66666666666666
+      },
+      {
+        "scenario": "Accumulation Phase",
+        "status": "SUCCESS",
+        "response_time_ms": 155.26999999999998,
+        "traditional_sss": 69.15,
+        "ml_enhanced_sss": 69.02,
+        "ml_confidence": 0.754,
+        "improvement": -0.187997107736818
+      },
+      {
+        "scenario": "High Volatility Speculation",
+        "status": "SUCCESS",
+        "response_time_ms": 138.27700000000002,
+        "traditional_sss": 102.55,
+        "ml_enhanced_sss": 101.78,
+        "ml_confidence": 0.664,
+        "improvement": -0.7508532423208153
+      }
+    ],
+    "breakout_probability": [
+      {
+        "case": "Strong Bullish Setup",
+        "status": "SUCCESS",
+        "response_time_ms": 175.798,
+        "ensemble_probability": 100,
+        "prediction_confidence": "medium",
+        "ml_ensemble": {
+          "final_probability": 100,
+          "ml_probability": 100,
+          "traditional_probability": 100,
+          "ml_confidence": 0.708,
+          "weighting": {
+            "traditional": 0.6,
+            "ml": 0.4
+          }
+        },
+        "expected_range": [
+          70,
+          95
+        ]
+      },
+      {
+        "case": "Weak Bearish Setup",
+        "status": "SUCCESS",
+        "response_time_ms": 123.839,
+        "ensemble_probability": 50.48,
+        "prediction_confidence": "high",
+        "ml_ensemble": {
+          "final_probability": 50.48,
+          "ml_probability": 57.43,
+          "traditional_probability": 43.52,
+          "ml_confidence": 0.893,
+          "weighting": {
+            "traditional": 0.5,
+            "ml": 0.5
+          }
+        },
+        "expected_range": [
+          20,
+          50
+        ]
+      },
+      {
+        "case": "Neutral Consolidation",
+        "status": "SUCCESS",
+        "response_time_ms": 161.083,
+        "ensemble_probability": 69.59,
+        "prediction_confidence": "medium",
+        "ml_ensemble": {
+          "final_probability": 69.59,
+          "ml_probability": 79.26,
+          "traditional_probability": 63.15,
+          "ml_confidence": 0.679,
+          "weighting": {
+            "traditional": 0.6,
+            "ml": 0.4
+          }
+        },
+        "expected_range": [
+          40,
+          70
+        ]
+      }
+    ],
+    "comprehensive_analysis": [
+      {
+        "symbol": "SOL",
+        "status": "SUCCESS",
+        "response_time_ms": 130.441,
+        "final_sss": 87.21,
+        "final_probability": 93.3,
+        "action": "STRONG_BUY",
+        "confidence": "HIGH",
+        "reasoning": [
+          "ML-enhanced SSS score: 87.21",
+          "Ensemble breakout probability: 93.3%",
+          "Market context: bullish trend with medium volatility",
+          "ML confidence: 0.616"
+        ]
+      },
+      {
+        "symbol": "DOGE",
+        "status": "SUCCESS",
+        "response_time_ms": 122.659,
+        "final_sss": 96.57,
+        "final_probability": 100,
+        "action": "STRONG_BUY",
+        "confidence": "HIGH",
+        "reasoning": [
+          "ML-enhanced SSS score: 96.57",
+          "Ensemble breakout probability: 100.0%",
+          "Market context: bullish trend with medium volatility",
+          "ML confidence: 0.787"
+        ]
+      },
+      {
+        "symbol": "ADA",
+        "status": "SUCCESS",
+        "response_time_ms": 136.58,
+        "final_sss": 73.73,
+        "final_probability": 85.62,
+        "action": "BUY",
+        "confidence": "MEDIUM_HIGH",
+        "reasoning": [
+          "ML-enhanced SSS score: 73.73",
+          "Ensemble breakout probability: 85.62%",
+          "Market context: bullish trend with medium volatility",
+          "ML confidence: 0.679"
+        ]
+      }
+    ],
+    "performance_benchmark": {
+      "total_requests": 20,
+      "successful_requests": 20,
+      "success_rate": 100.0,
+      "avg_response_time_ms": 141.76700115203857,
+      "min_response_time_ms": 107.58423805236816,
+      "max_response_time_ms": 169.1110134124756,
+      "p95_response_time_ms": 159.5775008201599
+    }
+  }
+}
