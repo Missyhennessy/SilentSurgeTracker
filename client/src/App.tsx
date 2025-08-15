@@ -17,6 +17,7 @@ import PythonEnginePage from "@/pages/python-engine";
 import { MLDashboard } from "@/components/MLDashboard";
 import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/protected-route";
+import SubscriptionPage from "@/pages/SubscriptionPage";
 
 function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<"light" | "dark">("dark");
@@ -92,6 +93,13 @@ function Router() {
             {() => (
               <ProtectedRoute>
                 <MLDashboard />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/subscribe">
+            {() => (
+              <ProtectedRoute>
+                <SubscriptionPage />
               </ProtectedRoute>
             )}
           </Route>

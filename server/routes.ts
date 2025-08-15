@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
@@ -7,6 +8,7 @@ import { insertCryptoAssetSchema, insertAlertSchema, insertVelocityDataSchema } 
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { registerAuthRoutes } from "./auth-routes";
 import { registerSecurityRoutes } from "./security-integrations";
+import Stripe from "stripe";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -151,9 +153,297 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { regulatoryComplianceService } = await import('./regulatory-compliance-service');
   const { institutionalAPIService } = await import('./institutional-api-service');
   
-  // Python Engine Integration
+  // Initialize Stripe
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+  }
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2023-10-16",
+  });
+
+  // Subscription middleware to check if user has access
+  const requireSubscription = async (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const userId = req.user?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ message: "Invalid user session" });
+    }
+
+    try {
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if user is founder (free access)
+      if (user.isFounder || user.email === 'thennessy01@gmail.com') {
+        return next();
+      }
+
+      // Check if user has active subscription
+      if (user.isPremium && user.subscriptionStatus === 'active') {
+        return next();
+      }
+
+      // User needs subscription
+      return res.status(402).json({ 
+        message: "Premium subscription required",
+        needsSubscription: true,
+        userEmail: user.email
+      });
+
+    } catch (error) {
+      console.error('Subscription check error:', error);
+      return res.status(500).json({ message: "Subscription check failed" });
+    }
+  };
+
+  // Stripe subscription routes
+  app.post('/api/subscription/create', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Don't create subscription for founder
+      if (user.isFounder || user.email === 'thennessy01@gmail.com') {
+        return res.status(400).json({ error: 'Founder account does not need subscription' });
+      }
+
+      if (user.stripeSubscriptionId) {
+        const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+        
+        if (subscription.status === 'active') {
+          return res.json({
+            subscriptionId: subscription.id,
+            status: subscription.status,
+            clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+          });
+        }
+      }
+
+      if (!user.email) {
+        return res.status(400).json({ error: 'User email required for subscription' });
+      }
+
+      // Create Stripe customer if not exists
+      let customerId = user.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`.trim() || user.email,
+        });
+        customerId = customer.id;
+        
+        await storage.updateUserSubscription(userId, {
+          stripeCustomerId: customerId
+        });
+      }
+
+      // Create subscription with placeholder price (you'll need to set STRIPE_PRICE_ID)
+      const priceId = process.env.STRIPE_PRICE_ID || 'price_1234567890'; // You need to create this in Stripe Dashboard
+      
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{ price: priceId }],
+        payment_behavior: 'default_incomplete',
+        payment_settings: { save_default_payment_method: 'on_subscription' },
+        expand: ['latest_invoice.payment_intent'],
+      });
+
+      // Save subscription to database
+      await storage.createSubscription({
+        userId: userId,
+        stripeSubscriptionId: subscription.id,
+        stripeCustomerId: customerId,
+        status: subscription.status,
+        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        plan: 'pro',
+        priceId: priceId,
+      });
+
+      // Update user subscription status
+      await storage.updateUserSubscription(userId, {
+        stripeSubscriptionId: subscription.id,
+        subscriptionStatus: subscription.status,
+        subscriptionPlan: 'pro',
+        isPremium: subscription.status === 'active',
+        subscriptionEndsAt: new Date(subscription.current_period_end * 1000),
+      });
+
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+        status: subscription.status,
+      });
+
+    } catch (error: any) {
+      console.error('Subscription creation error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get subscription status
+  app.get('/api/subscription/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const subscription = await storage.getSubscription(userId);
+      
+      res.json({
+        isPremium: user.isPremium,
+        isFounder: user.isFounder,
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionPlan: user.subscriptionPlan,
+        subscriptionEndsAt: user.subscriptionEndsAt,
+        subscription: subscription ? {
+          id: subscription.stripeSubscriptionId,
+          status: subscription.status,
+          currentPeriodEnd: subscription.currentPeriodEnd,
+          plan: subscription.plan
+        } : null
+      });
+
+    } catch (error) {
+      console.error('Subscription status error:', error);
+      res.status(500).json({ error: 'Failed to get subscription status' });
+    }
+  });
+
+  // Cancel subscription
+  app.post('/api/subscription/cancel', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.stripeSubscriptionId) {
+        return res.status(404).json({ error: 'No subscription found' });
+      }
+
+      const subscription = await stripe.subscriptions.update(user.stripeSubscriptionId, {
+        cancel_at_period_end: true,
+      });
+
+      await storage.updateSubscription(user.stripeSubscriptionId, {
+        status: subscription.status,
+      });
+
+      res.json({ 
+        message: 'Subscription will be canceled at the end of the current period',
+        cancelAt: new Date(subscription.current_period_end * 1000)
+      });
+
+    } catch (error: any) {
+      console.error('Subscription cancellation error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Stripe webhook to handle subscription updates
+  app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+    try {
+      const sig = req.headers['stripe-signature'];
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      
+      if (!webhookSecret) {
+        console.log('Webhook secret not configured, skipping signature verification');
+      }
+
+      let event;
+      try {
+        if (webhookSecret) {
+          event = stripe.webhooks.constructEvent(req.body, sig as string, webhookSecret);
+        } else {
+          event = JSON.parse(req.body.toString());
+        }
+      } catch (err: any) {
+        console.log('Webhook signature verification failed.', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+      }
+
+      // Handle the event
+      switch (event.type) {
+        case 'customer.subscription.updated':
+        case 'customer.subscription.deleted':
+          const subscription = event.data.object as any;
+          
+          try {
+            const dbSubscription = await storage.getSubscriptionByStripeId(subscription.id);
+            if (dbSubscription) {
+              // Update subscription in database
+              await storage.updateSubscription(subscription.id, {
+                status: subscription.status,
+                currentPeriodStart: new Date(subscription.current_period_start * 1000),
+                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+              });
+
+              // Update user status
+              await storage.updateUserSubscription(dbSubscription.userId, {
+                subscriptionStatus: subscription.status,
+                isPremium: subscription.status === 'active',
+                subscriptionEndsAt: new Date(subscription.current_period_end * 1000),
+              });
+
+              console.log(`Subscription ${subscription.id} updated to ${subscription.status}`);
+            }
+          } catch (error) {
+            console.error('Error updating subscription:', error);
+          }
+          break;
+
+        case 'invoice.payment_succeeded':
+          const invoice = event.data.object as any;
+          
+          try {
+            if (invoice.subscription) {
+              const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+              const dbSubscription = await storage.getSubscriptionByStripeId(subscription.id);
+              
+              if (dbSubscription) {
+                // Create payment record
+                await storage.createPaymentRecord({
+                  userId: dbSubscription.userId,
+                  stripePaymentIntentId: invoice.payment_intent,
+                  amount: invoice.amount_paid,
+                  currency: invoice.currency,
+                  status: 'succeeded',
+                  description: `Subscription payment for ${subscription.id}`,
+                });
+
+                console.log(`Payment succeeded for subscription ${subscription.id}`);
+              }
+            }
+          } catch (error) {
+            console.error('Error recording payment:', error);
+          }
+          break;
+
+        default:
+          console.log(`Unhandled event type ${event.type}`);
+      }
+
+      res.json({ received: true });
+    } catch (error) {
+      console.error('Webhook error:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
+    }
+  });
+
+  // Python Engine Integration with paywall protection
   const { registerPythonEngineRoutes } = await import('./python-engine-service');
-  registerPythonEngineRoutes(app);
+  registerPythonEngineRoutes(app, requireSubscription);
   
   // Blockchain Forensics API endpoints
   app.get("/api/forensics/trace/:hash", async (req, res) => {

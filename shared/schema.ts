@@ -20,12 +20,49 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  stripeCustomerId: varchar("stripe_customer_id"),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
+  subscriptionStatus: varchar("subscription_status").default("inactive"), // inactive, active, canceled, past_due
+  subscriptionPlan: varchar("subscription_plan").default("free"), // free, pro, premium
+  isPremium: boolean("is_premium").default(false),
+  isFounder: boolean("is_founder").default(false), // For thennessy01@gmail.com
+  subscriptionEndsAt: timestamp("subscription_ends_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Subscription tables
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  stripeSubscriptionId: varchar("stripe_subscription_id").unique().notNull(),
+  stripeCustomerId: varchar("stripe_customer_id").notNull(),
+  status: varchar("status").notNull(), // active, canceled, incomplete, past_due, etc.
+  currentPeriodStart: timestamp("current_period_start").notNull(),
+  currentPeriodEnd: timestamp("current_period_end").notNull(),
+  plan: varchar("plan").notNull(), // pro, premium
+  priceId: varchar("price_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const paymentHistory = pgTable("payment_history", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id").unique(),
+  amount: integer("amount").notNull(), // in cents
+  currency: varchar("currency").default("usd"),
+  status: varchar("status").notNull(), // succeeded, failed, pending
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+export type PaymentHistory = typeof paymentHistory.$inferSelect;
+export type InsertPaymentHistory = typeof paymentHistory.$inferInsert;
 
 export const cryptoAssets = pgTable("crypto_assets", {
   id: serial("id").primaryKey(),

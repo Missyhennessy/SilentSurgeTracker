@@ -115,7 +115,7 @@ class PythonEngineService {
     });
   }
 
-  private async executePythonScript(scriptPath: string, args: string[] = [], useInlineScript: boolean = false, inlineScript?: string): Promise<any> {
+  public async executePythonScript(scriptPath: string, args: string[] = [], useInlineScript: boolean = false, inlineScript?: string): Promise<any> {
     if (!this.isInitialized) {
       await this.initialize();
     }
@@ -339,7 +339,7 @@ class PythonEngineService {
 export const pythonEngineService = new PythonEngineService();
 
 // Register API routes
-export function registerPythonEngineRoutes(app: Express): void {
+export function registerPythonEngineRoutes(app: Express, requireSubscription?: any): void {
   // Initialize the service
   pythonEngineService.initialize().catch(console.error);
 
@@ -441,8 +441,8 @@ export function registerPythonEngineRoutes(app: Express): void {
     }
   });
 
-  // ML Models endpoint
-  app.get('/api/python-engine/ml-models', async (req, res) => {
+  // ML Models endpoint (Premium Feature)
+  app.get('/api/python-engine/ml-models', requireSubscription || ((req: any, res: any, next: any) => next()), async (req, res) => {
     try {
       const script = `
 import sys
@@ -490,8 +490,8 @@ except Exception as e:
     }
   });
 
-  // Enhanced SSS with ML
-  app.post('/api/python-engine/enhanced-sss', async (req, res) => {
+  // Enhanced SSS with ML (Premium Feature)
+  app.post('/api/python-engine/enhanced-sss', requireSubscription || ((req: any, res: any, next: any) => next()), async (req, res) => {
     try {
       const { behavioral_activity, velocity_anomaly, community_cohesion, anchor_pressure, hype_to_hold, historical_volatility } = req.body;
       
@@ -531,7 +531,7 @@ except Exception as e:
       
       res.json(parsedResult);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Enhanced SSS calculation error:', error);
       res.status(500).json({ 
         error: 'Enhanced SSS calculation failed',
@@ -540,8 +540,8 @@ except Exception as e:
     }
   });
 
-  // ML Breakout Probability
-  app.post('/api/python-engine/ml-breakout', async (req, res) => {
+  // ML Breakout Probability (Premium Feature)
+  app.post('/api/python-engine/ml-breakout', requireSubscription || ((req: any, res: any, next: any) => next()), async (req, res) => {
     try {
       const { sss, velocity, sentiment, anchor_pressure, timeframe = 7 } = req.body;
       
@@ -575,7 +575,7 @@ except Exception as e:
       
       res.json(parsedResult);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('ML Breakout Probability error:', error);
       res.status(500).json({ 
         error: 'ML breakout probability calculation failed',
@@ -584,8 +584,8 @@ except Exception as e:
     }
   });
 
-  // Comprehensive ML Analysis
-  app.post('/api/python-engine/comprehensive-analysis', async (req, res) => {
+  // Comprehensive ML Analysis (Premium Feature)
+  app.post('/api/python-engine/comprehensive-analysis', requireSubscription || ((req: any, res: any, next: any) => next()), async (req, res) => {
     try {
       const tokenData = req.body;
       
@@ -614,7 +614,7 @@ except Exception as e:
       
       res.json(parsedResult);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Comprehensive Analysis error:', error);
       res.status(500).json({ 
         error: 'Comprehensive analysis failed',

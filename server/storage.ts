@@ -1,5 +1,5 @@
-import { CryptoAsset, InsertCryptoAsset, Alert, InsertAlert, VelocityData, InsertVelocityData, User, UpsertUser } from "@shared/schema";
-import { cryptoAssets, alerts, velocityData, users } from "@shared/schema";
+import { CryptoAsset, InsertCryptoAsset, Alert, InsertAlert, VelocityData, InsertVelocityData, User, UpsertUser, Subscription, InsertSubscription, PaymentHistory, InsertPaymentHistory } from "@shared/schema";
+import { cryptoAssets, alerts, velocityData, users, subscriptions, paymentHistory } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, ilike, or } from "drizzle-orm";
 
@@ -28,7 +28,19 @@ export interface IStorage {
   
   // User management for authentication
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUserSubscription(userId: string, subscriptionData: Partial<UpsertUser>): Promise<User | undefined>;
+  
+  // Subscription management
+  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  getSubscription(userId: string): Promise<Subscription | undefined>;
+  getSubscriptionByStripeId(stripeSubscriptionId: string): Promise<Subscription | undefined>;
+  updateSubscription(stripeSubscriptionId: string, updates: Partial<InsertSubscription>): Promise<Subscription | undefined>;
+  
+  // Payment history
+  createPaymentRecord(payment: InsertPaymentHistory): Promise<PaymentHistory>;
+  getPaymentHistory(userId: string): Promise<PaymentHistory[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -314,8 +326,26 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.email, email));
+      return user;
+    } catch (error) {
+      console.error('Error getting user by email:', error);
+      return undefined;
+    }
+  }
+
   async upsertUser(userData: UpsertUser): Promise<User> {
     try {
+      // Check if this is the founder account
+      if (userData.email === 'thennessy01@gmail.com') {
+        userData.isFounder = true;
+        userData.isPremium = true;
+        userData.subscriptionStatus = 'active';
+        userData.subscriptionPlan = 'founder';
+      }
+
       const [user] = await db
         .insert(users)
         .values(userData)
@@ -331,6 +361,108 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error upserting user:', error);
       throw error;
+    }
+  }
+
+  async updateUserSubscription(userId: string, subscriptionData: Partial<UpsertUser>): Promise<User | undefined> {
+    try {
+      const [user] = await db
+        .update(users)
+        .set({
+          ...subscriptionData,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      return user;
+    } catch (error) {
+      console.error('Error updating user subscription:', error);
+      return undefined;
+    }
+  }
+
+  // Subscription management methods
+  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    try {
+      const [newSubscription] = await db
+        .insert(subscriptions)
+        .values(subscription)
+        .returning();
+      return newSubscription;
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      throw error;
+    }
+  }
+
+  async getSubscription(userId: string): Promise<Subscription | undefined> {
+    try {
+      const [subscription] = await db
+        .select()
+        .from(subscriptions)
+        .where(eq(subscriptions.userId, userId))
+        .orderBy(desc(subscriptions.createdAt));
+      return subscription;
+    } catch (error) {
+      console.error('Error getting subscription:', error);
+      return undefined;
+    }
+  }
+
+  async getSubscriptionByStripeId(stripeSubscriptionId: string): Promise<Subscription | undefined> {
+    try {
+      const [subscription] = await db
+        .select()
+        .from(subscriptions)
+        .where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId));
+      return subscription;
+    } catch (error) {
+      console.error('Error getting subscription by Stripe ID:', error);
+      return undefined;
+    }
+  }
+
+  async updateSubscription(stripeSubscriptionId: string, updates: Partial<InsertSubscription>): Promise<Subscription | undefined> {
+    try {
+      const [subscription] = await db
+        .update(subscriptions)
+        .set({
+          ...updates,
+          updatedAt: new Date(),
+        })
+        .where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId))
+        .returning();
+      return subscription;
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+      return undefined;
+    }
+  }
+
+  // Payment history methods
+  async createPaymentRecord(payment: InsertPaymentHistory): Promise<PaymentHistory> {
+    try {
+      const [newPayment] = await db
+        .insert(paymentHistory)
+        .values(payment)
+        .returning();
+      return newPayment;
+    } catch (error) {
+      console.error('Error creating payment record:', error);
+      throw error;
+    }
+  }
+
+  async getPaymentHistory(userId: string): Promise<PaymentHistory[]> {
+    try {
+      return await db
+        .select()
+        .from(paymentHistory)
+        .where(eq(paymentHistory.userId, userId))
+        .orderBy(desc(paymentHistory.createdAt));
+    } catch (error) {
+      console.error('Error getting payment history:', error);
+      return [];
     }
   }
 }
