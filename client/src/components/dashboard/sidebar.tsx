@@ -55,6 +55,7 @@ const advancedModules = [
   { id: "marketscan" as const, name: "Market Scanner", icon: Search },
   { id: "cryptosearch" as const, name: "Crypto Search", icon: Search },
   { id: "python-engine" as const, name: "Python Engine", icon: Brain },
+  { id: "ml-dashboard" as const, name: "ML Dashboard", icon: Brain },
   { id: "layoutopt" as const, name: "Layout Optimizer", icon: BarChart3 },
 ];
 

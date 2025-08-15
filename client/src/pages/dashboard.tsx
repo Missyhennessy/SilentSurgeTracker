@@ -118,7 +118,11 @@ export default function Dashboard() {
         case "python-engine":
           console.log('Navigating to Python Engine');
           window.location.href = '/python-engine';
-          return <div className="p-6">Redirecting to Python Engine...</div>;
+          break;
+        case "ml-dashboard":
+          console.log('Navigating to ML Dashboard');
+          window.location.href = '/ml-dashboard';
+          return <div className="p-6">Redirecting to ML Dashboard...</div>;
         default:
           console.log('Loading default AssetScanner');
           return <AssetScanner />;

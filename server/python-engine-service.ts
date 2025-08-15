@@ -115,16 +115,27 @@ class PythonEngineService {
     });
   }
 
-  private async executePythonScript(scriptPath: string, args: string[] = []): Promise<any> {
+  private async executePythonScript(scriptPath: string, args: string[] = [], useInlineScript: boolean = false, inlineScript?: string): Promise<any> {
     if (!this.isInitialized) {
       await this.initialize();
     }
 
     return new Promise((resolve, reject) => {
-      const process = spawn(this.pythonPath, [scriptPath, ...args], {
-        cwd: this.enginePath,
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
+      let process;
+      
+      if (useInlineScript && inlineScript) {
+        // Execute inline script directly
+        process = spawn(this.pythonPath, ['-c', inlineScript, ...args], {
+          cwd: this.enginePath,
+          stdio: ['pipe', 'pipe', 'pipe']
+        });
+      } else {
+        // Execute script file
+        process = spawn(this.pythonPath, [scriptPath, ...args], {
+          cwd: this.enginePath,
+          stdio: ['pipe', 'pipe', 'pipe']
+        });
+      }
 
       let stdout = '';
       let stderr = '';
@@ -152,7 +163,8 @@ class PythonEngineService {
               resolve({ output: stdout, success: true });
             }
           } catch (parseError) {
-            resolve({ output: stdout, success: true });
+            // Return raw output if JSON parsing fails
+            resolve({ output: stdout, error: 'JSON parse failed', success: true });
           }
         } else {
           reject(new Error(`Python script failed with code ${code}: ${stderr}`));
@@ -426,6 +438,188 @@ export function registerPythonEngineRoutes(app: Express): void {
     } catch (error) {
       console.error('Python engine status error:', error);
       res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // ML Models endpoint
+  app.get('/api/python-engine/ml-models', async (req, res) => {
+    try {
+      const script = `
+import sys
+import os
+sys.path.append('python_engine')
+from simple_ml_demo import simple_ml_demo
+import json
+
+try:
+    result = simple_ml_demo()
+    print(json.dumps(result))
+except Exception as e:
+    print(json.dumps({"error": str(e)}))
+`;
+      
+      const result = await pythonEngineService.executePythonScript('temp_ml_script.py', [], true, script);
+      let parsedResult = result;
+      
+      if (typeof result === 'string') {
+        try {
+          parsedResult = JSON.parse(result);
+        } catch (e) {
+          parsedResult = { error: 'Failed to parse ML response', raw_output: result };
+        }
+      } else if (result && result.output && typeof result.output === 'string') {
+        try {
+          parsedResult = JSON.parse(result.output);
+        } catch (e) {
+          parsedResult = { error: 'Failed to parse ML output', raw_output: result.output };
+        }
+      }
+      
+      res.json({
+        timestamp: new Date().toISOString(),
+        ml_capabilities: parsedResult,
+        status: 'active'
+      });
+      
+    } catch (error) {
+      console.error('ML Models error:', error);
+      res.status(500).json({ 
+        error: 'ML models failed',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Enhanced SSS with ML
+  app.post('/api/python-engine/enhanced-sss', async (req, res) => {
+    try {
+      const { behavioral_activity, velocity_anomaly, community_cohesion, anchor_pressure, hype_to_hold, historical_volatility } = req.body;
+      
+      // Validate inputs
+      const required = { behavioral_activity, velocity_anomaly, community_cohesion, anchor_pressure, hype_to_hold, historical_volatility };
+      for (const [key, value] of Object.entries(required)) {
+        if (value === undefined || value === null || isNaN(Number(value))) {
+          return res.status(400).json({ error: `Invalid ${key} parameter` });
+        }
+      }
+
+      const script = `
+import sys
+import os
+sys.path.append('python_engine')
+from simple_ml_demo import enhanced_sss_calculation
+import json
+
+try:
+    metrics = {
+        'behavioral_activity': ${parseFloat(behavioral_activity)},
+        'velocity_anomaly': ${parseFloat(velocity_anomaly)},
+        'community_cohesion': ${parseFloat(community_cohesion)},
+        'anchor_pressure': ${parseFloat(anchor_pressure)},
+        'hype_to_hold': ${parseFloat(hype_to_hold)},
+        'historical_volatility': ${parseFloat(historical_volatility)}
+    }
+    
+    result = enhanced_sss_calculation(metrics)
+    print(json.dumps(result))
+except Exception as e:
+    print(json.dumps({"error": str(e)}))
+`;
+
+      const result = await pythonEngineService.executePythonScript('temp_enhanced_sss.py', [], true, script);
+      const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
+      
+      res.json(parsedResult);
+      
+    } catch (error) {
+      console.error('Enhanced SSS calculation error:', error);
+      res.status(500).json({ 
+        error: 'Enhanced SSS calculation failed',
+        details: error.message 
+      });
+    }
+  });
+
+  // ML Breakout Probability
+  app.post('/api/python-engine/ml-breakout', async (req, res) => {
+    try {
+      const { sss, velocity, sentiment, anchor_pressure, timeframe = 7 } = req.body;
+      
+      if (!sss || !velocity || !sentiment || !anchor_pressure) {
+        return res.status(400).json({ error: 'Missing required parameters: sss, velocity, sentiment, anchor_pressure' });
+      }
+
+      const script = `
+import sys
+import os
+sys.path.append('python_engine')
+from simple_ml_demo import ml_breakout_probability
+import json
+
+try:
+    result = ml_breakout_probability(
+        ${parseFloat(sss)}, 
+        ${parseFloat(velocity)}, 
+        ${parseFloat(sentiment)}, 
+        ${parseFloat(anchor_pressure)}, 
+        ${parseInt(timeframe)}
+    )
+    
+    print(json.dumps(result))
+except Exception as e:
+    print(json.dumps({"error": str(e)}))
+`;
+
+      const result = await pythonEngineService.executePythonScript('temp_ml_breakout.py', [], true, script);
+      const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
+      
+      res.json(parsedResult);
+      
+    } catch (error) {
+      console.error('ML Breakout Probability error:', error);
+      res.status(500).json({ 
+        error: 'ML breakout probability calculation failed',
+        details: error.message 
+      });
+    }
+  });
+
+  // Comprehensive ML Analysis
+  app.post('/api/python-engine/comprehensive-analysis', async (req, res) => {
+    try {
+      const tokenData = req.body;
+      
+      if (!tokenData.symbol) {
+        return res.status(400).json({ error: 'Token symbol is required' });
+      }
+
+      const script = `
+import sys
+import os
+sys.path.append('python_engine')
+from simple_ml_demo import comprehensive_analysis
+import json
+
+try:
+    token_data = ${JSON.stringify(tokenData)}
+    
+    result = comprehensive_analysis(token_data)
+    print(json.dumps(result))
+except Exception as e:
+    print(json.dumps({"error": str(e)}))
+`;
+
+      const result = await pythonEngineService.executePythonScript('temp_comprehensive.py', [], true, script);
+      const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
+      
+      res.json(parsedResult);
+      
+    } catch (error) {
+      console.error('Comprehensive Analysis error:', error);
+      res.status(500).json({ 
+        error: 'Comprehensive analysis failed',
+        details: error.message 
+      });
     }
   });
 
