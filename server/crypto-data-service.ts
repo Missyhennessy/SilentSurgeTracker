@@ -68,7 +68,7 @@ class CryptoDataService {
   private apiSources: ApiSource[] = [
     {
       name: 'cryptocompare',
-      priority: 1,
+      priority: 2,
       enabled: true,
       callsUsed: 0,
       callsLimit: 100000, // Very generous free tier
@@ -76,7 +76,7 @@ class CryptoDataService {
     },
     {
       name: 'coingecko',
-      priority: 2,
+      priority: 3,
       enabled: true,
       callsUsed: 0,
       callsLimit: 10000, // 10K per month
@@ -84,8 +84,8 @@ class CryptoDataService {
     },
     {
       name: 'mobula',
-      priority: 3,
-      enabled: false, // Disabled by default until API key provided
+      priority: 1, // Highest priority due to highest limits
+      enabled: !!process.env.MOBULA_API_KEY,
       callsUsed: 0,
       callsLimit: 300000, // 300K per month
       lastReset: new Date()
@@ -406,11 +406,17 @@ class CryptoDataService {
     if (process.env.MOBULA_API_KEY) {
       try {
         const mobulaHealthy = await mobulaApiService.healthCheck();
-        this.apiSources[2].enabled = mobulaHealthy;
+        const mobulaSource = this.apiSources.find(s => s.name === 'mobula');
+        if (mobulaSource) {
+          mobulaSource.enabled = mobulaHealthy;
+        }
         console.log(`Mobula API: ${mobulaHealthy ? '✅ Active' : '❌ Inactive'}`);
       } catch (error) {
         console.log('Mobula API: ❌ Inactive');
-        this.apiSources[2].enabled = false;
+        const mobulaSource = this.apiSources.find(s => s.name === 'mobula');
+        if (mobulaSource) {
+          mobulaSource.enabled = false;
+        }
       }
     } else {
       console.log('Mobula API: ⚠️ Skipped (No API key)');
