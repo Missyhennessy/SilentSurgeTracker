@@ -1,540 +1,280 @@
-import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { 
-  ArrowLeft, 
   TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  BarChart3, 
-  Users, 
-  ExternalLink,
-  Star,
-  StarOff,
-  ShoppingCart,
-  Info
+  Database, 
+  Activity, 
+  CheckCircle,
+  AlertCircle,
+  Loader2
 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { CryptoAsset } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-interface PriceDataPoint {
-  timestamp: string;
-  price: number;
-  volume?: number;
+interface MonitoringStats {
+  totalCryptocurrencies: number;
+  coverageIncrease: string;
+  apiSources: string[];
+  monitoringCapacity: string;
+  updateFrequency: string;
 }
 
-interface ExchangePair {
-  exchange: string;
-  pair: string;
-  price: number;
-  volume_24h: number;
-  trust_score?: number;
-}
-
-interface AssetMetadata {
-  description?: string;
-  website?: string;
-  whitepaper?: string;
-  twitter?: string;
-  telegram?: string;
-  discord?: string;
-  github?: string;
-  blockchain?: string;
-  contract_address?: string;
-}
-
-export default function CryptoDetailPage() {
-  const [location, navigate] = useLocation();
-  const [timeframe, setTimeframe] = useState<'1h' | '24h' | '7d' | '30d' | '90d'>('24h');
-  const [isWatchlisted, setIsWatchlisted] = useState(false);
+export default function CryptoMonitoringExpansion() {
+  const [isExpanding, setIsExpanding] = useState(false);
   const { toast } = useToast();
 
-  // Extract symbol from URL path
-  const pathParts = location.split('/');
-  const symbol = pathParts[pathParts.length - 1];
-
-  const { data: asset, isLoading: assetLoading, isError: assetError } = useQuery<CryptoAsset>({
-    queryKey: [`/api/assets/symbol/${symbol}`],
-    enabled: !!symbol,
+  const { data: monitoringStats, isLoading: statsLoading, refetch: refetchStats } = useQuery<MonitoringStats>({
+    queryKey: ['/api/crypto/monitoring-stats'],
   });
 
-  const { data: priceHistory, isLoading: priceLoading } = useQuery<PriceDataPoint[]>({
-    queryKey: [`/api/assets/${symbol}/price-history`, timeframe],
-    enabled: !!symbol,
-  });
-
-  const { data: exchangePairs, isLoading: pairsLoading } = useQuery<ExchangePair[]>({
-    queryKey: [`/api/assets/${symbol}/pairs`],
-    enabled: !!symbol,
-  });
-
-  const { data: metadata, isLoading: metadataLoading } = useQuery<AssetMetadata>({
-    queryKey: [`/api/assets/${symbol}/metadata`],
-    enabled: !!symbol,
-  });
-
-  const handleWatchlistToggle = async () => {
-    try {
-      const response = await apiRequest("POST", `/api/assets/${asset?.id}/watchlist`, {
-        action: isWatchlisted ? 'remove' : 'add'
+  const expandMonitoringMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/crypto/expand-monitoring", {});
+      return response.json();
+    },
+    onSuccess: () => {
+      setIsExpanding(true);
+      toast({
+        title: "Expansion Started",
+        description: "Cryptocurrency monitoring expansion is now processing. This will take 10-15 minutes.",
       });
       
-      if (response.ok) {
-        setIsWatchlisted(!isWatchlisted);
+      // Check status every 30 seconds
+      const interval = setInterval(async () => {
+        await refetchStats();
+      }, 30000);
+      
+      // Stop checking after 20 minutes
+      setTimeout(() => {
+        clearInterval(interval);
+        setIsExpanding(false);
         toast({
-          title: isWatchlisted ? "Removed from Watchlist" : "Added to Watchlist",
-          description: `${asset?.name} has been ${isWatchlisted ? 'removed from' : 'added to'} your watchlist.`,
+          title: "Expansion Complete",
+          description: "Cryptocurrency monitoring has been expanded successfully!",
         });
-      }
-    } catch (error) {
+      }, 1200000);
+    },
+    onError: (error) => {
       toast({
-        title: "Error",
-        description: "Failed to update watchlist. Please try again.",
+        title: "Expansion Failed",
+        description: "Failed to start cryptocurrency monitoring expansion. Please try again.",
         variant: "destructive",
       });
-    }
+    },
+  });
+
+  const handleStartExpansion = () => {
+    expandMonitoringMutation.mutate();
   };
 
-  const formatPrice = (price: number) => {
-    if (price >= 1) {
-      return `$${price.toFixed(2)}`;
-    } else if (price >= 0.01) {
-      return `$${price.toFixed(4)}`;
-    } else {
-      return `$${price.toFixed(8)}`;
-    }
-  };
-
-  const formatPercentage = (percentage: number) => {
-    const isPositive = percentage >= 0;
-    return (
-      <span className={`flex items-center gap-1 ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-        {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-        {Math.abs(percentage).toFixed(2)}%
-      </span>
-    );
-  };
-
-  const getSSSBadgeColor = (score: number) => {
-    if (score >= 80) return "bg-green-500";
-    if (score >= 60) return "bg-yellow-500";
-    if (score >= 40) return "bg-orange-500";
-    return "bg-red-500";
-  };
-
-  if (assetLoading) {
-    return (
-      <div className="min-h-screen bg-gray-900 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-700 rounded w-64"></div>
-            <div className="h-32 bg-gray-700 rounded"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="h-64 bg-gray-700 rounded"></div>
-              <div className="h-64 bg-gray-700 rounded"></div>
-              <div className="h-64 bg-gray-700 rounded"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (assetError || !asset) {
+  if (statsLoading) {
     return (
       <div className="min-h-screen bg-gray-900 p-6 flex items-center justify-center">
-        <Card className="bg-gray-800 border-gray-700 max-w-md">
-          <CardHeader>
-            <CardTitle className="text-red-400">Asset Not Found</CardTitle>
-            <CardDescription>
-              The cryptocurrency "{symbol}" could not be found or loaded.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => navigate('/')} className="w-full">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate('/')}
-                className="hover:bg-gray-700"
-                data-testid="back-button"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">
-                    {asset.symbol.charAt(0)}
-                  </span>
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-white">{asset.name}</h1>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-gray-300">
-                      {asset.symbol}
-                    </Badge>
-                    <Badge className={getSSSBadgeColor(asset.sssScore || 0)}>
-                      SSS: {(asset.sssScore || 0).toFixed(1)}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-3xl font-bold text-white">
-                  {formatPrice(asset.price)}
-                </div>
-                <div className="text-sm">
-                  {asset.change24h !== undefined && formatPercentage(asset.change24h)}
-                </div>
-              </div>
-              
-              <Button
-                variant={isWatchlisted ? "default" : "outline"}
-                onClick={handleWatchlistToggle}
-                className="flex items-center gap-2"
-                data-testid="watchlist-toggle"
-              >
-                {isWatchlisted ? <Star className="w-4 h-4" /> : <StarOff className="w-4 h-4" />}
-                {isWatchlisted ? "Watchlisted" : "Add to Watchlist"}
-              </Button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-900 p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold text-white flex items-center justify-center gap-3">
+            <Database className="w-8 h-8 text-blue-400" />
+            Cryptocurrency Monitoring Expansion
+          </h1>
+          <p className="text-gray-400">
+            Expand your platform to monitor as many cryptocurrencies as Mobula (~1.3 million assets)
+          </p>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-gray-800 border-gray-700">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="chart">Charts & Analysis</TabsTrigger>
-            <TabsTrigger value="exchanges">Where to Buy</TabsTrigger>
-            <TabsTrigger value="details">Details</TabsTrigger>
-          </TabsList>
-
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-gray-400">Market Cap</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-white">
-                    ${asset.marketCap ? (asset.marketCap / 1e9).toFixed(2) + 'B' : 'N/A'}
+        {/* Current Stats */}
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Activity className="w-5 h-5 text-green-400" />
+              Current Monitoring Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {monitoringStats ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Total Cryptocurrencies:</span>
+                    <span className="font-bold text-white">
+                      {typeof monitoringStats.totalCryptocurrencies === 'number' 
+                        ? monitoringStats.totalCryptocurrencies.toLocaleString()
+                        : monitoringStats.totalCryptocurrencies
+                      }
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-gray-400">24h Volume</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-white">
-                    ${asset.volume24h ? (asset.volume24h / 1e6).toFixed(2) + 'M' : 'N/A'}
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Coverage Increase:</span>
+                    <span className="font-bold text-green-400">
+                      {monitoringStats.coverageIncrease}
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-gray-400">Behavioral Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-blue-400">
-                    {(asset.behavioralActivity || 0).toFixed(1)}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-gray-400">Velocity Anomaly</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-purple-400">
-                    {(asset.velocityAnomaly || 0).toFixed(1)}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* SSS Components */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle>Silent Surge Score Breakdown</CardTitle>
-                <CardDescription>
-                  Advanced behavioral analysis components
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Community Cohesion</span>
-                      <span className="font-bold">{(asset.communityCohesion || 0).toFixed(1)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Anchor Pressure</span>
-                      <span className="font-bold">{(asset.anchorPressure || 0).toFixed(1)}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Hype-to-Hold Ratio</span>
-                      <span className="font-bold">{(asset.hypeToHoldRatio || 0).toFixed(1)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Historical Volatility</span>
-                      <span className="font-bold">{(asset.historicalVolatility || 0).toFixed(1)}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-center">
-                    <div className="text-center">
-                      <div className={`text-4xl font-bold mb-2 ${getSSSBadgeColor(asset.sssScore || 0)} bg-clip-text text-transparent`}>
-                        {(asset.sssScore || 0).toFixed(1)}
-                      </div>
-                      <div className="text-sm text-gray-400">Overall SSS Score</div>
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Update Frequency:</span>
+                    <span className="font-bold text-blue-400">
+                      {monitoringStats.updateFrequency}
+                    </span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Charts Tab */}
-          <TabsContent value="chart" className="space-y-6">
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle>Price Chart</CardTitle>
-                <div className="flex gap-2">
-                  {(['1h', '24h', '7d', '30d', '90d'] as const).map((period) => (
-                    <Button
-                      key={period}
-                      variant={timeframe === period ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setTimeframe(period)}
-                      data-testid={`timeframe-${period}`}
-                    >
-                      {period}
-                    </Button>
-                  ))}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-96">
-                  {priceLoading ? (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={priceHistory || []}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis 
-                          dataKey="timestamp" 
-                          stroke="#9CA3AF"
-                          tickFormatter={(value) => new Date(value).toLocaleDateString()}
-                        />
-                        <YAxis 
-                          stroke="#9CA3AF"
-                          tickFormatter={(value) => `$${value.toFixed(4)}`}
-                        />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#1F2937', 
-                            border: '1px solid #374151',
-                            borderRadius: '8px'
-                          }}
-                          labelFormatter={(value) => new Date(value).toLocaleString()}
-                          formatter={(value: number) => [`$${value.toFixed(6)}`, 'Price']}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="price" 
-                          stroke="#3B82F6" 
-                          strokeWidth={2}
-                          dot={false}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Exchanges Tab */}
-          <TabsContent value="exchanges" className="space-y-6">
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5" />
-                  Where to Buy {asset.symbol}
-                </CardTitle>
-                <CardDescription>
-                  Top exchanges and trading pairs for {asset.name}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {pairsLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-                  </div>
-                ) : exchangePairs && exchangePairs.length > 0 ? (
-                  <div className="space-y-4">
-                    {exchangePairs.map((pair, index) => (
-                      <div key={index} className="flex items-center justify-between p-4 bg-gray-900 rounded-lg">
-                        <div>
-                          <div className="font-semibold text-white">{pair.exchange}</div>
-                          <div className="text-gray-400 text-sm">{pair.pair}</div>
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-gray-400 block mb-2">API Sources:</span>
+                    <div className="space-y-1">
+                      {monitoringStats.apiSources.map((source, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-400" />
+                          <span className="text-sm text-white">{source}</span>
                         </div>
-                        <div className="text-right">
-                          <div className="font-bold text-white">{formatPrice(pair.price)}</div>
-                          <div className="text-gray-400 text-sm">
-                            Vol: ${(pair.volume_24h / 1e6).toFixed(2)}M
-                          </div>
-                        </div>
-                        <Button size="sm" variant="outline" asChild>
-                          <a href={`https://${pair.exchange.toLowerCase().replace(' ', '')}.com`} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="w-4 h-4 mr-2" />
-                            Trade
-                          </a>
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <div className="text-gray-400">Exchange data not available for this asset</div>
-                    <div className="text-sm text-gray-500 mt-2">
-                      Try searching on major exchanges like Binance, Coinbase, or Kraken
+                      ))}
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Details Tab */}
-          <TabsContent value="details" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader>
-                  <CardTitle>Asset Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Symbol:</span>
-                    <span className="font-mono">{asset.symbol}</span>
+                    <span className="text-gray-400">Target Capacity:</span>
+                    <span className="font-bold text-purple-400">
+                      {monitoringStats.monitoringCapacity}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Name:</span>
-                    <span>{asset.name}</span>
-                  </div>
-                  {metadata?.blockchain && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Blockchain:</span>
-                      <span>{metadata.blockchain}</span>
-                    </div>
-                  )}
-                  {metadata?.contract_address && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Contract:</span>
-                      <span className="font-mono text-xs break-all">{metadata.contract_address}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Last Updated:</span>
-                    <span>{new Date(asset.lastUpdated || Date.now()).toLocaleString()}</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {metadata && (
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <CardTitle>Links & Resources</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {metadata.website && (
-                      <Button variant="outline" size="sm" asChild className="w-full justify-start">
-                        <a href={metadata.website} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Official Website
-                        </a>
-                      </Button>
-                    )}
-                    {metadata.whitepaper && (
-                      <Button variant="outline" size="sm" asChild className="w-full justify-start">
-                        <a href={metadata.whitepaper} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Whitepaper
-                        </a>
-                      </Button>
-                    )}
-                    {metadata.twitter && (
-                      <Button variant="outline" size="sm" asChild className="w-full justify-start">
-                        <a href={metadata.twitter} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Twitter
-                        </a>
-                      </Button>
-                    )}
-                    {metadata.telegram && (
-                      <Button variant="outline" size="sm" asChild className="w-full justify-start">
-                        <a href={metadata.telegram} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Telegram
-                        </a>
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {metadata?.description && (
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader>
-                  <CardTitle>About {asset.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-300 leading-relaxed">{metadata.description}</p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <div className="animate-spin w-6 h-6 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+                <p className="text-gray-400">Loading monitoring statistics...</p>
+              </div>
             )}
-          </TabsContent>
-        </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* Expansion Control */}
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <TrendingUp className="w-5 h-5 text-blue-400" />
+              Expand Cryptocurrency Coverage
+            </CardTitle>
+            <CardDescription>
+              Increase your platform's monitoring from ~1,886 to 50,000+ cryptocurrencies using Mobula's extensive database
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-4">
+              <h3 className="font-semibold text-blue-400 mb-2">What This Expansion Includes:</h3>
+              <ul className="space-y-1 text-sm text-gray-300">
+                <li>• 50,000+ cryptocurrencies from Mobula API</li>
+                <li>• Emerging tokens, DeFi projects, GameFi, and NFT tokens</li>
+                <li>• Meme coins, Layer 2 tokens, and AI projects</li>
+                <li>• Real-world assets and cross-chain tokens</li>
+                <li>• Comprehensive SSS scoring for all new assets</li>
+              </ul>
+            </div>
+
+            {isExpanding ? (
+              <div className="bg-yellow-900/20 border border-yellow-500/20 rounded-lg p-4 flex items-center gap-3">
+                <Loader2 className="w-5 h-5 text-yellow-400 animate-spin" />
+                <div>
+                  <p className="font-medium text-yellow-400">Expansion in Progress</p>
+                  <p className="text-sm text-gray-300">
+                    Adding thousands of cryptocurrencies to your monitoring system. This process will take 10-15 minutes.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                <Button 
+                  onClick={handleStartExpansion} 
+                  disabled={expandMonitoringMutation.isPending}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                  data-testid="start-expansion-button"
+                >
+                  {expandMonitoringMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Starting Expansion...
+                    </>
+                  ) : (
+                    <>
+                      <Database className="w-4 h-4" />
+                      Start Expansion
+                    </>
+                  )}
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  onClick={() => refetchStats()}
+                  className="flex items-center gap-2"
+                >
+                  <Activity className="w-4 h-4" />
+                  Refresh Stats
+                </Button>
+              </div>
+            )}
+
+            {expandMonitoringMutation.isError && (
+              <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-4 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400" />
+                <div>
+                  <p className="font-medium text-red-400">Expansion Failed</p>
+                  <p className="text-sm text-gray-300">
+                    Unable to start cryptocurrency monitoring expansion. Please check your Mobula API key and try again.
+                  </p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Benefits */}
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white">Benefits of Expanded Monitoring</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-white">Complete Market Coverage</h4>
+                    <p className="text-sm text-gray-400">Monitor virtually every cryptocurrency available</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-white">Early Detection</h4>
+                    <p className="text-sm text-gray-400">Spot emerging opportunities before they trend</p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-white">Advanced Analytics</h4>
+                    <p className="text-sm text-gray-400">Silent Surge Score for all monitored assets</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-white">Comprehensive Data</h4>
+                    <p className="text-sm text-gray-400">Real-time updates across all blockchain networks</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

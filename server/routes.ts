@@ -1004,6 +1004,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cryptocurrency monitoring expansion endpoint
+  app.post('/api/crypto/expand-monitoring', isAuthenticated, async (req, res) => {
+    try {
+      const { expandedCryptoMonitoring } = await import('./expanded-crypto-monitoring');
+      
+      // Run expansion in background to avoid timeout
+      expandedCryptoMonitoring.expandCryptocurrencyMonitoring()
+        .then(() => {
+          console.log('✅ Cryptocurrency monitoring expansion completed successfully');
+        })
+        .catch((error) => {
+          console.error('❌ Cryptocurrency monitoring expansion failed:', error);
+        });
+
+      res.json({
+        message: 'Cryptocurrency monitoring expansion started',
+        status: 'processing',
+        estimatedCompletion: '10-15 minutes',
+        targetAssets: '50,000+'
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to start expansion', error: error.message });
+    }
+  });
+
+  // Get current monitoring statistics
+  app.get('/api/crypto/monitoring-stats', isAuthenticated, async (req, res) => {
+    try {
+      const { expandedCryptoMonitoring } = await import('./expanded-crypto-monitoring');
+      const stats = await expandedCryptoMonitoring.getCurrentMonitoringStats();
+      
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to get monitoring stats', error: error.message });
+    }
+  });
+
   // Simulate real-time data updates
   setInterval(async () => {
     try {
