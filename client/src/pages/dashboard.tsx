@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { SimplifiedNav } from "@/components/navigation/simplified-nav";
+import { UserFriendlyNav } from "@/components/navigation/user-friendly-nav";
 import { RealTimeIndicator } from "@/components/real-time-indicator";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { TrendingUp, Bell } from "lucide-react";
@@ -35,6 +35,7 @@ export default function Dashboard() {
   const [activeModule, setActiveModule] = useState<DashboardModule>("scanner");
   const [alertCount] = useState(3);
   const [showTour, setShowTour] = useState(false);
+  const [userLevel, setUserLevel] = useState<"beginner" | "advanced">("beginner");
 
   const { isConnected } = useWebSocket("/ws");
 
@@ -196,10 +197,12 @@ export default function Dashboard() {
         
         {/* Navigation Bar Row */}
         <div className="px-6 py-3">
-          <SimplifiedNav 
+          <UserFriendlyNav 
             activeModule={activeModule}
             setActiveModule={setActiveModule}
             alertCount={alertCount}
+            userLevel={userLevel}
+            onUserLevelChange={setUserLevel}
           />
         </div>
       </div>
