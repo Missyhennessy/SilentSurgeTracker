@@ -1,4 +1,6 @@
 import { storage } from "./storage";
+import { mobulaApiService, type MobulaAsset } from './mobula-api-service';
+import { cryptoCompareService } from './crypto-compare-service';
 // We'll calculate SSS score directly here since it's simpler
 function calculateSSS(metrics: {
   behavioralActivity: number;
@@ -48,10 +50,47 @@ interface CoinGeckoResponse {
   data: CoinGeckoMarketData[];
 }
 
+interface ApiSource {
+  name: string;
+  priority: number;
+  enabled: boolean;
+  callsUsed: number;
+  callsLimit: number;
+  lastReset: Date;
+}
+
 class CryptoDataService {
   private apiKey: string;
   private baseUrl = 'https://api.coingecko.com/api/v3';
   private updateInterval: NodeJS.Timeout | null = null;
+  
+  // Multi-API source management
+  private apiSources: ApiSource[] = [
+    {
+      name: 'cryptocompare',
+      priority: 1,
+      enabled: true,
+      callsUsed: 0,
+      callsLimit: 100000, // Very generous free tier
+      lastReset: new Date()
+    },
+    {
+      name: 'coingecko',
+      priority: 2,
+      enabled: true,
+      callsUsed: 0,
+      callsLimit: 10000, // 10K per month
+      lastReset: new Date()
+    },
+    {
+      name: 'mobula',
+      priority: 3,
+      enabled: false, // Disabled by default until API key provided
+      callsUsed: 0,
+      callsLimit: 300000, // 300K per month
+      lastReset: new Date()
+    }
+  ];
   private totalPages = 50; // CoinGecko supports up to 50 pages (250 coins per page = 12,500+ cryptocurrencies)
   private coinsPerPage = 250;
   private currentPage = 1;
@@ -334,6 +373,137 @@ class CryptoDataService {
     if (!this.apiKey) {
       console.warn('CoinGecko API key not found. Using demo mode.');
     }
+    
+    // Test API sources on startup
+    this.validateApiSources();
+  }
+
+  // Validate which API sources are working
+  private async validateApiSources(): Promise<void> {
+    console.log('Validating API sources...');
+    
+    // Test CryptoCompare API (highest priority)
+    try {
+      const cryptoCompareHealthy = await cryptoCompareService.healthCheck();
+      this.apiSources[0].enabled = cryptoCompareHealthy;
+      console.log(`CryptoCompare API: ${cryptoCompareHealthy ? '✅ Active' : '❌ Inactive'}`);
+    } catch (error) {
+      console.log('CryptoCompare API: ❌ Inactive');
+      this.apiSources[0].enabled = false;
+    }
+    
+    // Test CoinGecko API
+    try {
+      await this.fetchMarketData();
+      this.apiSources[1].enabled = true;
+      console.log('CoinGecko API: ✅ Active');
+    } catch (error) {
+      console.log('CoinGecko API: ❌ Inactive');
+      this.apiSources[1].enabled = false;
+    }
+
+    // Test Mobula API (lowest priority, requires API key)
+    if (process.env.MOBULA_API_KEY) {
+      try {
+        const mobulaHealthy = await mobulaApiService.healthCheck();
+        this.apiSources[2].enabled = mobulaHealthy;
+        console.log(`Mobula API: ${mobulaHealthy ? '✅ Active' : '❌ Inactive'}`);
+      } catch (error) {
+        console.log('Mobula API: ❌ Inactive');
+        this.apiSources[2].enabled = false;
+      }
+    } else {
+      console.log('Mobula API: ⚠️ Skipped (No API key)');
+    }
+  }
+
+  // Get the best available API source
+  private getBestApiSource(): ApiSource | null {
+    const availableSources = this.apiSources
+      .filter(source => source.enabled)
+      .sort((a, b) => a.priority - b.priority);
+    
+    for (const source of availableSources) {
+      if (source.callsUsed < source.callsLimit * 0.9) { // Use 90% threshold
+        return source;
+      }
+    }
+    
+    return availableSources[0] || null; // Return best available even if near limit
+  }
+
+  // Fetch data using multiple API sources with fallback
+  async fetchCryptoDataWithFallback(symbol: string): Promise<any> {
+    const apiSource = this.getBestApiSource();
+    
+    if (!apiSource) {
+      throw new Error('No API sources available');
+    }
+    
+    try {
+      if (apiSource.name === 'cryptocompare') {
+        console.log(`Using CryptoCompare API for ${symbol}`);
+        const priceData = await cryptoCompareService.get24HourData(symbol);
+        apiSource.callsUsed++;
+        return cryptoCompareService.convertToStandardFormat(priceData, symbol);
+      } else if (apiSource.name === 'coingecko') {
+        console.log(`Using CoinGecko API for ${symbol}`);
+        const coinGeckoData = await this.fetchSingleCoinData(symbol);
+        apiSource.callsUsed++;
+        return coinGeckoData;
+      } else if (apiSource.name === 'mobula') {
+        console.log(`Using Mobula API for ${symbol}`);
+        const mobulaData = await mobulaApiService.getAssetPrice(symbol.toLowerCase());
+        apiSource.callsUsed++;
+        return mobulaApiService.convertToStandardFormat(mobulaData, symbol);
+      }
+    } catch (error) {
+      console.error(`${apiSource.name} API failed for ${symbol}:`, error);
+      
+      // Try fallback API
+      const fallbackSources = this.apiSources
+        .filter(source => source.enabled && source.name !== apiSource.name)
+        .sort((a, b) => a.priority - b.priority);
+      
+      for (const fallback of fallbackSources) {
+        try {
+          if (fallback.name === 'cryptocompare') {
+            console.log(`Fallback to CryptoCompare API for ${symbol}`);
+            const priceData = await cryptoCompareService.get24HourData(symbol);
+            fallback.callsUsed++;
+            return cryptoCompareService.convertToStandardFormat(priceData, symbol);
+          } else if (fallback.name === 'coingecko') {
+            console.log(`Fallback to CoinGecko API for ${symbol}`);
+            const coinGeckoData = await this.fetchSingleCoinData(symbol);
+            fallback.callsUsed++;
+            return coinGeckoData;
+          } else if (fallback.name === 'mobula') {
+            console.log(`Fallback to Mobula API for ${symbol}`);
+            const mobulaData = await mobulaApiService.getAssetPrice(symbol.toLowerCase());
+            fallback.callsUsed++;
+            return mobulaApiService.convertToStandardFormat(mobulaData, symbol);
+          }
+        } catch (fallbackError) {
+          console.error(`Fallback ${fallback.name} also failed:`, fallbackError);
+          continue;
+        }
+      }
+      
+      throw new Error(`All API sources failed for ${symbol}`);
+    }
+  }
+
+  // Get API sources status for monitoring
+  getApiSourcesStatus() {
+    return this.apiSources.map(source => ({
+      name: source.name,
+      enabled: source.enabled,
+      callsUsed: source.callsUsed,
+      callsLimit: source.callsLimit,
+      utilizationPercent: Math.round((source.callsUsed / source.callsLimit) * 100),
+      priority: source.priority,
+      lastReset: source.lastReset
+    }));
   }
 
   async fetchMarketData(): Promise<CoinGeckoMarketData[]> {
@@ -366,7 +536,72 @@ class CryptoDataService {
   async updateCryptoAssets(): Promise<void> {
     try {
       console.log('Fetching live crypto data...');
-      const marketData = await this.fetchMarketData();
+      
+      // Try Mobula API first, fallback to CoinGecko
+      const apiSource = this.getBestApiSource();
+      let marketData: any[] = [];
+      
+      if (apiSource?.name === 'cryptocompare') {
+        try {
+          console.log('Using CryptoCompare API for bulk update...');
+          const symbols = Object.keys(this.coreMapping);
+          const cryptoCompareResponse = await cryptoCompareService.getMultiplePrices(symbols, ['USD']);
+          
+          // Convert CryptoCompare data to our format
+          marketData = Object.entries(cryptoCompareResponse).map(([symbol, data]) => ({
+            id: this.coreMapping[symbol as keyof typeof this.coreMapping] || symbol.toLowerCase(),
+            symbol: symbol.toUpperCase(),
+            name: symbol,
+            current_price: data.USD || 0,
+            market_cap: 0, // CryptoCompare doesn't provide market cap in basic endpoints
+            total_volume: 0,
+            price_change_percentage_24h: 0,
+            market_cap_rank: null,
+            circulating_supply: 0,
+            total_supply: 0,
+            max_supply: null
+          }));
+          
+          apiSource.callsUsed++;
+          console.log('✅ CryptoCompare API bulk update successful');
+        } catch (error) {
+          console.error('CryptoCompare API failed, falling back to CoinGecko:', error);
+          marketData = await this.fetchMarketData();
+          // Mark CryptoCompare as disabled for this session
+          this.apiSources[0].enabled = false;
+        }
+      } else if (apiSource?.name === 'mobula') {
+        try {
+          console.log('Using Mobula API for bulk update...');
+          const symbols = Object.keys(this.coreMapping);
+          const mobulaResponse = await mobulaApiService.getMultipleAssetPrices(symbols);
+          
+          // Convert Mobula data to our format
+          marketData = Object.entries(mobulaResponse.data).map(([symbol, data]) => ({
+            id: symbol.toLowerCase(),
+            symbol: symbol.toUpperCase(),
+            name: symbol,
+            current_price: data.price,
+            market_cap: data.market_cap,
+            total_volume: data.volume,
+            price_change_percentage_24h: (data.price_change_24h / (data.price - data.price_change_24h)) * 100,
+            market_cap_rank: data.rank,
+            circulating_supply: 0,
+            total_supply: 0,
+            max_supply: null
+          }));
+          
+          apiSource.callsUsed++;
+          console.log('✅ Mobula API bulk update successful');
+        } catch (error) {
+          console.error('Mobula API failed, falling back to CoinGecko:', error);
+          marketData = await this.fetchMarketData();
+          // Mark Mobula as disabled for this session
+          this.apiSources[2].enabled = false;
+        }
+      } else {
+        marketData = await this.fetchMarketData();
+      }
       
       for (const coinData of marketData) {
         // Find matching symbol in our coin mapping
