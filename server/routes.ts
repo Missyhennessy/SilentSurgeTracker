@@ -1669,5 +1669,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get API sources status
+  app.get('/api/data-sources/status', isAuthenticated, async (req, res) => {
+    try {
+      const status = cryptoDataService.getApiSourcesStatus();
+      res.json(status);
+    } catch (error) {
+      console.error('Error fetching API sources status:', error);
+      res.status(500).json({ message: 'Failed to fetch API sources status' });
+    }
+  });
+
   return httpServer;
 }
