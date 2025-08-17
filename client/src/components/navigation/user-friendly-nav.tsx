@@ -54,8 +54,8 @@ export function UserFriendlyNav({
       icon: <Search className="w-4 h-4" />,
       modules: [
         { key: "scanner", label: "Asset Scanner", description: "AI-powered crypto discovery" },
-        { key: "search", label: "Advanced Search", description: "Search 1,886+ cryptocurrencies" },
-        { key: "market-scanner", label: "Market Scanner", description: "Real-time market anomaly detection" }
+        { key: "search" as DashboardModule, label: "Advanced Search", description: "Search 1,886+ cryptocurrencies" },
+        { key: "scanner" as DashboardModule, label: "Market Scanner", description: "Real-time market anomaly detection" }
       ]
     },
     {
