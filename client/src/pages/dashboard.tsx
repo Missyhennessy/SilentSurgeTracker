@@ -123,6 +123,10 @@ export default function Dashboard() {
           console.log('Navigating to ML Dashboard');
           window.location.href = '/ml-dashboard';
           return <div className="p-6">Redirecting to ML Dashboard...</div>;
+        case "api-status":
+          console.log('Navigating to API Status');
+          window.location.href = '/api-status';
+          return <div className="p-6">Redirecting to API Status Dashboard...</div>;
         default:
           console.log('Loading default AssetScanner');
           return <AssetScanner />;

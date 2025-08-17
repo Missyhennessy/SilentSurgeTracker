@@ -11,7 +11,8 @@ import {
   Activity,
   Target,
   Settings,
-  Users
+  Users,
+  Server
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -89,7 +90,8 @@ export function SimplifiedNav({ activeModule, setActiveModule, alertCount = 0 }:
         { key: "ml", label: "AI Models", description: "Machine learning insights" },
         { key: "analytics", label: "Historical Data", description: "Long-term trend analysis" },
         { key: "anchor", label: "Anchor Pressure", description: "Price support analysis" },
-        { key: "composite", label: "Composite Rating", description: "Overall asset scoring" }
+        { key: "composite", label: "Composite Rating", description: "Overall asset scoring" },
+        { key: "api-status" as DashboardModule, label: "API Status", description: "Monitor data source health" }
       ]
     }
   ];
