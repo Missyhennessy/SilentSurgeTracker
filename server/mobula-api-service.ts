@@ -114,15 +114,35 @@ export class MobulaApiService {
     return this.makeRequest<MobulaMultiDataResponse>('/market/multi-data', { assets: symbolString });
   }
 
-  async getAllAssets(limit: number = 1000): Promise<{ data: MobulaAsset[] }> {
+  async getAllAssets(limit: number = 50000): Promise<{ data: MobulaAsset[] }> {
     return this.makeRequest<{ data: MobulaAsset[] }>('/market/data', { 
       limit,
       order: 'market_cap_desc'
     });
   }
 
-  async searchAssets(query: string): Promise<{ data: MobulaAsset[] }> {
-    return this.makeRequest<{ data: MobulaAsset[] }>('/search', { q: query });
+  async getAllAssetsMetadata(limit: number = 100000): Promise<{ data: any[] }> {
+    // Use Mobula's metacore endpoint for comprehensive token metadata
+    return this.makeRequest<{ data: any[] }>('/metadata', { 
+      limit,
+      blockchain: 'all'
+    });
+  }
+
+  async searchAssets(query: string, limit: number = 100): Promise<{ data: MobulaAsset[] }> {
+    return this.makeRequest<{ data: MobulaAsset[] }>('/search', { 
+      q: query,
+      limit
+    });
+  }
+
+  async getAssetDetails(symbol: string): Promise<any> {
+    return this.makeRequest('/metadata', { asset: symbol });
+  }
+
+  async getAssetPairs(symbol: string): Promise<any> {
+    // Get trading pairs and exchanges for where to buy
+    return this.makeRequest('/pairs', { asset: symbol });
   }
 
   // Convert Mobula data to our internal format
