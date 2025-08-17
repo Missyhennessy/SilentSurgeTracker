@@ -22,4 +22,5 @@ export type DashboardModule =
   | "signals"
   | "market-scanner"
   | "search"
-  | "python-engine";
+  | "python-engine"
+  | "api-status";

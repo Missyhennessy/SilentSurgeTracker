@@ -18,6 +18,7 @@ import { MLDashboard } from "@/components/MLDashboard";
 import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import SubscriptionPage from "@/pages/SubscriptionPage";
+import ApiStatusPage from "@/pages/ApiStatusPage";
 
 function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<"light" | "dark">("dark");
@@ -100,6 +101,13 @@ function Router() {
             {() => (
               <ProtectedRoute>
                 <SubscriptionPage />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/api-status">
+            {() => (
+              <ProtectedRoute>
+                <ApiStatusPage />
               </ProtectedRoute>
             )}
           </Route>
