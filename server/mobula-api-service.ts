@@ -114,7 +114,7 @@ export class MobulaApiService {
     return this.makeRequest<MobulaMultiDataResponse>('/market/multi-data', { assets: symbolString });
   }
 
-  async getAllAssets(limit: number = 50000): Promise<{ data: MobulaAsset[] }> {
+  async getAllAssets(limit: number = 100000): Promise<{ data: MobulaAsset[] }> {
     return this.makeRequest<{ data: MobulaAsset[] }>('/market/data', { 
       limit,
       order: 'market_cap_desc'
