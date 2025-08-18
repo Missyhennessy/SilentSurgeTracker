@@ -1021,10 +1021,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         message: 'Multi-API cryptocurrency monitoring expansion started',
         status: 'processing',
-        estimatedCompletion: '10-15 minutes',
-        targetAssets: '14,500+ assets',
-        method: 'CryptoCompare (Primary) → CoinGecko (Fallback)',
-        apiHierarchy: 'Using our established multi-API redundancy system'
+        estimatedCompletion: '8-12 minutes',
+        targetAssets: '15,000 total assets',
+        method: 'CryptoCompare (Primary) → CoinGecko (Secondary)',
+        apiHierarchy: 'Using established multi-API redundancy system',
+        scope: 'Cryptocurrencies, NFTs, meme coins, and tokens'
       });
     } catch (error) {
       res.status(500).json({ message: 'Failed to start expansion', error: error.message });
@@ -1034,8 +1035,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current monitoring statistics
   app.get('/api/crypto/monitoring-stats', isAuthenticated, async (req, res) => {
     try {
-      const { coinGeckoExpansionService } = await import('./coingecko-expansion');
-      const stats = await coinGeckoExpansionService.getCurrentStats();
+      const { multiApiExpansionService } = await import('./multi-api-expansion');
+      const stats = await multiApiExpansionService.getCurrentStats();
       
       res.json(stats);
     } catch (error) {
