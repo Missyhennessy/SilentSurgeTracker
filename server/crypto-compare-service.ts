@@ -112,6 +112,31 @@ export class CryptoCompareService {
     };
   }
 
+  // Get top cryptocurrencies list for expansion
+  async getTopList(limit: number = 2000): Promise<any[]> {
+    try {
+      const response = await this.makeRequest('/top/mktcapfull', {
+        limit: Math.min(limit, 2000), // CryptoCompare allows up to 2000
+        tsym: 'USD'
+      });
+      
+      if (response.Data) {
+        return response.Data.map((item: any) => ({
+          symbol: item.CoinInfo?.Name || item.symbol,
+          name: item.CoinInfo?.FullName || item.name,
+          marketCap: item.DISPLAY?.USD?.MKTCAP ? parseFloat(item.DISPLAY.USD.MKTCAP.replace(/[\$,]/g, '')) : 0,
+          volume24h: item.RAW?.USD?.TOTALVOLUME24HTO || 0,
+          price: item.RAW?.USD?.PRICE || 0
+        }));
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('CryptoCompare top list failed:', error);
+      return [];
+    }
+  }
+
   // Health check
   async healthCheck(): Promise<boolean> {
     try {
