@@ -1007,23 +1007,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cryptocurrency monitoring expansion endpoint
   app.post('/api/crypto/expand-monitoring', isAuthenticated, async (req, res) => {
     try {
-      const { coinGeckoExpansionService } = await import('./coingecko-expansion');
+      const { multiApiExpansionService } = await import('./multi-api-expansion');
       
       // Run expansion in background to avoid timeout
-      coinGeckoExpansionService.expandCryptocurrencyMonitoring()
+      multiApiExpansionService.expandCryptocurrencyMonitoring()
         .then(() => {
-          console.log('✅ Cryptocurrency monitoring expansion completed successfully');
+          console.log('✅ Multi-API cryptocurrency monitoring expansion completed successfully');
         })
         .catch((error) => {
-          console.error('❌ Cryptocurrency monitoring expansion failed:', error);
+          console.error('❌ Multi-API cryptocurrency monitoring expansion failed:', error);
         });
 
       res.json({
-        message: 'Cryptocurrency monitoring expansion started',
+        message: 'Multi-API cryptocurrency monitoring expansion started',
         status: 'processing',
-        estimatedCompletion: '15-20 minutes',
-        targetAssets: '12,500+ (CoinGecko)',
-        method: 'CoinGecko comprehensive scan'
+        estimatedCompletion: '10-15 minutes',
+        targetAssets: '14,500+ assets',
+        method: 'CryptoCompare (Primary) → CoinGecko (Fallback)',
+        apiHierarchy: 'Using our established multi-API redundancy system'
       });
     } catch (error) {
       res.status(500).json({ message: 'Failed to start expansion', error: error.message });

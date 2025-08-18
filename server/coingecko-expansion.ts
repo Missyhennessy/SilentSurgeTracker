@@ -1,5 +1,35 @@
 import { storage } from './storage';
-import { calculateSSS } from './crypto-data-service';
+import { cryptoCompareService } from './crypto-compare-service';
+
+// Calculate SSS score directly here
+function calculateSSS(metrics: {
+  behavioralActivity: number;
+  velocityAnomaly: number;
+  communityCohesion: number;
+  anchorPressure: number;
+  hypeToHoldRatio: number;
+  historicalVolatility: number;
+}): number {
+  const {
+    behavioralActivity,
+    velocityAnomaly,
+    communityCohesion,
+    anchorPressure,
+    hypeToHoldRatio,
+    historicalVolatility
+  } = metrics;
+
+  const sssScore = (
+    (anchorPressure * 0.25) +
+    (behavioralActivity * 0.20) +
+    (velocityAnomaly * 0.20) +
+    (communityCohesion * 0.20) +
+    (hypeToHoldRatio * 0.10) +
+    (historicalVolatility * 0.05)
+  );
+
+  return Math.min(100, Math.max(0, sssScore));
+}
 
 export class CoinGeckoExpansionService {
   private baseUrl = 'https://api.coingecko.com/api/v3';
