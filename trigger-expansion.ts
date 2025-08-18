@@ -1,8 +1,8 @@
-import { coinGeckoExpansionService } from './server/coingecko-expansion';
+import { multiApiExpansionService } from './server/multi-api-expansion';
 
-console.log('🚀 Starting CoinGecko-based cryptocurrency monitoring expansion...');
+console.log('🚀 Starting targeted 15,000 cryptocurrency monitoring expansion...');
 
-coinGeckoExpansionService.expandCryptocurrencyMonitoring()
+multiApiExpansionService.expandCryptocurrencyMonitoring()
   .then(() => {
     console.log('✅ Cryptocurrency monitoring expansion completed successfully!');
     process.exit(0);
