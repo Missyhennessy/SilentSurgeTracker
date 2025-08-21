@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silent Surge Tracker - Investor Pitch Deck</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .slide {
+            display: none;
+            padding: 60px;
+            height: 100vh;
+            overflow-y: auto;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .slide h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .slide h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: #60a5fa;
+            text-align: center;
+        }
+
+        .slide h3 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #34d399;
+        }
+
+        .slide p {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .slide ul {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .slide li {
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        .slide li::before {
+            content: "▶";
+            position: absolute;
+            left: 0;
+            color: #60a5fa;
+            font-weight: bold;
+        }
+
+        .highlight {
+            background: rgba(96, 165, 250, 0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+        }
+
+        .metric {
+            background: rgba(52, 211, 153, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            font-size: 1.4rem;
+            display: inline-block;
+            margin: 0.5rem;
+        }
+
+        .problem-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #ef4444;
+            display: block;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 1000;
+        }
+
+        .control-btn {
+            background: rgba(96, 165, 250, 0.9);
+            border: none;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: #60a5fa;
+            transform: translateY(-2px);
+        }
+
+        .control-btn:disabled {
+            background: rgba(100, 100, 100, 0.5);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .image-placeholder {
+            background: rgba(30, 41, 59, 0.6);
+            border: 2px dashed rgba(96, 165, 250, 0.5);
+            padding: 3rem;
+            text-align: center;
+            border-radius: 1rem;
+            margin: 2rem 0;
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .revenue-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .revenue-card {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            text-align: center;
+        }
+
+        .market-data {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 3rem 0;
+        }
+
+        .market-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .tam { background: rgba(96, 165, 250, 0.3); border: 3px solid #60a5fa; }
+        .sam { background: rgba(52, 211, 153, 0.3); border: 3px solid #34d399; }
+        .som { background: rgba(251, 191, 36, 0.3); border: 3px solid #fbbf24; }
+
+        .competitive-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+        }
+
+        .competitive-table th,
+        .competitive-table td {
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid rgba(96, 165, 250, 0.3);
+        }
+
+        .competitive-table th {
+            background: rgba(96, 165, 250, 0.2);
+            font-weight: 600;
+        }
+
+        .check { color: #22c55e; font-weight: bold; }
+        .cross { color: #ef4444; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="slide-counter">
+            <span id="current-slide">1</span> / <span id="total-slides">7</span>
+        </div>
+
+        <!-- Slide 1: Problem -->
+        <div class="slide active">
+            <h1>🚨 THE PROBLEM</h1>
+            <h2>95% of Crypto Investors Lose Money</h2>
+            
+            <div class="problem-stats">
+                <div class="stat-card">
+                    <span class="stat-number">95%</span>
+                    <p>of crypto investors consistently lose money</p>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">20,000+</span>
+                    <p>cryptocurrencies impossible to analyze manually</p>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">80%+</span>
+                    <p>of gains captured before discovery</p>
+                </div>
+            </div>
+
+            <h3>Three Critical Failures:</h3>
+            <ul>
+                <li><span class="highlight">Late Discovery Problem</span> - Investors find opportunities after major gains already captured</li>
+                <li><span class="highlight">Information Overload</span> - 20,000+ cryptocurrencies with no reliable early-warning system</li>
+                <li><span class="highlight">Failed Analysis Methods</span> - Traditional technical analysis misses behavioral market signals</li>
+            </ul>
+
+            <p style="font-size: 1.5rem; font-style: italic; margin-top: 3rem;">
+                "By the time everyone knows about a crypto opportunity, it's already too late."
+            </p>
+        </div>
+
+        <!-- Slide 2: Solution -->
+        <div class="slide">
+            <h1>✅ THE SOLUTION</h1>
+            <h2>The Silent Surge Score (SSS)</h2>
+            <p style="font-size: 1.4rem; margin-bottom: 3rem;">
+                <span class="highlight">Patent-pending algorithm</span> that identifies crypto opportunities 
+                <span class="metric">30-90 days early</span>
+            </p>
+
+            <h3>Six Behavioral Indicators:</h3>
+            <ul>
+                <li><strong>Behavioral Activity (25%)</strong> - Community engagement patterns</li>
+                <li><strong>Token Velocity Anomaly (20%)</strong> - Unusual transaction flows</li>
+                <li><strong>Community Cohesion (15%)</strong> - Network strength analysis</li>
+                <li><strong>Anchor Pressure (15%)</strong> - Market maker behavior</li>
+                <li><strong>Hype-to-Hold Ratio (15%)</strong> - Sentiment vs. accumulation</li>
+                <li><strong>Historical Volatility (10%)</strong> - Price pattern recognition</li>
+            </ul>
+
+            <div style="text-align: center; margin-top: 3rem;">
+                <div class="metric">86%+ Accuracy</div>
+                <div class="metric">278ms Response Time</div>
+                <div class="metric">First Behavioral ML Platform</div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Product -->
+        <div class="slide">
+            <h1>🖥️ PRODUCT</h1>
+            <h2>Real-Time Intelligence Dashboard</h2>
+            
+            <div class="image-placeholder">
+                🖼️ Dashboard Screenshot: Professional interface showing real-time SSS scores
+                <br><small>Visual Asset: Crypto_dashboard_interface_mockup_44e1aa95.png</small>
+            </div>
+
+            <h3>Platform Capabilities:</h3>
+            <ul>
+                <li><span class="metric">7,099+ Cryptocurrencies</span> monitored continuously</li>
+                <li><span class="metric">278ms Response Time</span> for instant analysis</li>
+                <li><span class="metric">Live SSS Calculations</span> with behavioral heatmaps</li>
+                <li><span class="metric">Predictive Alerts</span> for emerging opportunities</li>
+            </ul>
+
+            <h3>Current Live Data (January 2025):</h3>
+            <ul>
+                <li><strong>EGN (Edu3Games):</strong> SSS Score 99.6 - Exceptional breakout potential at $0.037</li>
+                <li><strong>DIVI:</strong> SSS Score 99.7 - Highest rated opportunity at $0.0016</li>
+                <li><strong>EUL (Euler):</strong> SSS Score 94.0 - Strong institutional signals at $13.38</li>
+                <li><strong>CGV (Cogito Finance):</strong> SSS Score 90.0 - Advanced DeFi opportunity at $0.0046</li>
+            </ul>
+        </div>
+
+        <!-- Slide 4: Traction -->
+        <div class="slide">
+            <h1>📈 TRACTION</h1>
+            <h2>Strong Early Validation & Platform Performance</h2>
+
+            <div class="problem-stats">
+                <div class="stat-card">
+                    <span class="stat-number">7,099</span>
+                    <p>cryptocurrencies monitored with avg SSS 46.3</p>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">86%+</span>
+                    <p>prediction accuracy across market conditions</p>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">A+</span>
+                    <p>security rating - institutional grade</p>
+                </div>
+            </div>
+
+            <h3>Technical Achievements:</h3>
+            <ul>
+                <li><span class="highlight">Patent-pending algorithm</span> operational at scale</li>
+                <li><span class="highlight">Real-time ML processing</span> with 278ms response time</li>
+                <li><span class="highlight">99.9% system uptime</span> with comprehensive monitoring</li>
+                <li><span class="highlight">Multi-API integration</span> ensuring data redundancy</li>
+            </ul>
+
+            <h3>User Validation:</h3>
+            <ul>
+                <li>Professional traders requesting enterprise access</li>
+                <li>Institutional inquiries for API licensing</li>
+                <li>Growing waitlist for premium features</li>
+                <li>Recent successful predictions: CLBTC, SUI breakouts confirmed</li>
+            </ul>
+        </div>
+
+        <!-- Slide 5: Market Opportunity -->
+        <div class="slide">
+            <h1>🎯 MARKET OPPORTUNITY</h1>
+            <h2>$8.2B Crypto Analytics Market with 23.8% CAGR Growth</h2>
+            
+            <div class="image-placeholder">
+                📊 Market Size Visualization: TAM, SAM, SOM breakdown
+                <br><small>Visual Asset: Market_opportunity_TAM_SAM_SOM_0488568b.png</small>
+            </div>
+
+            <div class="market-data">
+                <div class="market-circle tam">
+                    <div>
+                        <strong>TAM</strong><br>
+                        $8.2B<br>
+                        <small>Total Market</small>
+                    </div>
+                </div>
+                <div class="market-circle sam">
+                    <div>
+                        <strong>SAM</strong><br>
+                        $7.2B<br>
+                        <small>Addressable</small>
+                    </div>
+                </div>
+                <div class="market-circle som">
+                    <div>
+                        <strong>SOM</strong><br>
+                        $37M<br>
+                        <small>Our Target</small>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Market Segments:</h3>
+            <ul>
+                <li><strong>Professional Traders:</strong> $2.1B (500K+ traders, $4.2K avg spend)</li>
+                <li><strong>Institutional Funds:</strong> $3.7B (2,300+ funds, $1.6M avg budget)</li>
+                <li><strong>Retail Investors:</strong> $1.4B (420M+ investors, growing demand)</li>
+            </ul>
+        </div>
+
+        <!-- Slide 6: Business Model -->
+        <div class="slide">
+            <h1>💰 BUSINESS MODEL</h1>
+            <h2>Freemium SaaS with Strong Unit Economics</h2>
+            
+            <div class="image-placeholder">
+                💼 Pricing Tiers: Freemium to Enterprise with revenue projections
+                <br><small>Visual Asset: Business_model_pricing_tiers_a9f05ec5.png</small>
+            </div>
+
+            <div class="revenue-grid">
+                <div class="revenue-card">
+                    <h3>🆓 Free Tier</h3>
+                    <p>Basic SSS access, limited monitoring</p>
+                    <div class="metric">User Acquisition</div>
+                </div>
+                <div class="revenue-card">
+                    <h3>💎 Premium ($29/month)</h3>
+                    <p>Full 7,000+ coverage, ML predictions</p>
+                    <div class="metric">$29 × 15K = $5.22M by Y3</div>
+                </div>
+                <div class="revenue-card">
+                    <h3>🏢 Enterprise ($500-5K/month)</h3>
+                    <p>White-label, custom integrations</p>
+                    <div class="metric">$600 avg × 500 = $3M by Y3</div>
+                </div>
+            </div>
+
+            <h3>Revenue Projections:</h3>
+            <ul>
+                <li><strong>Year 1:</strong> $648K (1K premium + 50 enterprise)</li>
+                <li><strong>Year 2:</strong> $2.94M (5K premium + 200 enterprise)</li>
+                <li><strong>Year 3:</strong> $8.22M (15K premium + 500 enterprise)</li>
+            </ul>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <span class="metric">85% Gross Margin</span>
+                <span class="metric">7:1 LTV/CAC Premium</span>
+                <span class="metric">24:1 LTV/CAC Enterprise</span>
+            </div>
+        </div>
+
+        <!-- Slide 7: Go-to-Market -->
+        <div class="slide">
+            <h1>🚀 GO-TO-MARKET STRATEGY</h1>
+            <h2>Multi-Channel Customer Acquisition</h2>
+
+            <h3>Phase 1: Product-Led Growth (Months 1-6)</h3>
+            <ul>
+                <li>Launch freemium platform with viral features</li>
+                <li>Content marketing & SEO targeting "crypto analysis"</li>
+                <li>Crypto community engagement (Discord, Telegram, Reddit)</li>
+                <li>Influencer partnerships with successful predictions</li>
+            </ul>
+
+            <h3>Phase 2: Sales-Led Expansion (Months 7-12)</h3>
+            <ul>
+                <li>Direct institutional sales to hedge funds</li>
+                <li>Strategic partnerships with exchanges and platforms</li>
+                <li>API licensing to fintech companies</li>
+                <li>Conference presence at major crypto events</li>
+            </ul>
+
+            <h3>Phase 3: Scale & Leadership (Year 2+)</h3>
+            <ul>
+                <li>International expansion (Europe, Asia)</li>
+                <li>Strategic acquisitions of complementary tech</li>
+                <li>Market leadership through thought leadership</li>
+                <li>IPO preparation and strategic exit planning</li>
+            </ul>
+
+            <h3>Customer Acquisition Economics:</h3>
+            <div class="problem-stats">
+                <div class="stat-card">
+                    <strong>Digital Marketing</strong><br>
+                    $50 CAC → $348 LTV<br>
+                    <span class="metric">7:1 Ratio</span>
+                </div>
+                <div class="stat-card">
+                    <strong>Enterprise Sales</strong><br>
+                    $500 CAC → $12K LTV<br>
+                    <span class="metric">24:1 Ratio</span>
+                </div>
+                <div class="stat-card">
+                    <strong>Partnership Referrals</strong><br>
+                    $25 CAC → $520 LTV<br>
+                    <span class="metric">20:1 Ratio</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn" onclick="previousSlide()" id="prevBtn">← Previous</button>
+        <button class="control-btn" onclick="nextSlide()" id="nextBtn">Next →</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        document.getElementById('total-slides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[n].classList.add('active');
+            
+            document.getElementById('current-slide').textContent = n + 1;
+            document.getElementById('prevBtn').disabled = n === 0;
+            document.getElementById('nextBtn').disabled = n === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                previousSlide();
+            }
+        });
+
+        // Initialize
+        showSlide(0);
+    </script>
+</body>
+</html>
