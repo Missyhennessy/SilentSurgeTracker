@@ -49,9 +49,18 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  // Show loading state while authentication is being checked
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
+      {!isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
         <>
