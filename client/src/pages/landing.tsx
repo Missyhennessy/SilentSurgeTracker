@@ -79,7 +79,7 @@ export default function Landing() {
           {/* Statistics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20 pt-16 border-t border-white/20">
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-400">1000+</div>
+              <div className="text-3xl font-bold text-blue-400">7,099</div>
               <div className="text-gray-400">Cryptocurrencies Tracked</div>
             </div>
             <div className="text-center">
