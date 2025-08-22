@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, AreaChart, Area } from 'recharts';
 import { CryptoAsset } from '@/types/crypto';
 import SSSBreakdown from '@/components/dashboard/sss-breakdown';
+import { useSubscription } from '@/hooks/useSubscription';
+import { PremiumPaywall } from '@/components/ui/premium-paywall';
 
 interface NewsItem {
   id: string;
@@ -53,6 +55,7 @@ export default function CryptoDetail() {
   const [location, navigate] = useLocation();
   const [timeframe, setTimeframe] = useState('7d');
   const [activeTab, setActiveTab] = useState('overview');
+  const { hasPremiumAccess } = useSubscription();
   
   // Extract symbol from URL path
   const pathParts = location.split('/');
@@ -288,17 +291,25 @@ export default function CryptoDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center">
-                  <div className="text-4xl font-bold mb-2" style={{ color: (asset?.sssScore || 0) >= 70 ? '#10b981' : (asset?.sssScore || 0) >= 50 ? '#f59e0b' : '#ef4444' }}>
-                    {asset?.sssScore?.toFixed(1) || '0.0'}
+                {hasPremiumAccess ? (
+                  <div className="text-center">
+                    <div className="text-4xl font-bold mb-2" style={{ color: (asset?.sssScore || 0) >= 70 ? '#10b981' : (asset?.sssScore || 0) >= 50 ? '#f59e0b' : '#ef4444' }}>
+                      {asset?.sssScore?.toFixed(1) || '0.0'}
+                    </div>
+                    <p className="text-sm text-gray-500 mb-4">
+                      {(asset?.sssScore || 0) >= 70 ? 'High Potential' : (asset?.sssScore || 0) >= 50 ? 'Medium Potential' : 'Lower Potential'}
+                    </p>
+                    <Button variant="outline" size="sm" onClick={() => setActiveTab('analysis')}>
+                      View Analysis
+                    </Button>
                   </div>
-                  <p className="text-sm text-gray-500 mb-4">
-                    {(asset?.sssScore || 0) >= 70 ? 'High Potential' : (asset?.sssScore || 0) >= 50 ? 'Medium Potential' : 'Lower Potential'}
-                  </p>
-                  <Button variant="outline" size="sm" onClick={() => setActiveTab('analysis')}>
-                    View Analysis
-                  </Button>
-                </div>
+                ) : (
+                  <PremiumPaywall
+                    feature="Silent Surge Score"
+                    description="Our proprietary algorithm analyzes 6 key metrics to predict cryptocurrency surges."
+                    size="sm"
+                  />
+                )}
               </CardContent>
             </Card>
           </div>
@@ -471,7 +482,55 @@ export default function CryptoDetail() {
         </TabsContent>
 
         <TabsContent value="analysis">
-          {asset && <SSSBreakdown asset={asset} />}
+          {hasPremiumAccess ? (
+            asset && <SSSBreakdown asset={asset} />
+          ) : (
+            <div className="space-y-6">
+              <PremiumPaywall
+                feature="Advanced SSS Analysis"
+                description="Get detailed breakdowns of behavioral activity, velocity anomalies, community cohesion, anchor pressure, and ML predictions."
+                size="lg"
+              />
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>What's Included in SSS Analysis</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-blue-400" />
+                      <div>
+                        <p className="font-medium text-white">Behavioral Activity</p>
+                        <p className="text-sm text-gray-400">Trading pattern analysis</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-green-400" />
+                      <div>
+                        <p className="font-medium text-white">Velocity Anomaly</p>
+                        <p className="text-sm text-gray-400">Transaction speed insights</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-purple-400" />
+                      <div>
+                        <p className="font-medium text-white">Community Cohesion</p>
+                        <p className="text-sm text-gray-400">Social sentiment tracking</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-orange-400" />
+                      <div>
+                        <p className="font-medium text-white">ML Predictions</p>
+                        <p className="text-sm text-gray-400">AI-powered breakout analysis</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="news" className="space-y-6">
