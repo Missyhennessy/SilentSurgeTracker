@@ -24,7 +24,7 @@ export default function AssetScanner() {
 
   const { data: assets, isLoading, error } = useQuery<CryptoAsset[]>({
     queryKey: ["/api/assets"],
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 60000, // Refetch every 60 seconds
   });
 
   // Handle error toast in useEffect to avoid infinite re-renders
@@ -36,7 +36,7 @@ export default function AssetScanner() {
         variant: "destructive",
       });
     }
-  }, [error, toast]);
+  }, [error]); // Remove toast from dependencies
 
   // Calculate quick stats
   const quickStats = assets ? [
