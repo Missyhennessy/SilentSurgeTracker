@@ -323,6 +323,104 @@ class PythonEngineService {
     };
   }
 
+  async calculateEnhancedSSS(symbol: string, price: number, volume: number, change24h: number, change7d: number = 0, velocityAnomaly: number = 50): Promise<any> {
+    try {
+      const script = `
+import sys
+import os
+sys.path.append('/home/runner/workspace/python_engine')
+
+import json
+import numpy as np
+from datetime import datetime
+from enhanced_sss_calculator import EnhancedSSS
+
+def calculate_professional_sss(symbol, price, volume, change24h, change7d, velocity_anomaly):
+    try:
+        # Initialize enhanced SSS calculator
+        calculator = EnhancedSSS()
+        
+        # Prepare crypto data
+        crypto_data = {
+            'symbol': symbol,
+            'price': price,
+            'volume': volume,
+            'change24h': change24h,
+            'change7d': change7d,
+            'velocityAnomaly': velocity_anomaly,
+            'communityScore': min(100, volume / 10000000 * 50),  # Volume-based community score
+            'socialVolume': min(100, abs(change24h) * 10 + 30)   # Price movement based social activity
+        }
+        
+        # Generate price history simulation based on recent changes
+        current_price = price
+        price_history = []
+        
+        # Simulate 30 days of price data based on recent performance
+        daily_change = change7d / 7 / 100  # Average daily change from weekly
+        volatility = abs(change24h) / 100 * 2  # Estimate volatility from 24h change
+        
+        for i in range(30, 0, -1):  # Go backwards from today
+            # Random walk with drift
+            random_factor = np.random.normal(0, volatility / 2)
+            day_price = current_price * (1 - (daily_change * i) + random_factor)
+            price_history.append(max(0.001, day_price))
+        
+        # Calculate enhanced SSS
+        result = calculator.calculate_enhanced_sss(crypto_data, price_history)
+        
+        # Convert to format expected by frontend
+        enhanced_result = {
+            "symbol": result['symbol'],
+            "sss_score": round(result['enhanced_sss_score'], 1),
+            "confidence": round(result['confidence'] * 100, 1),
+            "prediction": result['prediction'],
+            "components": result['components'],
+            "professional_analysis": {
+                "sentiment_score": round(result['components']['sentiment']['sentiment_score'], 1),
+                "risk_score": round(result['components']['risk']['risk_score'], 1),
+                "market_mood": result['components']['sentiment']['market_mood'],
+                "risk_level": result['components']['risk']['risk_level'],
+                "recommendation": result['prediction']['recommendation'],
+                "profit_probability": round(result['prediction']['profit_probability'] * 100, 1),
+                "key_factors": result['prediction']['key_factors'],
+                "warnings": result['prediction']['warnings']
+            },
+            "calculation_time": result['calculation_time'],
+            "version": result['version']
+        }
+        
+        return enhanced_result
+        
+    except Exception as e:
+        import traceback
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+            "symbol": symbol,
+            "fallback_sss": 50.0
+        }
+
+# Get input parameters
+symbol = "${symbol}"
+price = ${price}
+volume = ${volume}
+change24h = ${change24h}
+change7d = ${change7d}
+velocity_anomaly = ${velocityAnomaly}
+
+result = calculate_professional_sss(symbol, price, volume, change24h, change7d, velocity_anomaly)
+print(json.dumps(result))
+`;
+
+      const result = await this.executePythonScript('temp_enhanced_sss.py', [], true, script);
+      return result;
+    } catch (error) {
+      console.error('Error in enhanced SSS calculation:', error);
+      return null;
+    }
+  }
+
   async getEngineStatus(): Promise<any> {
     try {
       const result = await this.executePythonScript('-c', [
