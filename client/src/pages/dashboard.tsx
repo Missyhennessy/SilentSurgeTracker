@@ -152,7 +152,7 @@ export default function Dashboard() {
                 <div className="w-px h-8 bg-gray-700"></div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-yellow-400">
-                    <AnimatedCounter value={alertCount} />
+                    <AnimatedCounter value={3} />
                   </div>
                   <div className="text-xs text-gray-400">Alerts</div>
                 </div>
@@ -164,12 +164,12 @@ export default function Dashboard() {
               <RealTimeIndicator />
               <Button variant="ghost" size="sm" className="relative">
                 <Bell className="h-5 w-5" />
-                {alertCount > 0 && (
+                {3 > 0 && (
                   <Badge 
                     variant="destructive" 
                     className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
                   >
-                    {alertCount > 9 ? '9+' : alertCount}
+                    {3 > 9 ? '9+' : 3}
                   </Badge>
                 )}
               </Button>
@@ -182,9 +182,9 @@ export default function Dashboard() {
           <UserFriendlyNav 
             activeModule={activeModule}
             setActiveModule={setActiveModule}
-            alertCount={alertCount}
-            userLevel={userLevel}
-            onUserLevelChange={setUserLevel}
+            alertCount={3}
+            userLevel={"beginner"}
+            onUserLevelChange={() => {}}
           />
         </div>
       </div>
@@ -212,9 +212,9 @@ export default function Dashboard() {
       {process.env.NODE_ENV === 'development' && <PerformanceMonitor />}
       
       <TourOverlay 
-        isOpen={showTour}
-        onClose={() => setShowTour(false)}
-        onComplete={() => setShowTour(false)}
+        isOpen={false}
+        onClose={() => {}}
+        onComplete={() => {}}
       />
     </div>
   );
