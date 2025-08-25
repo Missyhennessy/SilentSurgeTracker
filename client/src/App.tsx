@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 import Dashboard from "@/pages/dashboard";
 import InvestorDashboard from "@/pages/investor-dashboard";
+import StableDashboard from "@/pages/stable-dashboard";
 import Landing from "@/pages/landing";
 import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
@@ -67,8 +68,9 @@ function Router() {
         <Route path="/" component={Landing} />
       ) : (
         <>
-          <Route path="/" component={InvestorDashboard} />
-          <Route path="/dashboard" component={InvestorDashboard} />
+          <Route path="/" component={StableDashboard} />
+          <Route path="/dashboard" component={StableDashboard} />
+          <Route path="/investor" component={InvestorDashboard} />
           <Route path="/full-dashboard" component={Dashboard} />
           <Route path="/profile">
             {() => (
