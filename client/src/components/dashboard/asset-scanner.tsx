@@ -22,15 +22,14 @@ export default function AssetScanner() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { toast } = useToast();
 
-  // Temporarily disable asset fetching to fix refresh loop
-  // const { data: assets, isLoading, error } = useQuery<CryptoAsset[]>({
-  //   queryKey: ["/api/assets"],
-  //   refetchInterval: false, // Disable auto-refetch to prevent loops
-  // });
-  
-  const assets: CryptoAsset[] = []; // Empty for now
-  const isLoading = false;
-  const error = null;
+  // Re-enable asset fetching with anti-refresh protection
+  const { data: assets, isLoading, error } = useQuery<CryptoAsset[]>({
+    queryKey: ["/api/assets"],
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false, // No auto-refresh to prevent loops
+  });
 
   // Handle error toast in useEffect to avoid infinite re-renders
   useEffect(() => {
