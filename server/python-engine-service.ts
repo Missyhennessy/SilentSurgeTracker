@@ -64,6 +64,24 @@ interface DecisionRequest {
   risk_profile?: 'conservative' | 'moderate' | 'aggressive';
 }
 
+interface RegimeAnalysisRequest {
+  symbols: string[];
+  timeframe?: string;
+  thresholds?: {
+    atr_thresh?: number;
+    macro_thresh?: number;
+    anchor_vol_thresh?: number;
+  };
+}
+
+interface BacktestRequest {
+  strategy: string;
+  symbols: string[];
+  date_range: string;
+  risk_profile: 'conservative' | 'moderate' | 'aggressive';
+  parameters?: Record<string, any>;
+}
+
 class PythonEngineService {
   private pythonPath: string;
   private enginePath: string;
