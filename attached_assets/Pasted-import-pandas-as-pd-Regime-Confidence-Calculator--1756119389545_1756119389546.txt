@@ -1,0 +1,77 @@
+import pandas as pd
+
+# -----------------------------
+# Regime Confidence Calculator
+# -----------------------------
+def compute_regime_confidence(data, atr_thresh=0.08, macro_thresh=1.5, anchor_vol_thresh=0.2):
+    atr = data.get("atr", 1)
+    volume = data.get("volume", 1)
+    macro = data.get("macro_surprise", 0)
+    anchor = data.get("anchor_pressure", 0)
+
+    vol_ratio = atr / volume
+    anchor_vol = abs(anchor - 0.5)
+
+    score = 0
+    score += 1 if vol_ratio > atr_thresh else 0
+    score += 1 if macro > macro_thresh else 0
+    score += 1 if anchor_vol > anchor_vol_thresh else 0
+
+    confidence = score / 3
+    regime = "volatility" if confidence >= 0.5 else "momentum"
+    return regime, round(confidence, 2)
+
+# -----------------------------
+# Regime-Specific Scoring
+# -----------------------------
+def score_asset(asset_id, data, regime="momentum"):
+    price = data.get("price", 0)
+    volume = data.get("volume", 1)
+    atr = data.get("atr", 1)
+    macro = data.get("macro_surprise", 0)
+    anchor = data.get("anchor_pressure", 0)
+
+    if regime == "momentum":
+        score = (price / volume) * 100 + anchor * 0.4
+    elif regime == "volatility":
+        vol_penalty = atr / volume
+        score = (price / volume) * (1 - vol_penalty) - macro * 0.05 + anchor * 0.2
+    else:
+        score = 0
+
+    return {"Score": round(score, 2)}
+
+# -----------------------------
+# Hybrid Scoring Engine
+# -----------------------------
+def hybrid_score_asset(asset_id, data):
+    regime, confidence = compute_regime_confidence(data)
+    score_momentum = score_asset(asset_id, data, regime="momentum")["Score"]
+    score_volatility = score_asset(asset_id, data, regime="volatility")["Score"]
+
+    hybrid_score = score_momentum * (1 - confidence) + score_volatility * confidence
+
+    return {
+        "Asset": asset_id.upper(),
+        "Hybrid_Score": round(hybrid_score, 2),
+        "Momentum_Score": round(score_momentum, 2),
+        "Volatility_Score": round(score_volatility, 2),
+        "Confidence": confidence,
+        "Dominant_Regime": regime
+    }
+
+# -----------------------------
+# Backtest Engine
+# -----------------------------
+def backtest_hybrid(df):
+    results = []
+    for _, row in df.iterrows():
+        scored = hybrid_score_asset(row["Asset"], row)
+        results.append({
+            "Date": row["Date"],
+            "Asset": scored["Asset"],
+            "Hybrid_Score": scored["Hybrid_Score"],
+            "Confidence": scored["Confidence"],
+            "Dominant_Regime": scored["Dominant_Regime"]
+        })
+    return pd.DataFrame(results)
