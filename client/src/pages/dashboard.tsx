@@ -1,46 +1,58 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TrendingUp, Bell, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+
+// Import dashboard components
+import AssetScanner from "@/components/dashboard/asset-scanner";
+import Watchlist from "@/components/dashboard/watchlist";
+import BehavioralHeatmap from "@/components/dashboard/behavioral-heatmap";
+import VelocityTracking from "@/components/dashboard/velocity-tracking";
+import CohesionAnalyzer from "@/components/dashboard/cohesion-analyzer";
+import AnchorPressure from "@/components/dashboard/anchor-pressure";
 
 export default function Dashboard() {
   const [activeModule, setActiveModule] = useState("scanner");
   
-  const totalAssets = 7099; // Hardcoded to prevent refresh loops
+  // Get total assets for header with anti-refresh protection
+  const { data: assets } = useQuery<any[]>({
+    queryKey: ["/api/assets"],
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false, // No auto-refresh to prevent loops
+  });
+
+  const totalAssets = Array.isArray(assets) ? assets.length : 7099;
 
   const renderModule = () => {
-    return (
-      <div className="p-8 text-center">
-        <h2 className="text-2xl font-bold text-white mb-4">
-          Silent Surge Tracker Dashboard
-        </h2>
-        <p className="text-gray-400 mb-6">
-          Professional cryptocurrency analysis platform with enhanced algorithm
-        </p>
-        <div className="bg-gray-800 p-6 rounded-lg max-w-2xl mx-auto">
-          <h3 className="text-lg font-semibold text-green-400 mb-2">
-            ✅ Website Refresh Issue Fixed!
-          </h3>
-          <p className="text-gray-300 mb-4">
-            Enhanced SSS algorithm active • 7,099+ cryptocurrencies monitored
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <div className="bg-gray-700 p-4 rounded">
-              <div className="text-2xl font-bold text-blue-400">7,099</div>
-              <div className="text-sm text-gray-400">Assets Tracked</div>
-            </div>
-            <div className="bg-gray-700 p-4 rounded">
-              <div className="text-2xl font-bold text-green-400">Enhanced</div>
-              <div className="text-sm text-gray-400">SSS Algorithm</div>
-            </div>
-            <div className="bg-gray-700 p-4 rounded">
-              <div className="text-2xl font-bold text-yellow-400">Real-time</div>
-              <div className="text-sm text-gray-400">Analysis</div>
-            </div>
-          </div>
+    try {
+      switch (activeModule) {
+        case "scanner":
+          return <AssetScanner />;
+        case "watchlist":
+          return <Watchlist />;
+        case "heatmap":
+          return <BehavioralHeatmap />;
+        case "velocity":
+          return <VelocityTracking />;
+        case "cohesion":
+          return <CohesionAnalyzer />;
+        case "anchor":
+          return <AnchorPressure />;
+        default:
+          return <AssetScanner />;
+      }
+    } catch (error) {
+      console.error('Dashboard render error:', error);
+      return (
+        <div className="p-8 text-center">
+          <h2 className="text-xl text-white mb-4">Loading Dashboard...</h2>
+          <p className="text-gray-400">Enhanced SSS algorithm active • Real-time crypto analysis</p>
         </div>
-      </div>
-    );
+      );
+    }
   };
 
   return (
@@ -103,13 +115,13 @@ export default function Dashboard() {
         
         {/* Navigation Bar Row */}
         <div className="px-6 py-3">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <Button 
               variant={activeModule === "scanner" ? "default" : "ghost"}
               size="sm"
               onClick={() => setActiveModule("scanner")}
             >
-              Scanner
+              Asset Scanner
             </Button>
             <Button 
               variant={activeModule === "watchlist" ? "default" : "ghost"}
@@ -119,11 +131,32 @@ export default function Dashboard() {
               Watchlist
             </Button>
             <Button 
-              variant={activeModule === "analysis" ? "default" : "ghost"}
+              variant={activeModule === "heatmap" ? "default" : "ghost"}
               size="sm"
-              onClick={() => setActiveModule("analysis")}
+              onClick={() => setActiveModule("heatmap")}
             >
-              Analysis
+              Heatmap
+            </Button>
+            <Button 
+              variant={activeModule === "velocity" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveModule("velocity")}
+            >
+              Velocity
+            </Button>
+            <Button 
+              variant={activeModule === "cohesion" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveModule("cohesion")}
+            >
+              Cohesion
+            </Button>
+            <Button 
+              variant={activeModule === "anchor" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveModule("anchor")}
+            >
+              Anchor
             </Button>
           </div>
         </div>
