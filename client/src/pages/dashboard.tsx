@@ -15,16 +15,8 @@ import AnchorPressure from "@/components/dashboard/anchor-pressure";
 export default function Dashboard() {
   const [activeModule, setActiveModule] = useState("scanner");
   
-  // Get total assets for header with anti-refresh protection
-  const { data: assets } = useQuery<any[]>({
-    queryKey: ["/api/assets"],
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false, // No auto-refresh to prevent loops
-  });
-
-  const totalAssets = Array.isArray(assets) ? assets.length : 7099;
+  // Static data for investor presentation - no API calls
+  const totalAssets = 7099;
 
   const renderModule = () => {
     try {
@@ -80,7 +72,7 @@ export default function Dashboard() {
               <div className="hidden lg:flex items-center gap-4 ml-6">
                 <div className="text-center">
                   <div className="text-lg font-bold text-white">
-                    {totalAssets.toLocaleString()}
+                    7,099
                   </div>
                   <div className="text-xs text-gray-400">Assets</div>
                 </div>

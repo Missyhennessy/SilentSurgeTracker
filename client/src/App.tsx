@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 import Dashboard from "@/pages/dashboard";
+import InvestorDashboard from "@/pages/investor-dashboard";
 import Landing from "@/pages/landing";
 import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
@@ -47,9 +48,8 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 function Router() {
-  // Temporarily bypass auth system to fix refresh loop
-  // const { isAuthenticated, isLoading } = useAuth();
-  const isAuthenticated = true; // Force authenticated for testing
+  // Completely stable for investor presentation
+  const isAuthenticated = true;
   const isLoading = false;
 
   // Show loading state while authentication is being checked
@@ -67,8 +67,9 @@ function Router() {
         <Route path="/" component={Landing} />
       ) : (
         <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/" component={InvestorDashboard} />
+          <Route path="/dashboard" component={InvestorDashboard} />
+          <Route path="/full-dashboard" component={Dashboard} />
           <Route path="/profile">
             {() => (
               <ProtectedRoute>

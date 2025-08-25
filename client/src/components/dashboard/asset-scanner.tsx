@@ -22,14 +22,59 @@ export default function AssetScanner() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { toast } = useToast();
 
-  // Re-enable asset fetching with anti-refresh protection
-  const { data: assets, isLoading, error } = useQuery<CryptoAsset[]>({
-    queryKey: ["/api/assets"],
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false, // No auto-refresh to prevent loops
-  });
+  // Static demo data for investor presentation
+  const assets: CryptoAsset[] = [
+    {
+      id: 1,
+      symbol: "GALA",
+      name: "Gala",
+      price: 0.02,
+      sssScore: 85.3,
+      marketCap: 750000000,
+      volume24h: 45000000,
+      priceChange24h: 12.5,
+      behavioralActivity: 78,
+      tokenVelocity: 82,
+      communityScore: 89,
+      anchorPressure: 76,
+      hypeToHoldRatio: 1.4,
+      historicalVolatility: 0.65
+    },
+    {
+      id: 2,
+      symbol: "FLOKI",
+      name: "Floki",
+      price: 0.00015,
+      sssScore: 78.9,
+      marketCap: 1200000000,
+      volume24h: 67000000,
+      priceChange24h: 8.3,
+      behavioralActivity: 85,
+      tokenVelocity: 73,
+      communityScore: 92,
+      anchorPressure: 68,
+      hypeToHoldRatio: 1.7,
+      historicalVolatility: 0.72
+    },
+    {
+      id: 3,
+      symbol: "PONKE",
+      name: "Ponke",
+      price: 0.11,
+      sssScore: 82.1,
+      marketCap: 380000000,
+      volume24h: 28000000,
+      priceChange24h: 15.7,
+      behavioralActivity: 89,
+      tokenVelocity: 77,
+      communityScore: 84,
+      anchorPressure: 81,
+      hypeToHoldRatio: 1.2,
+      historicalVolatility: 0.58
+    }
+  ];
+  const isLoading = false;
+  const error = null;
 
   // Handle error toast in useEffect to avoid infinite re-renders
   useEffect(() => {
