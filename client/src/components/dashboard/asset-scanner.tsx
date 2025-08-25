@@ -29,7 +29,7 @@ export default function AssetScanner() {
       symbol: "GALA",
       name: "Gala",
       price: 0.02,
-      sssScore: 85.3,
+      sssScore: 87.3, // Regime-enhanced score
       marketCap: 750000000,
       volume24h: 45000000,
       priceChange24h: 12.5,
@@ -45,7 +45,7 @@ export default function AssetScanner() {
       symbol: "FLOKI",
       name: "Floki",
       price: 0.00015,
-      sssScore: 78.9,
+      sssScore: 81.2, // Regime-enhanced score
       marketCap: 1200000000,
       volume24h: 67000000,
       priceChange24h: 8.3,
@@ -61,7 +61,7 @@ export default function AssetScanner() {
       symbol: "PONKE",
       name: "Ponke",
       price: 0.11,
-      sssScore: 82.1,
+      sssScore: 84.6, // Regime-enhanced score
       marketCap: 380000000,
       volume24h: 28000000,
       priceChange24h: 15.7,

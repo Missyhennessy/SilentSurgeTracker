@@ -17,22 +17,25 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from sentiment_analyzer import CryptoSentimentAnalyzer
 from risk_analyzer import ProfessionalRiskAnalyzer
+from regime_analyzer import RegimeAnalyzer
 
 class EnhancedSSS:
     def __init__(self):
         self.sentiment_analyzer = CryptoSentimentAnalyzer()
         self.risk_analyzer = ProfessionalRiskAnalyzer()
+        self.regime_analyzer = RegimeAnalyzer()
         
-        # Enhanced weighting system
+        # Enhanced weighting system with regime analysis
         self.component_weights = {
-            'behavioral_activity': 0.15,     # Reduced from 0.20
-            'velocity_anomaly': 0.15,       # Reduced from 0.20  
-            'community_cohesion': 0.10,     # Reduced from 0.15
-            'anchor_pressure': 0.10,        # Reduced from 0.15
-            'hype_to_hold_ratio': 0.10,     # Reduced from 0.15
-            'historical_volatility': 0.10,  # Reduced from 0.15
-            'sentiment_score': 0.15,        # NEW - Real-time sentiment
-            'risk_assessment': 0.15         # NEW - Professional risk analysis
+            'behavioral_activity': 0.12,     # Reduced for regime integration
+            'velocity_anomaly': 0.12,       # Reduced for regime integration
+            'community_cohesion': 0.08,     # Reduced for regime integration
+            'anchor_pressure': 0.08,        # Reduced for regime integration
+            'hype_to_hold_ratio': 0.08,     # Reduced for regime integration
+            'historical_volatility': 0.08,  # Reduced for regime integration
+            'sentiment_score': 0.12,        # Real-time sentiment
+            'risk_assessment': 0.12,        # Professional risk analysis
+            'regime_score': 0.20            # NEW - Regime-aware hybrid scoring
         }
         
         # Validation weights sum to 1.0
@@ -121,7 +124,7 @@ class EnhancedSSS:
                 'error': str(e)
             }
     
-    def calculate_enhanced_sss(self, crypto_data: dict, price_history: List[float] = None) -> dict:
+    def calculate_enhanced_sss(self, crypto_data: dict, price_history: Optional[List[float]] = None) -> dict:
         """Calculate enhanced SSS with professional analysis"""
         symbol = crypto_data.get('symbol', 'UNKNOWN')
         
@@ -145,6 +148,18 @@ class EnhancedSSS:
         
         risk_component = self.calculate_risk_component(symbol, price_history)
         
+        # Calculate regime component
+        regime_data = {
+            'atr': abs(crypto_data.get('change24h', 0)) / 100,
+            'volume': crypto_data.get('volume', 1000000),
+            'macro_surprise': crypto_data.get('macro_surprise', 0),
+            'anchor_pressure': legacy_components['anchor_pressure'] / 100,
+            'price': crypto_data.get('price', 1.0)
+        }
+        
+        regime_result = self.regime_analyzer.hybrid_score_asset(symbol, regime_data)
+        regime_score = regime_result['Hybrid_Score']
+        
         # Combine all components using weights
         total_score = (
             legacy_components['behavioral_activity'] * self.component_weights['behavioral_activity'] +
@@ -154,7 +169,8 @@ class EnhancedSSS:
             legacy_components['hype_to_hold_ratio'] * self.component_weights['hype_to_hold_ratio'] +
             legacy_components['historical_volatility'] * self.component_weights['historical_volatility'] +
             sentiment_component['sentiment_score'] * self.component_weights['sentiment_score'] +
-            risk_component['risk_score'] * self.component_weights['risk_assessment']
+            risk_component['risk_score'] * self.component_weights['risk_assessment'] +
+            regime_score * self.component_weights['regime_score']
         )
         
         # Calculate overall confidence
@@ -175,7 +191,8 @@ class EnhancedSSS:
             'components': {
                 'legacy': legacy_components,
                 'sentiment': sentiment_component,
-                'risk': risk_component
+                'risk': risk_component,
+                'regime': regime_result
             },
             'component_weights': self.component_weights,
             'calculation_time': datetime.now().isoformat(),

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { TrendingUp, Bell, Activity, Target, Zap, Search } from "lucide-react";
+import RegimeAnalyzer from "@/components/dashboard/regime-analyzer";
+import BacktestingEngine from "@/components/dashboard/backtesting-engine";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -137,11 +139,29 @@ export default function StableDashboard() {
           >
             SSS Analysis
           </Button>
+          <Button 
+            variant={activeView === "regime" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveView("regime")}
+          >
+            Regime Analyzer
+          </Button>
+          <Button 
+            variant={activeView === "backtest" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveView("backtest")}
+          >
+            Backtesting
+          </Button>
         </div>
       </nav>
 
       {/* Main Content */}
       <main className="p-6 space-y-6">
+        {activeView === "regime" && <RegimeAnalyzer />}
+        {activeView === "backtest" && <BacktestingEngine />}
+        {(activeView === "overview" || activeView === "scanner" || activeView === "analysis") && (
+          <div className="space-y-6">
         {/* Key Metrics Dashboard */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="bg-gray-800 border-gray-700">
@@ -273,6 +293,8 @@ export default function StableDashboard() {
             </div>
           </CardContent>
         </Card>
+          </div>
+        )}
       </main>
     </div>
   );
