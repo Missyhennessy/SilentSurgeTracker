@@ -584,6 +584,58 @@ except Exception as e:
     }
   });
 
+  // Hybrid SSS with Advanced Regime Detection (Premium Feature)
+  app.post('/api/python-engine/hybrid-sss', requireSubscription || ((req: any, res: any, next: any) => next()), async (req, res) => {
+    try {
+      const { tokenData, marketData } = req.body;
+      
+      if (!tokenData || typeof tokenData !== 'object') {
+        return res.status(400).json({ error: 'Invalid token data' });
+      }
+
+      // Validate required fields
+      const requiredFields = ['behavioral_activity', 'velocity_anomaly', 'community_cohesion', 'anchor_pressure', 'hype_to_hold', 'historical_volatility'];
+      for (const field of requiredFields) {
+        if (tokenData[field] === undefined) {
+          return res.status(400).json({ error: `Missing required field: ${field}` });
+        }
+      }
+
+      // Create temporary file with input data
+      const inputFile = `temp_hybrid_input_${Date.now()}.json`;
+      const inputPath = path.join(pythonEngineService.enginePath, inputFile);
+      
+      await fs.writeFile(inputPath, JSON.stringify({
+        token_data: tokenData,
+        market_data: marketData || {}
+      }));
+
+      try {
+        const result = await pythonEngineService.executePythonScript('calculate_hybrid_sss.py', [inputFile]);
+        
+        // Clean up temp file
+        await fs.unlink(inputPath).catch(() => {});
+        
+        if (result && result.success) {
+          res.json(result);
+        } else {
+          throw new Error(result?.error || 'Hybrid SSS calculation failed');
+        }
+      } catch (scriptError) {
+        // Clean up temp file on error
+        await fs.unlink(inputPath).catch(() => {});
+        throw scriptError;
+      }
+      
+    } catch (error: any) {
+      console.error('Hybrid SSS calculation error:', error);
+      res.status(500).json({ 
+        error: 'Hybrid SSS calculation failed',
+        details: error.message 
+      });
+    }
+  });
+
   // Comprehensive ML Analysis (Premium Feature)
   app.post('/api/python-engine/comprehensive-analysis', requireSubscription || ((req: any, res: any, next: any) => next()), async (req, res) => {
     try {
