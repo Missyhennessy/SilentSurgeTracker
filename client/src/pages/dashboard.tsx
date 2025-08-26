@@ -1,49 +1,141 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, Bell, Activity } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { UserFriendlyNav } from "@/components/navigation/user-friendly-nav";
+import { RealTimeIndicator } from "@/components/real-time-indicator";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
+import { PerformanceMonitor } from "@/components/ui/performance-monitor";
+import { TrendingUp, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
-
-// Import dashboard components
+import { FloatingActionButton, defaultFABActions } from "@/components/ui/floating-action-button";
 import AssetScanner from "@/components/dashboard/asset-scanner";
 import Watchlist from "@/components/dashboard/watchlist";
 import BehavioralHeatmap from "@/components/dashboard/behavioral-heatmap";
 import VelocityTracking from "@/components/dashboard/velocity-tracking";
 import CohesionAnalyzer from "@/components/dashboard/cohesion-analyzer";
 import AnchorPressure from "@/components/dashboard/anchor-pressure";
+import HHRComparator from "@/components/dashboard/hhr-comparator";
+import CompositeRating from "@/components/dashboard/composite-rating";
+import HistoricalSSSTracker from "@/components/analytics/historical-sss-tracker";
+import PortfolioTracker from "@/components/analytics/portfolio-tracker";
+import BacktestingEngine from "@/components/analytics/backtesting-engine";
+import { ModelPerformance } from "@/components/ml/model-performance";
+import RiskManagement from "@/components/advanced/risk-management";
+import MarketSentiment from "@/components/advanced/market-sentiment";
+import PortfolioOptimization from "@/components/advanced/portfolio-optimization";
+import AlertsManagement from "@/components/advanced/alerts-management";
+import TradingSignals from "@/components/advanced/trading-signals";
+import MarketScanner from "@/components/advanced/market-scanner";
+import CryptoSearch from "@/components/advanced/crypto-search";
+import { useWebSocket } from "@/hooks/use-websocket";
+import { DashboardModule } from "@/types/dashboard";
+import { TourOverlay } from "@/components/onboarding/tour-overlay";
+
 
 export default function Dashboard() {
-  const [activeModule, setActiveModule] = useState("scanner");
-  
-  // Static data for investor presentation - no API calls
-  const totalAssets = 7099;
+  const [activeModule, setActiveModule] = useState<DashboardModule>("scanner");
+  const [alertCount] = useState(3);
+  const [showTour, setShowTour] = useState(false);
+  const [userLevel, setUserLevel] = useState<"beginner" | "advanced">("beginner");
+
+  const { isConnected } = useWebSocket("/ws");
+
+  useEffect(() => {
+    const hasSeenTour = localStorage.getItem('sst-tour-completed');
+    if (!hasSeenTour) {
+      setShowTour(true);
+    }
+  }, []);
+
+  // Get total assets for header
+  const { data: assets } = useQuery<any[]>({
+    queryKey: ["/api/assets"],
+    refetchInterval: 30000,
+  });
+
+  const totalAssets = Array.isArray(assets) ? assets.length : 0;
 
   const renderModule = () => {
+    console.log('Rendering module:', activeModule);
+    
     try {
       switch (activeModule) {
         case "scanner":
+          console.log('Loading AssetScanner');
           return <AssetScanner />;
         case "watchlist":
+          console.log('Loading Watchlist');
           return <Watchlist />;
         case "heatmap":
+          console.log('Loading BehavioralHeatmap');
           return <BehavioralHeatmap />;
         case "velocity":
+          console.log('Loading VelocityTracking');
           return <VelocityTracking />;
         case "cohesion":
+          console.log('Loading CohesionAnalyzer');
           return <CohesionAnalyzer />;
         case "anchor":
+          console.log('Loading AnchorPressure');
           return <AnchorPressure />;
+        case "hhr":
+          console.log('Loading HHRComparator');
+          return <HHRComparator />;
+        case "composite":
+          console.log('Loading CompositeRating');
+          return <CompositeRating />;
+        case "analytics":
+          console.log('Loading HistoricalSSSTracker');
+          return <HistoricalSSSTracker />;
+        case "portfolio":
+          console.log('Loading PortfolioTracker');
+          return <PortfolioTracker />;
+        case "backtest":
+          console.log('Loading BacktestingEngine');
+          return <BacktestingEngine />;
+        case "ml":
+          console.log('Loading ModelPerformance');
+          return <ModelPerformance />;
+        case "risk":
+          console.log('Loading RiskManagement');
+          return <RiskManagement />;
+        case "sentiment":
+          console.log('Loading MarketSentiment');
+          return <MarketSentiment />;
+        case "optimization":
+          console.log('Loading PortfolioOptimization');
+          return <PortfolioOptimization />;
+        case "alerts":
+          console.log('Loading AlertsManagement');
+          return <AlertsManagement />;
+        case "signals":
+          console.log('Loading TradingSignals');
+          return <TradingSignals />;
+        case "market-scanner":
+          console.log('Loading MarketScanner');
+          return <MarketScanner />;
+        case "search":
+          console.log('Loading CryptoSearch');
+          return <CryptoSearch />;
+        case "python-engine":
+          console.log('Navigating to Python Engine');
+          window.location.href = '/python-engine';
+          break;
+        case "ml-dashboard":
+          console.log('Navigating to ML Dashboard');
+          window.location.href = '/ml-dashboard';
+          return <div className="p-6">Redirecting to ML Dashboard...</div>;
+        case "api-status":
+          console.log('Navigating to API Status');
+          window.location.href = '/api-status';
+          return <div className="p-6">Redirecting to API Status Dashboard...</div>;
         default:
+          console.log('Loading default AssetScanner');
           return <AssetScanner />;
       }
     } catch (error) {
-      console.error('Dashboard render error:', error);
-      return (
-        <div className="p-8 text-center">
-          <h2 className="text-xl text-white mb-4">Loading Dashboard...</h2>
-          <p className="text-gray-400">Enhanced SSS algorithm active • Real-time crypto analysis</p>
-        </div>
-      );
+      console.error('Error rendering module:', activeModule, error);
+      return <div className="p-6 text-red-500">Error loading module: {activeModule}</div>;
     }
   };
 
@@ -72,14 +164,14 @@ export default function Dashboard() {
               <div className="hidden lg:flex items-center gap-4 ml-6">
                 <div className="text-center">
                   <div className="text-lg font-bold text-white">
-                    7,099
+                    <AnimatedCounter value={totalAssets} />
                   </div>
                   <div className="text-xs text-gray-400">Assets</div>
                 </div>
                 <div className="w-px h-8 bg-gray-700"></div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-yellow-400">
-                    3
+                    <AnimatedCounter value={alertCount} />
                   </div>
                   <div className="text-xs text-gray-400">Alerts</div>
                 </div>
@@ -88,18 +180,17 @@ export default function Dashboard() {
 
             {/* Right section */}
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-3 py-1 bg-green-900/30 rounded-full">
-                <Activity className="h-4 w-4 text-green-400" />
-                <span className="text-sm text-green-400">Live</span>
-              </div>
+              <RealTimeIndicator />
               <Button variant="ghost" size="sm" className="relative">
                 <Bell className="h-5 w-5" />
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
-                >
-                  3
-                </Badge>
+                {alertCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                  >
+                    {alertCount > 9 ? '9+' : alertCount}
+                  </Badge>
+                )}
               </Button>
             </div>
           </div>
@@ -107,54 +198,20 @@ export default function Dashboard() {
         
         {/* Navigation Bar Row */}
         <div className="px-6 py-3">
-          <div className="flex items-center gap-4 flex-wrap">
-            <Button 
-              variant={activeModule === "scanner" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveModule("scanner")}
-            >
-              Asset Scanner
-            </Button>
-            <Button 
-              variant={activeModule === "watchlist" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveModule("watchlist")}
-            >
-              Watchlist
-            </Button>
-            <Button 
-              variant={activeModule === "heatmap" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveModule("heatmap")}
-            >
-              Heatmap
-            </Button>
-            <Button 
-              variant={activeModule === "velocity" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveModule("velocity")}
-            >
-              Velocity
-            </Button>
-            <Button 
-              variant={activeModule === "cohesion" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveModule("cohesion")}
-            >
-              Cohesion
-            </Button>
-            <Button 
-              variant={activeModule === "anchor" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveModule("anchor")}
-            >
-              Anchor
-            </Button>
-          </div>
+          <UserFriendlyNav 
+            activeModule={activeModule}
+            setActiveModule={setActiveModule}
+            alertCount={alertCount}
+            userLevel={userLevel}
+            onUserLevelChange={setUserLevel}
+          />
         </div>
       </div>
       
       <div className="flex flex-1 overflow-hidden">
+
+
+        
         {/* Main Content Area - Enhanced Scrolling */}
         <main className="flex-1 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto scroll-container bg-gray-900 p-2 sm:p-4 lg:p-6">
@@ -166,6 +223,18 @@ export default function Dashboard() {
           </div>
         </main>
       </div>
+      
+      {/* Floating Action Button */}
+      <FloatingActionButton actions={defaultFABActions} />
+      
+      {/* Performance Monitor (Development) */}
+      {process.env.NODE_ENV === 'development' && <PerformanceMonitor />}
+      
+      <TourOverlay 
+        isOpen={showTour}
+        onClose={() => setShowTour(false)}
+        onComplete={() => setShowTour(false)}
+      />
     </div>
   );
 }

@@ -10,11 +10,6 @@ export function useWebSocket(url: string) {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     
-    // Prevent multiple connections
-    if (ws.current?.readyState === WebSocket.CONNECTING || ws.current?.readyState === WebSocket.OPEN) {
-      return;
-    }
-    
     ws.current = new WebSocket(wsUrl);
 
     ws.current.onopen = () => {
@@ -41,11 +36,11 @@ export function useWebSocket(url: string) {
     };
 
     return () => {
-      if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
+      if (ws.current) {
         ws.current.close();
       }
     };
-  }, []); // Remove url dependency to prevent reconnections
+  }, [url]);
 
   const sendMessage = (message: any) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
