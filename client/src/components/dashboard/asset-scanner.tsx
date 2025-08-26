@@ -22,59 +22,10 @@ export default function AssetScanner() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { toast } = useToast();
 
-  // Static demo data for investor presentation
-  const assets: CryptoAsset[] = [
-    {
-      id: 1,
-      symbol: "GALA",
-      name: "Gala",
-      price: 0.02,
-      sssScore: 87.3, // Regime-enhanced score
-      marketCap: 750000000,
-      volume24h: 45000000,
-      priceChange24h: 12.5,
-      behavioralActivity: 78,
-      tokenVelocity: 82,
-      communityScore: 89,
-      anchorPressure: 76,
-      hypeToHoldRatio: 1.4,
-      historicalVolatility: 0.65
-    },
-    {
-      id: 2,
-      symbol: "FLOKI",
-      name: "Floki",
-      price: 0.00015,
-      sssScore: 81.2, // Regime-enhanced score
-      marketCap: 1200000000,
-      volume24h: 67000000,
-      priceChange24h: 8.3,
-      behavioralActivity: 85,
-      tokenVelocity: 73,
-      communityScore: 92,
-      anchorPressure: 68,
-      hypeToHoldRatio: 1.7,
-      historicalVolatility: 0.72
-    },
-    {
-      id: 3,
-      symbol: "PONKE",
-      name: "Ponke",
-      price: 0.11,
-      sssScore: 84.6, // Regime-enhanced score
-      marketCap: 380000000,
-      volume24h: 28000000,
-      priceChange24h: 15.7,
-      behavioralActivity: 89,
-      tokenVelocity: 77,
-      communityScore: 84,
-      anchorPressure: 81,
-      hypeToHoldRatio: 1.2,
-      historicalVolatility: 0.58
-    }
-  ];
-  const isLoading = false;
-  const error = null;
+  const { data: assets, isLoading, error } = useQuery<CryptoAsset[]>({
+    queryKey: ["/api/assets"],
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
 
   // Handle error toast in useEffect to avoid infinite re-renders
   useEffect(() => {
@@ -85,7 +36,7 @@ export default function AssetScanner() {
         variant: "destructive",
       });
     }
-  }, [error]); // Remove toast from dependencies
+  }, [error, toast]);
 
   // Calculate quick stats
   const quickStats = assets ? [

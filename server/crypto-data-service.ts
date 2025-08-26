@@ -1,7 +1,6 @@
 import { storage } from "./storage";
 import { mobulaApiService, type MobulaAsset } from './mobula-api-service';
 import { cryptoCompareService } from './crypto-compare-service';
-import { pythonEngineService } from './python-engine-service';
 // We'll calculate SSS score directly here since it's simpler
 function calculateSSS(metrics: {
   behavioralActivity: number;
@@ -188,43 +187,15 @@ class CryptoDataService {
   private coinCache = new Map<string, string>();
 
   // Calculate SSS score
-  async calculateSSS(metrics: {
+  calculateSSS(metrics: {
     behavioralActivity: number;
     velocityAnomaly: number;
     communityCohesion: number;
     anchorPressure: number;
     hypeToHoldRatio: number;
     historicalVolatility: number;
-    symbol?: string;
-    price?: number;
-    volume?: number;
-    change24h?: number;
-    change7d?: number;
-  }): Promise<number> {
-    try {
-      // Use enhanced professional algorithm if we have enough data
-      if (metrics.symbol && metrics.price && metrics.volume !== undefined && metrics.change24h !== undefined) {
-        const enhancedResult = await pythonEngineService.calculateEnhancedSSS(
-          metrics.symbol,
-          metrics.price,
-          metrics.volume,
-          metrics.change24h,
-          metrics.change7d || 0,
-          metrics.velocityAnomaly
-        );
-        
-        if (enhancedResult && enhancedResult.sss_score) {
-          console.log(`Enhanced SSS for ${metrics.symbol}: ${enhancedResult.sss_score} (was: ${calculateSSS(metrics).toFixed(1)})`);
-          return enhancedResult.sss_score;
-        }
-      }
-      
-      // Fallback to traditional calculation
-      return calculateSSS(metrics);
-    } catch (error) {
-      console.error('Enhanced SSS calculation failed, using fallback:', error);
-      return calculateSSS(metrics);
-    }
+  }): number {
+    return calculateSSS(metrics);
   }
 
 
@@ -364,14 +335,7 @@ class CryptoDataService {
           
           for (const coinData of marketData) {
             const behavioralMetrics = this.calculateBehavioralMetrics(coinData);
-            const sssScore = await this.calculateSSS({
-              ...behavioralMetrics,
-              symbol: coinData.symbol,
-              price: coinData.current_price,
-              volume: coinData.total_volume,
-              change24h: coinData.price_change_percentage_24h || 0,
-              change7d: 0
-            });
+            const sssScore = this.calculateSSS(behavioralMetrics);
             
             await storage.upsertCryptoAsset({
               symbol: coinData.symbol.toUpperCase(),
@@ -661,7 +625,7 @@ class CryptoDataService {
           const behavioralMetrics = this.calculateBehavioralMetrics(coinData);
           
           // Calculate new SSS score
-          const sssScore = await this.calculateSSS(behavioralMetrics);
+          const sssScore = calculateSSS(behavioralMetrics);
           
           // Update asset with new data
           await storage.updateCryptoAsset(existingAsset.id, {
@@ -677,7 +641,7 @@ class CryptoDataService {
         } else {
           // Create new asset if it doesn't exist
           const behavioralMetrics = this.calculateBehavioralMetrics(coinData);
-          const sssScore = await this.calculateSSS(behavioralMetrics);
+          const sssScore = calculateSSS(behavioralMetrics);
           
           await storage.createCryptoAsset({
             symbol: symbol.toUpperCase(),
@@ -806,7 +770,7 @@ class CryptoDataService {
           if (existing) continue;
 
           const behavioralMetrics = this.calculateBehavioralMetrics(coinData);
-          const sssScore = await this.calculateSSS(behavioralMetrics);
+          const sssScore = calculateSSS(behavioralMetrics);
 
           await storage.createCryptoAsset({
             symbol: coinData.symbol.toUpperCase(),
