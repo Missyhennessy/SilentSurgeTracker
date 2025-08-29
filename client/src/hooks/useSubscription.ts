@@ -16,8 +16,11 @@ export function useSubscription() {
     queryKey: ["/api/subscription/status"],
     enabled: isAuthenticated,
     retry: false,
-    staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    staleTime: Infinity, // Never consider stale to prevent refresh cycles
+    gcTime: Infinity, // Keep in cache indefinitely
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
   });
 
   const hasPremiumAccess = !!(subscriptionStatus?.isPremium || subscriptionStatus?.isFounder);
