@@ -105,9 +105,13 @@ export function AnimatedPercentage({
       setAnimationState(direction);
       setPreviousPercentage(percentage);
       
-      setTimeout(() => {
-        setAnimationState('neutral');
-      }, 1500);
+      // Timer disabled to prevent refresh cycles
+      setAnimationState('neutral');
+      
+      // Original timer code disabled:
+      // setTimeout(() => {
+      //   setAnimationState('neutral');
+      // }, 1500);
     }
   }, [percentage, previousPercentage]);
 

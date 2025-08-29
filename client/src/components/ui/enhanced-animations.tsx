@@ -95,14 +95,19 @@ export function EnhancedAnimatedCounter({
         
         setDisplayValue(currentValue);
         
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        } else {
-          setPrevValue(value);
-        }
+        // Animation disabled to prevent refresh cycles
+        setDisplayValue(value);
+        setPrevValue(value);
+        
+        // Original animation code disabled:
+        // if (progress < 1) {
+        //   requestAnimationFrame(animate);
+        // } else {
+        //   setPrevValue(value);
+        // }
       };
       
-      requestAnimationFrame(animate);
+      // requestAnimationFrame(animate); // DISABLED
     }
   }, [value, displayValue, prevValue, duration]);
 

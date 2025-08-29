@@ -18,6 +18,20 @@ interface SSSComponent {
 }
 
 export default function SSSBreakdown({ asset }: SSSBreakdownProps) {
+  // Safety check to prevent crashes
+  if (!asset || asset.sssScore === undefined) {
+    return (
+      <Card className="bg-gray-800 border-gray-700">
+        <CardHeader>
+          <CardTitle className="text-white">SSS Score Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-400">Loading asset data...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   // Calculate individual SSS components based on the overall score
   const baseScore = asset.sssScore;
   const variance = 0.2; // 20% variance from base score
