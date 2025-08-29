@@ -28,23 +28,26 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
   const [showFloatingChange, setShowFloatingChange] = useState(false);
   const { hasPremiumAccess } = useSubscription();
 
-  // Track price changes for animations
+  // Track price changes for animations - DISABLED to prevent refresh cycles
   useEffect(() => {
     if (asset.price !== previousPrice) {
-      setShowFloatingChange(true);
-      setTimeout(() => {
-        setPreviousPrice(asset.price);
-        setShowFloatingChange(false);
-      }, 2000);
+      setPreviousPrice(asset.price);
+      // Animation disabled to prevent constant timers causing refresh cycles
+      // setShowFloatingChange(true);
+      // setTimeout(() => {
+      //   setShowFloatingChange(false);
+      // }, 2000);
     }
   }, [asset.price, previousPrice]);
 
-  // Track SSS score changes
+  // Track SSS score changes - DISABLED to prevent refresh cycles
   useEffect(() => {
     if (asset.sssScore !== previousScore) {
-      setTimeout(() => {
-        setPreviousScore(asset.sssScore);
-      }, 1000);
+      setPreviousScore(asset.sssScore);
+      // Timer disabled to prevent refresh cycles
+      // setTimeout(() => {
+      //   setPreviousScore(asset.sssScore);
+      // }, 1000);
     }
   }, [asset.sssScore, previousScore]);
   

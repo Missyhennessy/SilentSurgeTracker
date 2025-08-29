@@ -36,22 +36,27 @@ export function AnimatedPrice({
       const priceStep = (endPrice - startPrice) / steps;
       
       let currentStep = 0;
-      const interval = setInterval(() => {
-        currentStep++;
-        const newPrice = startPrice + (priceStep * currentStep);
-        setDisplayPrice(newPrice);
-        
-        if (currentStep >= steps) {
-          clearInterval(interval);
-          setDisplayPrice(endPrice);
-          setPreviousPrice(endPrice);
-          
-          // Reset animation state after a delay
-          setTimeout(() => {
-            setAnimationState('neutral');
-          }, 1500);
-        }
-      }, stepDuration);
+      // Animation disabled to prevent refresh cycles
+      setDisplayPrice(endPrice);
+      setPreviousPrice(endPrice);
+      setAnimationState('neutral');
+      
+      // Original animation code disabled:
+      // const interval = setInterval(() => {
+      //   currentStep++;
+      //   const newPrice = startPrice + (priceStep * currentStep);
+      //   setDisplayPrice(newPrice);
+      //   
+      //   if (currentStep >= steps) {
+      //     clearInterval(interval);
+      //     setDisplayPrice(endPrice);
+      //     setPreviousPrice(endPrice);
+      //     
+      //     setTimeout(() => {
+      //       setAnimationState('neutral');
+      //     }, 1500);
+      //   }
+      // }, stepDuration);
       
       return () => clearInterval(interval);
     }
