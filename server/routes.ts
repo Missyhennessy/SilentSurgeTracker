@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
-import { WebSocketServer, WebSocket } from "ws";
+// import { WebSocketServer, WebSocket } from "ws"; // Disabled to prevent refresh cycles
 import { storage } from "./storage";
 import { cryptoDataService } from "./crypto-data-service";
 import { insertCryptoAssetSchema, insertAlertSchema, insertVelocityDataSchema } from "@shared/schema";
@@ -20,91 +20,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerAuthRoutes(app);
   registerSecurityRoutes(app);
 
-  // WebSocket server for real-time updates with security improvements
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
-  const connectionCount = new Map<string, number>();
-  const MAX_CONNECTIONS_PER_IP = 5;
+  // WebSocket server disabled to prevent constant refresh cycles
+  // const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
-  wss.on('connection', (ws, req) => {
-    const clientIP = req.socket.remoteAddress || 'unknown';
-    const currentConnections = connectionCount.get(clientIP) || 0;
-    
-    // Limit connections per IP
-    if (currentConnections >= MAX_CONNECTIONS_PER_IP) {
-      ws.close(1008, 'Too many connections from this IP');
-      return;
-    }
-    
-    connectionCount.set(clientIP, currentConnections + 1);
-    console.log('Client connected to WebSocket');
-    
-    // Set up heartbeat to detect dead connections
-    let isAlive = true;
-    ws.on('pong', () => { isAlive = true; });
-    
-    const heartbeat = setInterval(() => {
-      if (!isAlive) {
-        ws.terminate();
-        return;
-      }
-      isAlive = false;
-      ws.ping();
-    }, 30000);
-    
-    ws.on('message', (message) => {
-      try {
-        const messageString = message.toString();
-        
-        // Limit message size
-        if (messageString.length > 1024) {
-          ws.close(1009, 'Message too large');
-          return;
-        }
-        
-        const data = JSON.parse(messageString);
-        if (data.type === 'subscribe') {
-          // Handle subscription to specific assets or alerts
-          console.log('Client subscribed to:', data.topic);
-        }
-      } catch (error) {
-        console.error('WebSocket message error:', error);
-        ws.close(1003, 'Invalid message format');
-      }
-    });
-
-    ws.on('close', () => {
-      console.log('Client disconnected from WebSocket');
-      clearInterval(heartbeat);
-      const connections = connectionCount.get(clientIP) || 1;
-      connectionCount.set(clientIP, Math.max(0, connections - 1));
-    });
-  });
-
-  // Broadcast updates to all connected clients
+  // Simple broadcast function (no-op when WebSocket is disabled)
   const broadcast = (data: any) => {
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(data));
-      }
-    });
+    // WebSocket broadcasting disabled - using simple polling instead
   };
 
   // Start real-time crypto data updates
   cryptoDataService.startRealTimeUpdates(2); // Update every 2 minutes
   
-  // Set up periodic broadcasting of updated data
-  setInterval(async () => {
-    try {
-      const assets = await storage.getCryptoAssets();
-      broadcast({
-        type: 'crypto_update',
-        data: assets,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('Error broadcasting crypto updates:', error);
-    }
-  }, 30000); // Broadcast every 30 seconds
+  // Periodic broadcasting disabled - using simple polling instead
+  // setInterval(async () => {
+  //   try {
+  //     const assets = await storage.getCryptoAssets();
+  //     broadcast({
+  //       type: 'crypto_update',
+  //       data: assets,
+  //       timestamp: new Date().toISOString()
+  //     });
+  //   } catch (error) {
+  //     console.error('Error broadcasting crypto updates:', error);
+  //   }
+  // }, 30000); // Broadcast every 30 seconds
 
   // Authentication API endpoints
   registerAuthRoutes(app);

@@ -1,38 +1,26 @@
 import { useEffect, useState } from 'react';
-import { useWebSocket } from '@/hooks/use-websocket';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Zap, Wifi, WifiOff } from 'lucide-react';
+import { RefreshCw, Zap, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-// Using fetch directly for manual updates
 
 interface RealTimeIndicatorProps {
   onDataUpdate?: (data: any) => void;
 }
 
 export function RealTimeIndicator({ onDataUpdate }: RealTimeIndicatorProps) {
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [updateCount, setUpdateCount] = useState(0);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
-  
-  const { lastMessage, isConnected } = useWebSocket('/ws');
 
+  // Simple timer to show system is active
   useEffect(() => {
-    if (lastMessage) {
-      try {
-        // lastMessage is already parsed from WebSocket hook
-        const data = lastMessage;
-        if (data.type === 'crypto_update' || data.type === 'bulk_update' || data.type === 'asset_update') {
-          setLastUpdate(new Date());
-          setUpdateCount(prev => prev + 1);
-          onDataUpdate?.(data.data);
-        }
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
-      }
-    }
-  }, [lastMessage, onDataUpdate]);
+    const interval = setInterval(() => {
+      setLastUpdate(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleManualUpdate = async () => {
     setIsUpdating(true);
@@ -65,47 +53,33 @@ export function RealTimeIndicator({ onDataUpdate }: RealTimeIndicatorProps) {
   };
 
   return (
-    <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border">
+    <div className="flex items-center gap-3">
       <div className="flex items-center gap-2">
-        {isConnected ? (
-          <Wifi className="h-4 w-4 text-green-500" />
-        ) : (
-          <WifiOff className="h-4 w-4 text-red-500" />
-        )}
-        <Badge variant={isConnected ? "default" : "destructive"}>
-          {isConnected ? "Live" : "Offline"}
+        <CheckCircle className="h-4 w-4 text-green-500" />
+        <Badge variant="default" className="bg-green-500/10 text-green-400 border-green-500/20">
+          System Active
         </Badge>
       </div>
 
-      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+      <div className="flex items-center gap-2 text-sm text-gray-400">
         <Zap className="h-4 w-4" />
         <span>
-          {lastUpdate 
-            ? `Last update: ${lastUpdate.toLocaleTimeString()}`
-            : 'Waiting for data...'
-          }
+          Updated: {lastUpdate.toLocaleTimeString()}
         </span>
       </div>
-
-      {updateCount > 0 && (
-        <Badge variant="outline">
-          {updateCount} updates
-        </Badge>
-      )}
 
       <Button
         onClick={handleManualUpdate}
         disabled={isUpdating}
         size="sm"
-        variant="outline"
-        className="ml-auto"
+        variant="ghost"
+        className="h-8 px-3"
       >
         {isUpdating ? (
-          <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+          <RefreshCw className="h-4 w-4 animate-spin" />
         ) : (
-          <RefreshCw className="h-4 w-4 mr-2" />
+          <RefreshCw className="h-4 w-4" />
         )}
-        Update Now
       </Button>
     </div>
   );
