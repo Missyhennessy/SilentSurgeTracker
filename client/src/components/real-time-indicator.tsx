@@ -13,14 +13,14 @@ export function RealTimeIndicator({ onDataUpdate }: RealTimeIndicatorProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
 
-  // Simple timer to show system is active
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLastUpdate(new Date());
-    }, 60000); // Update every minute
+  // Timer disabled to prevent refresh cycles
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setLastUpdate(new Date());
+  //   }, 60000); // Update every minute
 
-    return () => clearInterval(interval);
-  }, []);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   const handleManualUpdate = async () => {
     setIsUpdating(true);
