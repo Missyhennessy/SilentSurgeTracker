@@ -814,11 +814,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Asset not found" });
       }
       
-      // Broadcast update to WebSocket clients
-      broadcast({
-        type: 'asset_update',
-        data: asset
-      });
+      // Broadcasting disabled - using simple polling instead
+      // broadcast({
+      //   type: 'asset_update',
+      //   data: asset
+      // });
       
       res.json(asset);
     } catch (error) {
@@ -922,12 +922,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await cryptoDataService.updateCryptoAssets();
       const assets = await storage.getCryptoAssets();
       
-      // Broadcast the update to all connected clients
-      broadcast({
-        type: 'crypto_update',
-        data: assets,
-        timestamp: new Date().toISOString()
-      });
+      // Broadcasting disabled - using simple polling instead
+      // broadcast({
+      //   type: 'crypto_update',
+      //   data: assets,
+      //   timestamp: new Date().toISOString()
+      // });
       
       res.json({ 
         success: true, 
@@ -983,7 +983,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Simulate real-time data updates
+  // Real-time data simulation disabled to prevent refresh cycles
+  /*
   setInterval(async () => {
     try {
       const assets = await storage.getCryptoAssets();
@@ -1012,7 +1013,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Broadcast updates
+      // Broadcasting disabled - using simple polling instead
       const updatedAssets = await storage.getCryptoAssets();
       broadcast({
         type: 'bulk_update',
@@ -1022,7 +1023,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error in data simulation:', error);
     }
-  }, 30000); // Update every 30 seconds
+  }, 30000); // Update every 30 seconds - DISABLED
+  */
 
   // ML Performance endpoints
   app.get("/api/ml/performance", async (req, res) => {
