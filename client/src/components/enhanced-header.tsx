@@ -25,13 +25,14 @@ export function EnhancedHeader({ isConnected, totalAssets = 0, activeAlerts = 0 
   const [currentTime, setCurrentTime] = useState(new Date());
   const { user } = useAuth() as { user?: User };
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+  // Timer disabled to prevent refresh cycles
+  // useEffect(() => {
+  //   const timer = setInterval(() => {
+  //     setCurrentTime(new Date());
+  //   }, 1000);
 
-    return () => clearInterval(timer);
-  }, []);
+  //   return () => clearInterval(timer);
+  // }, []);
 
   return (
     <header className="bg-gray-900 border-b border-gray-700 px-6 py-4 sticky top-0 z-30 h-20">
