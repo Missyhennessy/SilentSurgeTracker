@@ -22,17 +22,17 @@ import { useQuery } from "@tanstack/react-query";
 function WhaleTrackingDashboard() {
   const { data: transactions } = useQuery({
     queryKey: ["/api/whale/transactions"],
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: false, // Disabled to prevent refresh cycles
   });
 
   const { data: sentiment } = useQuery({
     queryKey: ["/api/whale/sentiment"],
-    refetchInterval: 60000,
+    refetchInterval: false, // Disabled to prevent refresh cycles
   });
 
   const { data: wallets } = useQuery({
     queryKey: ["/api/whale/wallets"],
-    refetchInterval: 120000,
+    refetchInterval: false, // Disabled to prevent refresh cycles
   });
 
   return (
