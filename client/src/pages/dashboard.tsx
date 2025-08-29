@@ -43,11 +43,14 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Get total assets for header with simple polling
+  // Get total assets for header - no automatic refreshing
   const { data: assets } = useQuery<any[]>({
     queryKey: ["/api/assets"],
     refetchInterval: false, // Disabled to prevent refresh cycles
-    staleTime: 300000, // 5 minutes to reduce aggressive polling
+    staleTime: Infinity, // Never consider stale to prevent refresh cycles
+    gcTime: Infinity, // Keep in cache indefinitely
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const totalAssets = Array.isArray(assets) ? assets.length : 0;
