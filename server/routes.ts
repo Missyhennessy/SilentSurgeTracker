@@ -29,7 +29,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Start real-time crypto data updates
-  cryptoDataService.startRealTimeUpdates(2); // Update every 2 minutes
+  // cryptoDataService.startRealTimeUpdates(2); // DISABLED to prevent refresh cycles
   
   // Periodic broadcasting disabled - using simple polling instead
   // setInterval(async () => {
@@ -162,7 +162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.json({
             subscriptionId: subscription.id,
             status: subscription.status,
-            clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+            clientSecret: (subscription.latest_invoice as any)?.payment_intent?.client_secret,
           });
         }
       }
@@ -967,7 +967,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         scope: 'Cryptocurrencies, NFTs, meme coins, and tokens'
       });
     } catch (error) {
-      res.status(500).json({ message: 'Failed to start expansion', error: error.message });
+      res.status(500).json({ message: 'Failed to start expansion', error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -979,7 +979,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(stats);
     } catch (error) {
-      res.status(500).json({ message: 'Failed to get monitoring stats', error: error.message });
+      res.status(500).json({ message: 'Failed to get monitoring stats', error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 

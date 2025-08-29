@@ -61,7 +61,7 @@ export default function Landing() {
               <Zap className="w-12 h-12 text-purple-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-3">Real-Time Analysis</h3>
               <p className="text-gray-300">
-                Live data processing with WebSocket updates, anomaly detection,
+                Live data processing with real-time updates, anomaly detection,
                 and instant alerts for emerging opportunities.
               </p>
             </div>
