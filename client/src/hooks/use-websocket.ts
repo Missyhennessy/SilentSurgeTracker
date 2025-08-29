@@ -7,6 +7,11 @@ export function useWebSocket(url: string) {
   const ws = useRef<WebSocket | null>(null);
 
   useEffect(() => {
+    // Prevent creating multiple connections
+    if (ws.current?.readyState === WebSocket.OPEN || ws.current?.readyState === WebSocket.CONNECTING) {
+      return;
+    }
+
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     
@@ -14,7 +19,6 @@ export function useWebSocket(url: string) {
 
     ws.current.onopen = () => {
       setIsConnected(true);
-      console.log('WebSocket connected');
     };
 
     ws.current.onmessage = (event) => {
@@ -34,7 +38,6 @@ export function useWebSocket(url: string) {
 
     ws.current.onclose = () => {
       setIsConnected(false);
-      console.log('WebSocket disconnected');
     };
 
     ws.current.onerror = (error) => {
@@ -42,11 +45,11 @@ export function useWebSocket(url: string) {
     };
 
     return () => {
-      if (ws.current) {
+      if (ws.current?.readyState === WebSocket.OPEN) {
         ws.current.close();
       }
     };
-  }, [url]);
+  }, []);
 
   const sendMessage = (message: any) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
