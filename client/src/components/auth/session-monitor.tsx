@@ -26,31 +26,32 @@ export function SessionMonitor() {
   useEffect(() => {
     if (!sessionExpiry) return;
 
-    const timer = setInterval(() => {
-      const now = new Date();
-      const diff = sessionExpiry.getTime() - now.getTime();
-      
-      if (diff <= 0) {
-        setTimeLeft("Expired");
-        setShowWarning(true);
-        return;
-      }
+    // Timer disabled to prevent refresh cycles
+    // const timer = setInterval(() => {
+    //   const now = new Date();
+    //   const diff = sessionExpiry.getTime() - now.getTime();
+    //   
+    //   if (diff <= 0) {
+    //     setTimeLeft("Expired");
+    //     setShowWarning(true);
+    //     return;
+    //   }
 
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    //   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    //   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    //   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-      if (days === 0 && hours < 2) {
-        setShowWarning(true);
-        setTimeLeft(`${hours}h ${minutes}m`);
-      } else if (days === 0) {
-        setTimeLeft(`${hours}h ${minutes}m`);
-      } else {
-        setTimeLeft(`${days}d ${hours}h`);
-      }
-    }, 60000); // Update every minute
+    //   if (days === 0 && hours < 2) {
+    //     setShowWarning(true);
+    //     setTimeLeft(`${hours}h ${minutes}m`);
+    //   } else if (days === 0) {
+    //     setTimeLeft(`${hours}h ${minutes}m`);
+    //   } else {
+    //     setTimeLeft(`${days}d ${hours}h`);
+    //   }
+    // }, 60000); // Update every minute
 
-    return () => clearInterval(timer);
+    // return () => clearInterval(timer);
   }, [sessionExpiry]);
 
   useEffect(() => {
