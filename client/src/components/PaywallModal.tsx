@@ -110,7 +110,7 @@ export default function PaywallModal({ isOpen, onClose, feature, description }: 
             </Button>
           </div>
 
-          {user && 'email' in user && user.email && (
+          {user?.email && (
             <p className="text-xs text-center text-muted-foreground">
               Subscription will be linked to {user.email}
             </p>
