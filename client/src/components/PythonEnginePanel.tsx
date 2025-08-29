@@ -52,15 +52,19 @@ export function PythonEnginePanel() {
   // Fetch engine status
   const { data: engineStatus } = useQuery({
     queryKey: ['/api/python-engine/status'],
-    refetchInterval: 30000 // Check status every 30 seconds
+    refetchInterval: false // Disabled to prevent refresh cycles
   });
 
   // Run full analysis mutation
   const analysisMutation = useMutation({
-    mutationFn: (tokens?: string[]) => apiRequest('/api/python-engine/analysis', {
-      method: 'POST',
-      body: JSON.stringify({ tokens })
-    }),
+    mutationFn: async (tokens?: string[]) => {
+      const response = await fetch('/api/python-engine/analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tokens })
+      });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/python-engine'] });
     }
@@ -68,7 +72,10 @@ export function PythonEnginePanel() {
 
   // Run demo mutation
   const demoMutation = useMutation({
-    mutationFn: () => apiRequest('/api/python-engine/demo'),
+    mutationFn: async () => {
+      const response = await fetch('/api/python-engine/demo', { method: 'POST' });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/python-engine'] });
     }
@@ -85,7 +92,7 @@ export function PythonEnginePanel() {
 
   const handleAddCustomTokens = () => {
     const tokens = customTokenInput.split(',').map(t => t.trim().toUpperCase()).filter(t => t.length > 0);
-    setSelectedTokens([...new Set([...selectedTokens, ...tokens])]);
+    setSelectedTokens([...Array.from(new Set([...selectedTokens, ...tokens]))]);
     setCustomTokenInput('');
   };
 
@@ -288,14 +295,14 @@ export function PythonEnginePanel() {
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className={`h-3 w-3 rounded-full ${engineStatus?.status === 'ready' ? 'bg-green-500' : 'bg-red-500'}`} />
+              <div className={`h-3 w-3 rounded-full ${(engineStatus as any)?.status === 'ready' ? 'bg-green-500' : 'bg-red-500'}`} />
               <span className="font-medium">
-                Status: {engineStatus?.status === 'ready' ? 'Ready' : 'Error'}
+                Status: {(engineStatus as any)?.status === 'ready' ? 'Ready' : 'Error'}
               </span>
             </div>
-            {engineStatus?.python_version && (
+            {(engineStatus as any)?.python_version && (
               <Badge variant="outline">
-                Python {engineStatus.python_version.split(' ')[0]}
+                Python {(engineStatus as any)?.python_version?.split(' ')[0]}
               </Badge>
             )}
           </div>

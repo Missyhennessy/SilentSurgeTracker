@@ -28,7 +28,7 @@ export default function AnchorPressure() {
 
   const { data: assets } = useQuery<CryptoAsset[]>({
     queryKey: ["/api/assets"],
-    refetchInterval: 30000,
+    refetchInterval: false, // Disabled to prevent refresh cycles
   });
 
   const selectedAssetData = assets?.find(asset => asset.symbol === selectedAsset) || assets?.[0];

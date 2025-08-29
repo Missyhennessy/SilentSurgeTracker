@@ -46,8 +46,8 @@ export default function Dashboard() {
   // Get total assets for header with simple polling
   const { data: assets } = useQuery<any[]>({
     queryKey: ["/api/assets"],
-    refetchInterval: 60000, // Refresh every minute
-    staleTime: 30000, // Consider data stale after 30 seconds
+    refetchInterval: false, // Disabled to prevent refresh cycles
+    staleTime: 300000, // 5 minutes to reduce aggressive polling
   });
 
   const totalAssets = Array.isArray(assets) ? assets.length : 0;

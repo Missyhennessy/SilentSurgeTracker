@@ -23,7 +23,7 @@ export default function BehavioralHeatmap() {
 
   const { data: assets } = useQuery<CryptoAsset[]>({
     queryKey: ["/api/assets"],
-    refetchInterval: 30000,
+    refetchInterval: false, // Disabled to prevent refresh cycles
   });
 
   // Generate behavioral activity data for each asset
