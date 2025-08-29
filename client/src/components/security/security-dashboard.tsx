@@ -43,14 +43,14 @@ export function SecurityDashboard() {
   // Fetch security data
   const { data: securityData, isLoading } = useQuery({
     queryKey: ['/api/security/dashboard'],
-    refetchInterval: 30000, // Update every 30 seconds
+    refetchInterval: false, // Disabled to prevent refresh cycles
     retry: false
   });
 
   useEffect(() => {
-    if (securityData) {
-      setSecurityMetrics(securityData.metrics || securityMetrics);
-      setThreats(securityData.threats || []);
+    if (securityData && typeof securityData === 'object') {
+      setSecurityMetrics((securityData as any).metrics || securityMetrics);
+      setThreats((securityData as any).threats || []);
     }
   }, [securityData]);
 

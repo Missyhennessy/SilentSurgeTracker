@@ -17,7 +17,7 @@ import { getScoreColor } from "@/lib/sss-calculator";
 export default function Watchlist() {
   const { data: assets, isLoading } = useQuery<CryptoAsset[]>({
     queryKey: ["/api/watchlist"],
-    refetchInterval: 30000,
+    refetchInterval: false, // Disabled to prevent refresh cycles
   });
 
   const getAssetIcon = (symbol: string) => {

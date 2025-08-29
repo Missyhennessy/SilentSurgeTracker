@@ -36,7 +36,7 @@ export default function CompositeRating() {
 
   const { data: assets } = useQuery<CryptoAsset[]>({
     queryKey: ["/api/assets"],
-    refetchInterval: 30000,
+    refetchInterval: false, // Disabled to prevent refresh cycles
   });
 
   // Calculate SSS with custom weights
