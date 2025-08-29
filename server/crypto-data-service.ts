@@ -555,7 +555,7 @@ class CryptoDataService {
           
           // Convert CryptoCompare data to our format
           marketData = Object.entries(cryptoCompareResponse).map(([symbol, data]) => ({
-            id: this.coreMapping[symbol as keyof typeof this.coreMapping] || symbol.toLowerCase(),
+            id: (this.coreMapping as any)[symbol] || symbol.toLowerCase(),
             symbol: symbol.toUpperCase(),
             name: symbol,
             current_price: data.USD || 0,
