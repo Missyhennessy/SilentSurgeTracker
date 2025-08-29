@@ -26,7 +26,6 @@ import AlertsManagement from "@/components/advanced/alerts-management";
 import TradingSignals from "@/components/advanced/trading-signals";
 import MarketScanner from "@/components/advanced/market-scanner";
 import CryptoSearch from "@/components/advanced/crypto-search";
-import { useWebSocket } from "@/hooks/use-websocket";
 import { DashboardModule } from "@/types/dashboard";
 import { TourOverlay } from "@/components/onboarding/tour-overlay";
 
@@ -36,7 +35,6 @@ export default function Dashboard() {
   const [alertCount] = useState(3);
   const [showTour, setShowTour] = useState(false);
 
-  const { isConnected } = useWebSocket("/ws");
 
   useEffect(() => {
     const hasSeenTour = localStorage.getItem('sst-tour-completed');
@@ -45,10 +43,11 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Get total assets for header
+  // Get total assets for header with simple polling
   const { data: assets } = useQuery<any[]>({
     queryKey: ["/api/assets"],
-    refetchInterval: 30000,
+    refetchInterval: 60000, // Refresh every minute
+    staleTime: 30000, // Consider data stale after 30 seconds
   });
 
   const totalAssets = Array.isArray(assets) ? assets.length : 0;
