@@ -56,81 +56,56 @@ export default function Dashboard() {
   const totalAssets = Array.isArray(assets) ? assets.length : 0;
 
   const renderModule = () => {
-    console.log('Rendering module:', activeModule);
-    
     try {
       switch (activeModule) {
         case "scanner":
-          console.log('Loading AssetScanner');
           return <AssetScanner />;
         case "watchlist":
-          console.log('Loading Watchlist');
           return <Watchlist />;
         case "heatmap":
-          console.log('Loading BehavioralHeatmap');
           return <BehavioralHeatmap />;
         case "velocity":
-          console.log('Loading VelocityTracking');
           return <VelocityTracking />;
         case "cohesion":
-          console.log('Loading CohesionAnalyzer');
           return <CohesionAnalyzer />;
         case "anchor":
-          console.log('Loading AnchorPressure');
           return <AnchorPressure />;
         case "hhr":
-          console.log('Loading HHRComparator');
           return <HHRComparator />;
         case "composite":
-          console.log('Loading CompositeRating');
           return <CompositeRating />;
         case "analytics":
-          console.log('Loading HistoricalSSSTracker');
           return <HistoricalSSSTracker />;
         case "portfolio":
-          console.log('Loading PortfolioTracker');
           return <PortfolioTracker />;
         case "backtest":
-          console.log('Loading BacktestingEngine');
           return <BacktestingEngine />;
         case "ml":
-          console.log('Loading ModelPerformance');
           return <ModelPerformance />;
         case "risk":
-          console.log('Loading RiskManagement');
           return <RiskManagement />;
         case "sentiment":
-          console.log('Loading MarketSentiment');
           return <MarketSentiment />;
         case "optimization":
-          console.log('Loading PortfolioOptimization');
           return <PortfolioOptimization />;
         case "alerts":
-          console.log('Loading AlertsManagement');
           return <AlertsManagement />;
         case "signals":
-          console.log('Loading TradingSignals');
           return <TradingSignals />;
         case "market-scanner":
-          console.log('Loading MarketScanner');
           return <MarketScanner />;
         case "search":
-          console.log('Loading CryptoSearch');
           return <CryptoSearch />;
         case "python-engine":
-          console.log('Navigating to Python Engine');
           window.location.href = '/python-engine';
           break;
         case "ml-dashboard":
-          console.log('Navigating to ML Dashboard');
           window.location.href = '/ml-dashboard';
           return <div className="p-6">Redirecting to ML Dashboard...</div>;
         case "api-status":
-          console.log('Navigating to API Status');
           window.location.href = '/api-status';
           return <div className="p-6">Redirecting to API Status Dashboard...</div>;
         default:
-          console.log('Loading default AssetScanner');
           return <AssetScanner />;
       }
     } catch (error) {
