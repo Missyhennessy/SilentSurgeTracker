@@ -29,24 +29,29 @@ export function SSScoreAnimation({
       const stepDuration = duration / steps;
       const scoreStep = (endScore - startScore) / steps;
       
-      let currentStep = 0;
-      const interval = setInterval(() => {
-        currentStep++;
-        const newScore = startScore + (scoreStep * currentStep);
-        setDisplayScore(newScore);
-        
-        if (currentStep >= steps) {
-          clearInterval(interval);
-          setDisplayScore(endScore);
-          
-          // Reset animation state after delay
-          setTimeout(() => {
-            setAnimationState('neutral');
-          }, 1500);
-        }
-      }, stepDuration);
+      // Animation disabled to prevent refresh cycles
+      setDisplayScore(endScore);
+      setAnimationState('neutral');
       
-      return () => clearInterval(interval);
+      // Original animation code disabled:
+      // let currentStep = 0;
+      // const interval = setInterval(() => {
+      //   currentStep++;
+      //   const newScore = startScore + (scoreStep * currentStep);
+      //   setDisplayScore(newScore);
+      //   
+      //   if (currentStep >= steps) {
+      //     clearInterval(interval);
+      //     setDisplayScore(endScore);
+      //     
+      //     // Reset animation state after delay
+      //     setTimeout(() => {
+      //       setAnimationState('neutral');
+      //     }, 1500);
+      //   }
+      // }, stepDuration);
+      // 
+      // return () => clearInterval(interval);
     }
   }, [score, previousScore]);
 
