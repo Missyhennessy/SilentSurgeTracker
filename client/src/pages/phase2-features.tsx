@@ -44,11 +44,11 @@ function WhaleTrackingDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Whale Sentiment</p>
-                <p className="text-2xl font-bold">{sentiment && typeof sentiment.overall === 'number' ? sentiment.overall.toFixed(1) : '0'}%</p>
+                <p className="text-2xl font-bold">{(sentiment as any)?.overall ? (sentiment as any).overall.toFixed(1) : '0'}%</p>
               </div>
               <TrendingUp className="h-4 w-4 text-green-500" />
             </div>
-            <Progress value={sentiment && typeof sentiment.overall === 'number' ? sentiment.overall : 0} className="mt-2" />
+            <Progress value={(sentiment as any)?.overall || 0} className="mt-2" />
           </CardContent>
         </Card>
 
@@ -57,7 +57,7 @@ function WhaleTrackingDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Active Whales</p>
-                <p className="text-2xl font-bold">{sentiment && typeof sentiment.activeWhales === 'number' ? sentiment.activeWhales : 0}</p>
+                <p className="text-2xl font-bold">{(sentiment as any)?.activeWhales || 0}</p>
               </div>
               <Users className="h-4 w-4 text-blue-500" />
             </div>
@@ -70,10 +70,10 @@ function WhaleTrackingDashboard() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Net Flow</p>
                 <p className="text-2xl font-bold">
-                  ${sentiment && typeof sentiment.netFlow === 'number' ? (sentiment.netFlow / 1000000).toFixed(1) : '0'}M
+                  ${(sentiment as any)?.netFlow ? ((sentiment as any).netFlow / 1000000).toFixed(1) : '0'}M
                 </p>
               </div>
-              <DollarSign className={`h-4 w-4 ${sentiment && typeof sentiment.netFlow === 'number' && sentiment.netFlow >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+              <DollarSign className={`h-4 w-4 ${(sentiment as any)?.netFlow >= 0 ? 'text-green-500' : 'text-red-500'}`} />
             </div>
           </CardContent>
         </Card>
@@ -84,7 +84,7 @@ function WhaleTrackingDashboard() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Buy Pressure</p>
                 <p className="text-2xl font-bold">
-                  ${sentiment && typeof sentiment.buyPressure === 'number' ? (sentiment.buyPressure / 1000000).toFixed(1) : '0'}M
+                  ${(sentiment as any)?.buyPressure ? ((sentiment as any).buyPressure / 1000000).toFixed(1) : '0'}M
                 </p>
               </div>
               <TrendingUp className="h-4 w-4 text-green-500" />
@@ -136,17 +136,17 @@ function WhaleTrackingDashboard() {
 function LSTMDashboard() {
   const { data: predictions } = useQuery({
     queryKey: ["/api/lstm/predictions"],
-    refetchInterval: 300000, // Refresh every 5 minutes
+    refetchInterval: false, // Disabled to prevent refresh cycles
   });
 
   const { data: topPredictions } = useQuery({
     queryKey: ["/api/lstm/top"],
-    refetchInterval: 300000,
+    refetchInterval: false, // Disabled to prevent refresh cycles
   });
 
   const { data: performance } = useQuery({
     queryKey: ["/api/lstm/performance"],
-    refetchInterval: 600000,
+    refetchInterval: false, // Disabled to prevent refresh cycles
   });
 
   return (
@@ -251,17 +251,17 @@ function LSTMDashboard() {
 function DeFiDashboard() {
   const { data: opportunities } = useQuery({
     queryKey: ["/api/defi/opportunities"],
-    refetchInterval: 600000, // Refresh every 10 minutes
+    refetchInterval: false, // Disabled to prevent refresh cycles
   });
 
   const { data: protocols } = useQuery({
     queryKey: ["/api/defi/protocols"],
-    refetchInterval: 600000,
+    refetchInterval: false, // Disabled to prevent refresh cycles
   });
 
   const { data: pools } = useQuery({
     queryKey: ["/api/defi/pools"],
-    refetchInterval: 600000,
+    refetchInterval: false, // Disabled to prevent refresh cycles
   });
 
   return (
