@@ -20,7 +20,13 @@ export function useWebSocket(url: string) {
     ws.current.onmessage = (event) => {
       try {
         const message: WebSocketMessage = JSON.parse(event.data);
-        setLastMessage(message);
+        // Only update if message is different to prevent unnecessary re-renders
+        setLastMessage(prevMessage => {
+          if (JSON.stringify(prevMessage) === JSON.stringify(message)) {
+            return prevMessage;
+          }
+          return message;
+        });
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
       }
