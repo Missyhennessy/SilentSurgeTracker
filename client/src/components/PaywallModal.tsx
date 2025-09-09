@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Crown, Sparkles, TrendingUp, Shield, Zap, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { apiRequest } from "@/lib/queryClient";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -15,23 +14,7 @@ interface PaywallModalProps {
 
 export default function PaywallModal({ isOpen, onClose, feature, description }: PaywallModalProps) {
   const { user } = useAuth();
-  const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
-
-  useEffect(() => {
-    const fetchSubscriptionStatus = async () => {
-      try {
-        const response = await apiRequest("GET", "/api/subscription/status");
-        const data = await response.json();
-        setSubscriptionStatus(data);
-      } catch (error) {
-        console.error('Failed to fetch subscription status:', error);
-      }
-    };
-
-    if (isOpen) {
-      fetchSubscriptionStatus();
-    }
-  }, [isOpen]);
+  const { subscriptionStatus } = useSubscription();
 
   const handleUpgrade = () => {
     window.location.href = "/subscribe";
