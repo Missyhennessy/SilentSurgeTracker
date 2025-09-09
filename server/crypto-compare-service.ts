@@ -36,15 +36,19 @@ export class CryptoCompareService {
 
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
         const response = await fetch(url.toString(), {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
             'User-Agent': 'Silent-Surge-Tracker/1.0'
           },
-          // @ts-ignore
-          timeout: 10000
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           throw new Error(`CryptoCompare API error: ${response.status} ${response.statusText}`);

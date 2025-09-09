@@ -72,13 +72,17 @@ export class MobulaApiService {
         if (this.apiKey) {
           headers['Authorization'] = `Bearer ${this.apiKey}`;
         }
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         const response = await fetch(url.toString(), {
           method: 'GET',
           headers,
-          // @ts-ignore - timeout is supported in Node.js fetch
-          timeout: 10000
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           throw new Error(`Mobula API error: ${response.status} ${response.statusText}`);
@@ -178,15 +182,19 @@ export class MobulaApiService {
   async healthCheck(): Promise<boolean> {
     try {
       // Use a simple endpoint that should work without API key
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
       const response = await fetch(`${this.baseUrl}/market/data?asset=bitcoin`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
           'User-Agent': 'Silent-Surge-Tracker/1.0'
         },
-        // @ts-ignore - timeout is supported in Node.js fetch
-        timeout: 5000
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (response.status === 401 && !this.apiKey) {
         console.log('ℹ️ Mobula API requires API key for full functionality');
