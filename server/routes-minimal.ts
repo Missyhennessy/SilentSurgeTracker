@@ -8,7 +8,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
   // Start real-time crypto data updates
-  cryptoDataService.startRealTimeUpdates(2); // Update every 2 minutes
+  // cryptoDataService.startRealTimeUpdates(2); // DISABLED to prevent refresh cycles
 
   // Basic API health check
   app.get("/api/health", async (req, res) => {
