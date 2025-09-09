@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Crown, Sparkles, TrendingUp, Shield, Zap, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import type { User } from "@shared/schema";
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -93,9 +94,9 @@ export default function PaywallModal({ isOpen, onClose, feature, description }: 
             </Button>
           </div>
 
-          {user?.email && (
+          {(user as User)?.email && (
             <p className="text-xs text-center text-muted-foreground">
-              Subscription will be linked to {user.email}
+              Subscription will be linked to {(user as User).email}
             </p>
           )}
         </div>
