@@ -115,7 +115,7 @@ export class CryptoCompareService {
   // Get top cryptocurrencies list for expansion
   async getTopList(limit: number = 2000): Promise<any[]> {
     try {
-      const response = await this.makeRequest('/top/mktcapfull', {
+      const response = await this.makeRequest<{Data: any[]}>('/top/mktcapfull', {
         limit: Math.min(limit, 2000), // CryptoCompare allows up to 2000
         tsym: 'USD'
       });
