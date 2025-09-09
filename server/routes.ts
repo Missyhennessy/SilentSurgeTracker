@@ -202,8 +202,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stripeSubscriptionId: subscription.id,
         stripeCustomerId: customerId,
         status: subscription.status,
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
+        currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
         plan: 'pro',
         priceId: priceId,
       });
@@ -214,12 +214,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionStatus: subscription.status,
         subscriptionPlan: 'pro',
         isPremium: subscription.status === 'active',
-        subscriptionEndsAt: new Date(subscription.current_period_end * 1000),
+        subscriptionEndsAt: new Date((subscription as any).current_period_end * 1000),
       });
 
       res.json({
         subscriptionId: subscription.id,
-        clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+        clientSecret: (subscription.latest_invoice as any)?.payment_intent?.client_secret,
         status: subscription.status,
       });
 
@@ -281,7 +281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ 
         message: 'Subscription will be canceled at the end of the current period',
-        cancelAt: new Date(subscription.current_period_end * 1000)
+        cancelAt: new Date((subscription as any).current_period_end * 1000)
       });
 
     } catch (error: any) {
