@@ -51,41 +51,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // External Security API endpoints
   registerSecurityRoutes(app);
 
-  // Phase 1 Advanced Features API endpoints
-  const sentimentService = await import('./sentiment-analysis-service');
-  const alertsService = await import('./advanced-alerts-service');
-  const exchangeService = await import('./cross-exchange-service');
-  const macroService = await import('./macro-economic-service');
+  // Phase 1 Advanced Features API endpoints - DISABLED to prevent refresh cycles
+  // const sentimentService = await import('./sentiment-analysis-service');
+  // const alertsService = await import('./advanced-alerts-service');
+  // const exchangeService = await import('./cross-exchange-service');
+  // const macroService = await import('./macro-economic-service');
   
   // Register Phase 1 service routes
-  if (sentimentService.registerSentimentRoutes) {
-    sentimentService.registerSentimentRoutes(app);
-  }
-  if (alertsService.registerAdvancedAlertsRoutes) {
-    alertsService.registerAdvancedAlertsRoutes(app);
-  }
-  if (exchangeService.registerCrossExchangeRoutes) {
-    exchangeService.registerCrossExchangeRoutes(app);
-  }
-  if (macroService.registerMacroEconomicRoutes) {
-    macroService.registerMacroEconomicRoutes(app);
-  }
+  // if (sentimentService.registerSentimentRoutes) {
+  //   sentimentService.registerSentimentRoutes(app);
+  // }
+  // if (alertsService.registerAdvancedAlertsRoutes) {
+  //   alertsService.registerAdvancedAlertsRoutes(app);
+  // }
+  // if (exchangeService.registerCrossExchangeRoutes) {
+  //   exchangeService.registerCrossExchangeRoutes(app);
+  // }
+  // if (macroService.registerMacroEconomicRoutes) {
+  //   macroService.registerMacroEconomicRoutes(app);
+  // }
 
-  // Phase 2 Advanced Features API endpoints
-  const whaleService = await import('./whale-tracking-service');
-  const lstmService = await import('./lstm-prediction-service');
-  const defiService = await import('./defi-integration-service');
+  // Phase 2 Advanced Features API endpoints - DISABLED to prevent refresh cycles
+  // const whaleService = await import('./whale-tracking-service');
+  // const lstmService = await import('./lstm-prediction-service');
+  // const defiService = await import('./defi-integration-service');
   
   // Register Phase 2 service routes
-  if (whaleService.registerWhaleTrackingRoutes) {
-    whaleService.registerWhaleTrackingRoutes(app);
-  }
-  if (lstmService.registerLSTMRoutes) {
-    lstmService.registerLSTMRoutes(app);
-  }
-  if (defiService.registerDeFiRoutes) {
-    defiService.registerDeFiRoutes(app);
-  }
+  // if (whaleService.registerWhaleTrackingRoutes) {
+  //   whaleService.registerWhaleTrackingRoutes(app);
+  // }
+  // if (lstmService.registerLSTMRoutes) {
+  //   lstmService.registerLSTMRoutes(app);
+  // }
+  // if (defiService.registerDeFiRoutes) {
+  //   defiService.registerDeFiRoutes(app);
+  // }
 
   // Phase 3 Advanced Features API endpoints
   const { blockchainForensicsService } = await import('./blockchain-forensics-service');
