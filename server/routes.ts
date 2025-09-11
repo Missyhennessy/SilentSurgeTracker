@@ -3,7 +3,7 @@ import express from "express";
 import { createServer, type Server } from "http";
 // import { WebSocketServer, WebSocket } from "ws"; // Disabled to prevent refresh cycles
 import { storage } from "./storage";
-import { cryptoDataService } from "./crypto-data-service";
+// import { cryptoDataService } from "./crypto-data-service"; // DISABLED to prevent side effects
 import { insertCryptoAssetSchema, insertAlertSchema, insertVelocityDataSchema } from "@shared/schema";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { registerAuthRoutes } from "./auth-routes";
@@ -919,7 +919,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Manual trigger for crypto data update
   app.post("/api/update-crypto-data", async (req, res) => {
     try {
-      await cryptoDataService.updateCryptoAssets();
+      // await cryptoDataService.updateCryptoAssets(); // DISABLED
       const assets = await storage.getCryptoAssets();
       
       // Broadcasting disabled - using simple polling instead
@@ -1653,7 +1653,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get API sources status
   app.get('/api/data-sources/status', isAuthenticated, async (req, res) => {
     try {
-      const status = cryptoDataService.getApiSourcesStatus();
+      // const status = cryptoDataService.getApiSourcesStatus(); // DISABLED
+      const status = { sources: [] }; // Placeholder
       res.json(status);
     } catch (error) {
       console.error('Error fetching API sources status:', error);
