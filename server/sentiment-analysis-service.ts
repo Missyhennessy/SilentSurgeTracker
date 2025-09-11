@@ -63,7 +63,7 @@ export class SentimentAnalysisService {
   constructor() {
     this.initializeMockInfluencers();
     this.initializeMockNews();
-    this.startSentimentMonitoring();
+    // this.startSentimentMonitoring(); // DISABLED for development to prevent event loop stalls
   }
 
   // Initialize mock influencer data
