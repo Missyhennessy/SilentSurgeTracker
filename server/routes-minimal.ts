@@ -15,11 +15,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  // Get all crypto assets
+  // Get all crypto assets - CACHED to prevent refresh cycles
+  let cachedAssets: any[] | null = null;
   app.get("/api/assets", async (req, res) => {
     try {
-      const assets = await storage.getCryptoAssets();
-      res.json(assets);
+      // Use cached data to prevent constant re-renders that cause Vite HMR loops
+      if (!cachedAssets) {
+        cachedAssets = await storage.getCryptoAssets();
+      }
+      res.json(cachedAssets);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

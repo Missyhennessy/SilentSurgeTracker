@@ -774,11 +774,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all crypto assets
+  // Get all crypto assets - CACHED to prevent refresh cycles
+  let cachedAssets: any[] | null = null;
   app.get("/api/assets", async (req, res) => {
     try {
-      const assets = await storage.getCryptoAssets();
-      res.json(assets);
+      // Use cached data to prevent constant re-renders that cause Vite HMR loops
+      if (!cachedAssets) {
+        cachedAssets = await storage.getCryptoAssets();
+      }
+      res.json(cachedAssets);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch assets" });
     }
@@ -946,16 +950,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cryptocurrency monitoring expansion endpoint
   app.post('/api/crypto/expand-monitoring', isAuthenticated, async (req, res) => {
     try {
-      const { multiApiExpansionService } = await import('./multi-api-expansion');
+      // const { multiApiExpansionService } = await import('./multi-api-expansion'); // DISABLED
       
-      // Run expansion in background to avoid timeout
-      multiApiExpansionService.expandCryptocurrencyMonitoring()
-        .then(() => {
-          console.log('✅ Multi-API cryptocurrency monitoring expansion completed successfully');
-        })
-        .catch((error) => {
-          console.error('❌ Multi-API cryptocurrency monitoring expansion failed:', error);
-        });
+      // Run expansion in background to avoid timeout - DISABLED
+      // multiApiExpansionService.expandCryptocurrencyMonitoring()
+      //   .then(() => {
+      //     console.log('✅ Multi-API cryptocurrency monitoring expansion completed successfully');
+      //   })
+      //   .catch((error) => {
+      //     console.error('❌ Multi-API cryptocurrency monitoring expansion failed:', error);
+      //   });
 
       res.json({
         message: 'Multi-API cryptocurrency monitoring expansion started',
@@ -974,10 +978,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current monitoring statistics
   app.get('/api/crypto/monitoring-stats', isAuthenticated, async (req, res) => {
     try {
-      const { multiApiExpansionService } = await import('./multi-api-expansion');
-      const stats = await multiApiExpansionService.getCurrentStats();
+      // const { multiApiExpansionService } = await import('./multi-api-expansion'); // DISABLED
+      // const stats = await multiApiExpansionService.getCurrentStats(); // DISABLED
       
-      res.json(stats);
+      res.json({ message: 'Monitoring stats disabled', assets: 0 });
     } catch (error) {
       res.status(500).json({ message: 'Failed to get monitoring stats', error: error instanceof Error ? error.message : 'Unknown error' });
     }
@@ -1614,9 +1618,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Batch update cryptocurrency database (expand to thousands)
   app.post("/api/crypto/batch-update", async (req, res) => {
     try {
-      const CryptoDataService = (await import("./crypto-data-service")).default;
-      const cryptoService = new CryptoDataService();
-      await cryptoService.updateAllCryptocurrencies();
+      // const CryptoDataService = (await import("./crypto-data-service")).default; // DISABLED
+      // const cryptoService = new CryptoDataService(); // DISABLED
+      // await cryptoService.updateAllCryptocurrencies(); // DISABLED
       
       const totalAssets = await storage.getCryptoAssetsCount();
       res.json({ 
