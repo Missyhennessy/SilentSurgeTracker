@@ -52,9 +52,8 @@ export interface DashboardModule {
   component: React.ComponentType;
 }
 
-// WebSocket interface removed to prevent refresh cycles
-// export interface WebSocketMessage {
-//   type: 'asset_update' | 'bulk_update' | 'crypto_update' | 'alert_triggered';
-//   data: any;
-//   timestamp?: string;
-// }
+export interface WebSocketMessage {
+  type: 'asset_update' | 'bulk_update' | 'crypto_update' | 'alert_triggered';
+  data: any;
+  timestamp?: string;
+}

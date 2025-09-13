@@ -35,30 +35,29 @@ export function PerformanceMonitor() {
           fps,
           memoryUsage: (performance as any).memory ? 
             Math.round((performance as any).memory.usedJSHeapSize / 1048576) : 0,
-          loadTime: 0 // Disabled performance timing
+          loadTime: Math.round(performance.timing?.loadEventEnd - performance.timing?.navigationStart) || 0
         }));
         
         frameCountRef.current = 0;
         lastTimeRef.current = now;
       }
       
-      // animationFrame = requestAnimationFrame(measureFPS); // DISABLED
+      animationFrame = requestAnimationFrame(measureFPS);
     };
 
-    // FPS monitoring DISABLED to prevent refresh cycles
-    // if (isVisible) {
-    //   measureFPS();
-    // }
+    if (isVisible) {
+      measureFPS();
+    }
 
-    // Network request monitoring DISABLED to prevent refresh cycles
-    // let requestCount = 0;
-    // const originalFetch = window.fetch;
-    // 
-    // window.fetch = async (...args) => {
-    //   requestCount++;
-    //   setMetrics(prev => ({ ...prev, networkRequests: requestCount }));
-    //   return originalFetch(...args);
-    // };
+    // Network request monitoring
+    let requestCount = 0;
+    const originalFetch = window.fetch;
+    
+    window.fetch = async (...args) => {
+      requestCount++;
+      setMetrics(prev => ({ ...prev, networkRequests: requestCount }));
+      return originalFetch(...args);
+    };
 
     // Keyboard shortcut to toggle visibility (Ctrl+Shift+P)
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -73,7 +72,7 @@ export function PerformanceMonitor() {
       if (animationFrame) {
         cancelAnimationFrame(animationFrame);
       }
-      // window.fetch = originalFetch; // DISABLED
+      window.fetch = originalFetch;
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isVisible]);

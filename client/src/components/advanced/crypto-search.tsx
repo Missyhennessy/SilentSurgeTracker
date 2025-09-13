@@ -58,7 +58,7 @@ export default function CryptoSearch() {
   // Fetch trending cryptocurrencies
   const { data: trendingData } = useQuery<{ trending: TrendingCoin[]; lastUpdated: string }>({
     queryKey: ['/api/crypto/trending'],
-    refetchInterval: false, // Disabled to prevent refresh cycles
+    refetchInterval: 300000, // 5 minutes
   });
 
   const handleSearch = async () => {

@@ -20,35 +20,31 @@ export function AnimatedCounter({
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    // Animation disabled to prevent refresh cycles
-    setCount(value);
-    
-    // Original animation code disabled:
-    // let startTime: number;
-    // let animationFrame: number;
-    //
-    // const animate = (timestamp: number) => {
-    //   if (!startTime) startTime = timestamp;
-    //   const progress = Math.min((timestamp - startTime) / duration, 1);
-    //   
-    //   // Easing function for smooth animation
-    //   const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-    //   const currentValue = value * easeOutQuart;
-    //   
-    //   setCount(currentValue);
-    //
-    //   if (progress < 1) {
-    //     animationFrame = requestAnimationFrame(animate);
-    //   }
-    // };
-    //
-    // animationFrame = requestAnimationFrame(animate);
-    //
-    // return () => {
-    //   if (animationFrame) {
-    //     cancelAnimationFrame(animationFrame);
-    //   }
-    // };
+    let startTime: number;
+    let animationFrame: number;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      
+      // Easing function for smooth animation
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+      const currentValue = value * easeOutQuart;
+      
+      setCount(currentValue);
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
   }, [value, duration]);
 
   const formatValue = (val: number) => {

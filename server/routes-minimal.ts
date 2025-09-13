@@ -8,22 +8,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
   // Start real-time crypto data updates
-  // cryptoDataService.startRealTimeUpdates(2); // DISABLED to prevent refresh cycles
+  cryptoDataService.startRealTimeUpdates(2); // Update every 2 minutes
 
   // Basic API health check
   app.get("/api/health", async (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  // Get all crypto assets - CACHED to prevent refresh cycles
-  let cachedAssets: any[] | null = null;
+  // Get all crypto assets
   app.get("/api/assets", async (req, res) => {
     try {
-      // Use cached data to prevent constant re-renders that cause Vite HMR loops
-      if (!cachedAssets) {
-        cachedAssets = await storage.getCryptoAssets();
-      }
-      res.json(cachedAssets);
+      const assets = await storage.getCryptoAssets();
+      res.json(assets);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

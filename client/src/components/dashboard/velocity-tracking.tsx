@@ -17,7 +17,7 @@ export default function VelocityTracking() {
 
   const { data: assets } = useQuery<CryptoAsset[]>({
     queryKey: ["/api/assets"],
-    refetchInterval: false, // Disabled to prevent refresh cycles
+    refetchInterval: 30000,
   });
 
   const selectedAssetData = assets?.find(asset => asset.symbol === selectedAsset) || assets?.[0];

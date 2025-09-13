@@ -158,7 +158,7 @@ Our proprietary approach combines:
 **Professional-Grade Tools**
 
 **Web Dashboard:**
-- Real-time SSS tracking for 7,099 cryptocurrencies
+- Real-time SSS tracking for 1000+ cryptocurrencies
 - Interactive price charts with technical indicators
 - Customizable alert system
 - Portfolio management and tracking

@@ -41,20 +41,20 @@ export default function CryptoMonitoringExpansion() {
         description: "Cryptocurrency monitoring expansion is now processing. This will take 10-15 minutes.",
       });
       
-      // Timer disabled to prevent refresh cycles
-      // const interval = setInterval(async () => {
-      //   await refetchStats();
-      // }, 30000);
+      // Check status every 30 seconds
+      const interval = setInterval(async () => {
+        await refetchStats();
+      }, 30000);
       
       // Stop checking after 20 minutes
-      // setTimeout(() => {
-      //   clearInterval(interval);
-      //   setIsExpanding(false);
-      //   toast({
-      //     title: "Expansion Complete",
-      //     description: "Cryptocurrency monitoring has been expanded successfully!",
-      //   });
-      // }, 1200000);
+      setTimeout(() => {
+        clearInterval(interval);
+        setIsExpanding(false);
+        toast({
+          title: "Expansion Complete",
+          description: "Cryptocurrency monitoring has been expanded successfully!",
+        });
+      }, 1200000);
     },
     onError: (error) => {
       toast({

@@ -48,12 +48,6 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   private handleReload = (): void => {
-    // Disable automatic reload in development to prevent refresh cycles
-    if (import.meta.env.DEV) {
-      console.log('ErrorBoundary reload disabled in development mode');
-      this.handleReset();
-      return;
-    }
     window.location.reload();
   };
 

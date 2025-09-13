@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CleanNav } from "@/components/navigation/clean-nav";
+import { UserFriendlyNav } from "@/components/navigation/user-friendly-nav";
 import { RealTimeIndicator } from "@/components/real-time-indicator";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
-import { TrendingUp } from "lucide-react";
+import { PerformanceMonitor } from "@/components/ui/performance-monitor";
+import { TrendingUp, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FloatingActionButton, defaultFABActions } from "@/components/ui/floating-action-button";
@@ -26,6 +27,7 @@ import AlertsManagement from "@/components/advanced/alerts-management";
 import TradingSignals from "@/components/advanced/trading-signals";
 import MarketScanner from "@/components/advanced/market-scanner";
 import CryptoSearch from "@/components/advanced/crypto-search";
+import { useWebSocket } from "@/hooks/use-websocket";
 import { DashboardModule } from "@/types/dashboard";
 import { TourOverlay } from "@/components/onboarding/tour-overlay";
 
@@ -34,7 +36,9 @@ export default function Dashboard() {
   const [activeModule, setActiveModule] = useState<DashboardModule>("scanner");
   const [alertCount] = useState(3);
   const [showTour, setShowTour] = useState(false);
+  const [userLevel, setUserLevel] = useState<"beginner" | "advanced">("beginner");
 
+  const { isConnected } = useWebSocket("/ws");
 
   useEffect(() => {
     const hasSeenTour = localStorage.getItem('sst-tour-completed');
@@ -43,69 +47,90 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Get total assets for header - no automatic refreshing
+  // Get total assets for header
   const { data: assets } = useQuery<any[]>({
     queryKey: ["/api/assets"],
-    refetchInterval: false, // Disabled to prevent refresh cycles
-    staleTime: Infinity, // Never consider stale to prevent refresh cycles
-    gcTime: Infinity, // Keep in cache indefinitely
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchInterval: 30000,
   });
 
   const totalAssets = Array.isArray(assets) ? assets.length : 0;
 
   const renderModule = () => {
+    console.log('Rendering module:', activeModule);
+    
     try {
       switch (activeModule) {
         case "scanner":
+          console.log('Loading AssetScanner');
           return <AssetScanner />;
         case "watchlist":
+          console.log('Loading Watchlist');
           return <Watchlist />;
         case "heatmap":
+          console.log('Loading BehavioralHeatmap');
           return <BehavioralHeatmap />;
         case "velocity":
+          console.log('Loading VelocityTracking');
           return <VelocityTracking />;
         case "cohesion":
+          console.log('Loading CohesionAnalyzer');
           return <CohesionAnalyzer />;
         case "anchor":
+          console.log('Loading AnchorPressure');
           return <AnchorPressure />;
         case "hhr":
+          console.log('Loading HHRComparator');
           return <HHRComparator />;
         case "composite":
+          console.log('Loading CompositeRating');
           return <CompositeRating />;
         case "analytics":
+          console.log('Loading HistoricalSSSTracker');
           return <HistoricalSSSTracker />;
         case "portfolio":
+          console.log('Loading PortfolioTracker');
           return <PortfolioTracker />;
         case "backtest":
+          console.log('Loading BacktestingEngine');
           return <BacktestingEngine />;
         case "ml":
+          console.log('Loading ModelPerformance');
           return <ModelPerformance />;
         case "risk":
+          console.log('Loading RiskManagement');
           return <RiskManagement />;
         case "sentiment":
+          console.log('Loading MarketSentiment');
           return <MarketSentiment />;
         case "optimization":
+          console.log('Loading PortfolioOptimization');
           return <PortfolioOptimization />;
         case "alerts":
+          console.log('Loading AlertsManagement');
           return <AlertsManagement />;
         case "signals":
+          console.log('Loading TradingSignals');
           return <TradingSignals />;
         case "market-scanner":
+          console.log('Loading MarketScanner');
           return <MarketScanner />;
         case "search":
+          console.log('Loading CryptoSearch');
           return <CryptoSearch />;
         case "python-engine":
+          console.log('Navigating to Python Engine');
           window.location.href = '/python-engine';
           break;
         case "ml-dashboard":
+          console.log('Navigating to ML Dashboard');
           window.location.href = '/ml-dashboard';
           return <div className="p-6">Redirecting to ML Dashboard...</div>;
         case "api-status":
+          console.log('Navigating to API Status');
           window.location.href = '/api-status';
           return <div className="p-6">Redirecting to API Status Dashboard...</div>;
         default:
+          console.log('Loading default AssetScanner');
           return <AssetScanner />;
       }
     } catch (error) {
@@ -116,26 +141,27 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
-      {/* Clean Header */}
+      {/* Combined Header and Navigation */}
       <div className="bg-gray-900 border-b border-gray-700 sticky top-0 z-30">
-        {/* Simplified Header */}
-        <div className="px-6 py-4">
+        {/* Top Header Row */}
+        <div className="px-6 py-3 border-b border-gray-700/50">
           <div className="flex items-center justify-between">
-            {/* Left: App Title */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">Silent Surge Tracker</h1>
-                <p className="text-sm text-gray-400">Cryptocurrency Analysis Platform</p>
-              </div>
-            </div>
-
-            {/* Right: Stats & Indicators */}
+            {/* Left section */}
             <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-white">Silent Surge Tracker</h1>
+                  <p className="text-xs text-gray-400">
+                    {new Date().toLocaleTimeString()} • Real-time Analysis
+                  </p>
+                </div>
+              </div>
+
               {/* Quick Stats */}
-              <div className="hidden lg:flex items-center gap-4">
+              <div className="hidden lg:flex items-center gap-4 ml-6">
                 <div className="text-center">
                   <div className="text-lg font-bold text-white">
                     <AnimatedCounter value={totalAssets} />
@@ -150,18 +176,36 @@ export default function Dashboard() {
                   <div className="text-xs text-gray-400">Alerts</div>
                 </div>
               </div>
-              
+            </div>
+
+            {/* Right section */}
+            <div className="flex items-center gap-4">
               <RealTimeIndicator />
+              <Button variant="ghost" size="sm" className="relative">
+                <Bell className="h-5 w-5" />
+                {alertCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                  >
+                    {alertCount > 9 ? '9+' : alertCount}
+                  </Badge>
+                )}
+              </Button>
             </div>
           </div>
         </div>
         
-        {/* Navigation */}
-        <CleanNav 
-          activeModule={activeModule}
-          setActiveModule={setActiveModule}
-          alertCount={alertCount}
-        />
+        {/* Navigation Bar Row */}
+        <div className="px-6 py-3">
+          <UserFriendlyNav 
+            activeModule={activeModule}
+            setActiveModule={setActiveModule}
+            alertCount={alertCount}
+            userLevel={userLevel}
+            onUserLevelChange={setUserLevel}
+          />
+        </div>
       </div>
       
       <div className="flex flex-1 overflow-hidden">
@@ -183,6 +227,8 @@ export default function Dashboard() {
       {/* Floating Action Button */}
       <FloatingActionButton actions={defaultFABActions} />
       
+      {/* Performance Monitor (Development) */}
+      {process.env.NODE_ENV === 'development' && <PerformanceMonitor />}
       
       <TourOverlay 
         isOpen={showTour}

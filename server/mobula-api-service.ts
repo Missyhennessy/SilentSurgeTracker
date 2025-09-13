@@ -72,17 +72,13 @@ export class MobulaApiService {
         if (this.apiKey) {
           headers['Authorization'] = `Bearer ${this.apiKey}`;
         }
-        
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         const response = await fetch(url.toString(), {
           method: 'GET',
           headers,
-          signal: controller.signal
+          // @ts-ignore - timeout is supported in Node.js fetch
+          timeout: 10000
         });
-        
-        clearTimeout(timeoutId);
 
         if (!response.ok) {
           throw new Error(`Mobula API error: ${response.status} ${response.statusText}`);
@@ -181,34 +177,23 @@ export class MobulaApiService {
   // Health check for the service
   async healthCheck(): Promise<boolean> {
     try {
-      // Use a simple endpoint with proper authentication
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const headers: HeadersInit = {
-        'Accept': 'application/json',
-        'User-Agent': 'Silent-Surge-Tracker/1.0'
-      };
-
-      if (this.apiKey) {
-        headers['Authorization'] = `Bearer ${this.apiKey}`;
-      }
-      
+      // Use a simple endpoint that should work without API key
       const response = await fetch(`${this.baseUrl}/market/data?asset=bitcoin`, {
         method: 'GET',
-        headers,
-        signal: controller.signal
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Silent-Surge-Tracker/1.0'
+        },
+        // @ts-ignore - timeout is supported in Node.js fetch
+        timeout: 5000
       });
       
-      clearTimeout(timeoutId);
-      
-      if (response.status === 401) {
-        console.log('ℹ️ Mobula API authentication failed - check API key');
-        return false;
+      if (response.status === 401 && !this.apiKey) {
+        console.log('ℹ️ Mobula API requires API key for full functionality');
+        return false; // Disable if API key required but not provided
       }
       
-      // Consider 200 and 429 (rate limit) as healthy
-      return response.ok || response.status === 429;
+      return response.ok;
     } catch (error) {
       console.error('Mobula API health check failed:', error);
       return false;

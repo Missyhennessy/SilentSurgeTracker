@@ -20,16 +20,12 @@ export function FloatingPriceChange({
   const isPositive = change > 0;
 
   useEffect(() => {
-    // Timer disabled to prevent refresh cycles
-    setIsVisible(false);
-    onAnimationComplete?.();
-    
-    // const timer = setTimeout(() => {
-    //   setIsVisible(false);
-    //   onAnimationComplete?.();
-    // }, 2000);
+    const timer = setTimeout(() => {
+      setIsVisible(false);
+      onAnimationComplete?.();
+    }, 2000);
 
-    // return () => clearTimeout(timer);
+    return () => clearTimeout(timer);
   }, [onAnimationComplete]);
 
   if (!isVisible || change === 0) return null;

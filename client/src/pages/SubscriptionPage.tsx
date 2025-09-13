@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscription } from "@/hooks/useSubscription";
 import { Check, Crown, Sparkles, TrendingUp, Shield, Zap } from "lucide-react";
 
 // Load Stripe
@@ -139,7 +138,26 @@ function CheckoutForm() {
 
 export default function SubscriptionPage() {
   const { user, isAuthenticated } = useAuth();
-  const { subscriptionStatus, isLoading: loading } = useSubscription();
+  const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      if (!isAuthenticated) return;
+      
+      try {
+        const response = await apiRequest("GET", "/api/subscription/status");
+        const data = await response.json();
+        setSubscriptionStatus(data);
+      } catch (error) {
+        console.error('Failed to fetch subscription status:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubscriptionStatus();
+  }, [isAuthenticated]);
 
   if (!isAuthenticated) {
     return (

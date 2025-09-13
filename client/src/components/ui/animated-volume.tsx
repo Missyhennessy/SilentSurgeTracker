@@ -28,28 +28,23 @@ export function AnimatedVolume({
       const stepDuration = duration / steps;
       const volumeStep = (endVolume - startVolume) / steps;
       
-      // Animation disabled to prevent refresh cycles
-      setDisplayVolume(endVolume);
-      setAnimationState('neutral');
+      let currentStep = 0;
+      const interval = setInterval(() => {
+        currentStep++;
+        const newVolume = startVolume + (volumeStep * currentStep);
+        setDisplayVolume(newVolume);
+        
+        if (currentStep >= steps) {
+          clearInterval(interval);
+          setDisplayVolume(endVolume);
+          
+          setTimeout(() => {
+            setAnimationState('neutral');
+          }, 1000);
+        }
+      }, stepDuration);
       
-      // Original animation code disabled:
-      // let currentStep = 0;
-      // const interval = setInterval(() => {
-      //   currentStep++;
-      //   const newVolume = startVolume + (volumeStep * currentStep);
-      //   setDisplayVolume(newVolume);
-      //   
-      //   if (currentStep >= steps) {
-      //     clearInterval(interval);
-      //     setDisplayVolume(endVolume);
-      //     
-      //     setTimeout(() => {
-      //       setAnimationState('neutral');
-      //     }, 1000);
-      //   }
-      // }, stepDuration);
-      // 
-      // return () => clearInterval(interval);
+      return () => clearInterval(interval);
     }
   }, [volume, previousVolume]);
 

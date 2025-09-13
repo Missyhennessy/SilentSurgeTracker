@@ -1,4 +1,4 @@
-import { Star, TrendingUp, TrendingDown, Plus, Eye, Crown } from "lucide-react";
+import { Star, TrendingUp, TrendingDown, Plus, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProgressRing } from "@/components/ui/progress-ring";
@@ -11,8 +11,6 @@ import { getScoreColor, getTrendArrow } from "@/lib/sss-calculator";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
-import { useSubscription } from "@/hooks/useSubscription";
-import { PremiumPaywall } from "@/components/ui/premium-paywall";
 
 
 interface AssetCardProps {
@@ -26,28 +24,24 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
   const [previousPrice, setPreviousPrice] = useState(asset.price);
   const [previousScore, setPreviousScore] = useState(asset.sssScore);
   const [showFloatingChange, setShowFloatingChange] = useState(false);
-  const { hasPremiumAccess } = useSubscription();
 
-  // Track price changes for animations - DISABLED to prevent refresh cycles
+  // Track price changes for animations
   useEffect(() => {
     if (asset.price !== previousPrice) {
-      setPreviousPrice(asset.price);
-      // Animation disabled to prevent constant timers causing refresh cycles
-      // setShowFloatingChange(true);
-      // setTimeout(() => {
-      //   setShowFloatingChange(false);
-      // }, 2000);
+      setShowFloatingChange(true);
+      setTimeout(() => {
+        setPreviousPrice(asset.price);
+        setShowFloatingChange(false);
+      }, 2000);
     }
   }, [asset.price, previousPrice]);
 
-  // Track SSS score changes - DISABLED to prevent refresh cycles
+  // Track SSS score changes
   useEffect(() => {
     if (asset.sssScore !== previousScore) {
-      setPreviousScore(asset.sssScore);
-      // Timer disabled to prevent refresh cycles
-      // setTimeout(() => {
-      //   setPreviousScore(asset.sssScore);
-      // }, 1000);
+      setTimeout(() => {
+        setPreviousScore(asset.sssScore);
+      }, 1000);
     }
   }, [asset.sssScore, previousScore]);
   
@@ -127,17 +121,11 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
           </div>
         </div>
         
-        {hasPremiumAccess ? (
-          <SSScoreAnimation 
-            score={asset.sssScore} 
-            previousScore={previousScore} 
-            size={50} 
-          />
-        ) : (
-          <div className="w-12 h-12 rounded-full border-2 border-dashed border-yellow-500/50 flex items-center justify-center bg-yellow-900/10">
-            <Crown className="w-5 h-5 text-yellow-400" />
-          </div>
-        )}
+        <SSScoreAnimation 
+          score={asset.sssScore} 
+          previousScore={previousScore} 
+          size={50} 
+        />
       </div>
 
 
@@ -159,26 +147,16 @@ export default function AssetCard({ asset, onSelect }: AssetCardProps) {
             <AnimatedPercentage percentage={asset.change24h} />
           </span>
         </div>
-        {hasPremiumAccess ? (
-          <div className="flex justify-between text-sm">
-            <span className="text-[var(--text-secondary)]">Velocity Anomaly</span>
-            <span className="text-[var(--warning-amber)] inline-flex items-center gap-1">
-              <AnimatedPercentage 
-                percentage={asset.velocityAnomaly} 
-                className="text-[var(--warning-amber)]"
-              />
-              <span className="animate-wiggle">{getTrendArrow(asset.velocityAnomaly)}</span>
-            </span>
-          </div>
-        ) : (
-          <div className="flex justify-between text-sm">
-            <span className="text-[var(--text-secondary)]">SSS Analysis</span>
-            <span className="text-yellow-400 inline-flex items-center gap-1 text-xs">
-              <Crown className="w-3 h-3" />
-              Pro Only
-            </span>
-          </div>
-        )}
+        <div className="flex justify-between text-sm">
+          <span className="text-[var(--text-secondary)]">Velocity Anomaly</span>
+          <span className="text-[var(--warning-amber)] inline-flex items-center gap-1">
+            <AnimatedPercentage 
+              percentage={asset.velocityAnomaly} 
+              className="text-[var(--warning-amber)]"
+            />
+            <span className="animate-wiggle">{getTrendArrow(asset.velocityAnomaly)}</span>
+          </span>
+        </div>
       </div>
       
       <div className="mt-4 pt-4 border-t border-[var(--dark-border)]">

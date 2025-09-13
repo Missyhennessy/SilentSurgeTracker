@@ -36,19 +36,15 @@ export class CryptoCompareService {
 
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
         const response = await fetch(url.toString(), {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
             'User-Agent': 'Silent-Surge-Tracker/1.0'
           },
-          signal: controller.signal
+          // @ts-ignore
+          timeout: 10000
         });
-        
-        clearTimeout(timeoutId);
 
         if (!response.ok) {
           throw new Error(`CryptoCompare API error: ${response.status} ${response.statusText}`);
@@ -119,7 +115,7 @@ export class CryptoCompareService {
   // Get top cryptocurrencies list for expansion
   async getTopList(limit: number = 2000): Promise<any[]> {
     try {
-      const response = await this.makeRequest<{Data: any[]}>('/top/mktcapfull', {
+      const response = await this.makeRequest('/top/mktcapfull', {
         limit: Math.min(limit, 2000), // CryptoCompare allows up to 2000
         tsym: 'USD'
       });

@@ -1,10 +1,10 @@
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Crown, Sparkles, TrendingUp, Shield, Zap, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscription } from "@/hooks/useSubscription";
-import type { User } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -15,7 +15,23 @@ interface PaywallModalProps {
 
 export default function PaywallModal({ isOpen, onClose, feature, description }: PaywallModalProps) {
   const { user } = useAuth();
-  const { subscriptionStatus } = useSubscription();
+  const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      try {
+        const response = await apiRequest("GET", "/api/subscription/status");
+        const data = await response.json();
+        setSubscriptionStatus(data);
+      } catch (error) {
+        console.error('Failed to fetch subscription status:', error);
+      }
+    };
+
+    if (isOpen) {
+      fetchSubscriptionStatus();
+    }
+  }, [isOpen]);
 
   const handleUpgrade = () => {
     window.location.href = "/subscribe";
@@ -94,9 +110,9 @@ export default function PaywallModal({ isOpen, onClose, feature, description }: 
             </Button>
           </div>
 
-          {(user as User)?.email && (
+          {user && 'email' in user && user.email && (
             <p className="text-xs text-center text-muted-foreground">
-              Subscription will be linked to {(user as User).email}
+              Subscription will be linked to {user.email}
             </p>
           )}
         </div>

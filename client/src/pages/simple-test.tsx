@@ -4,12 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 export default function SimpleTest() {
   const { data: health, isLoading: healthLoading } = useQuery({
     queryKey: ["/api/health"],
-    refetchInterval: false, // Disabled to prevent refresh cycles
+    refetchInterval: 5000,
   });
 
   const { data: assets, isLoading: assetsLoading } = useQuery({
     queryKey: ["/api/assets"],
-    refetchInterval: false, // Disabled to prevent refresh cycles
+    refetchInterval: 30000,
   });
 
   return (
