@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { UserFriendlyNav } from "@/components/navigation/user-friendly-nav";
 import { RealTimeIndicator } from "@/components/real-time-indicator";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
-import { PerformanceMonitor } from "@/components/ui/performance-monitor";
 import { TrendingUp, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -226,9 +225,6 @@ export default function Dashboard() {
       
       {/* Floating Action Button */}
       <FloatingActionButton actions={defaultFABActions} />
-      
-      {/* Performance Monitor (Development) */}
-      {process.env.NODE_ENV === 'development' && <PerformanceMonitor />}
       
       <TourOverlay 
         isOpen={showTour}
