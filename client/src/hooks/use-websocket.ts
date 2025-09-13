@@ -7,8 +7,13 @@ export function useWebSocket(url: string) {
   const ws = useRef<WebSocket | null>(null);
 
   useEffect(() => {
+    // Prevent connection loops by checking if already connected
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      return;
+    }
+
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const wsUrl = `${protocol}//${window.location.host}${url}`;
     
     ws.current = new WebSocket(wsUrl);
 
@@ -36,11 +41,11 @@ export function useWebSocket(url: string) {
     };
 
     return () => {
-      if (ws.current) {
+      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
         ws.current.close();
       }
     };
-  }, [url]);
+  }, []); // Remove url dependency to prevent connection loops
 
   const sendMessage = (message: any) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
