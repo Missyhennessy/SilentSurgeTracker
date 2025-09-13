@@ -10,10 +10,12 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, error } = useAuth();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    // Be more conservative with redirects - only redirect on explicit 401 errors
+    // This prevents WebKit cookie issues from causing constant redirects
+    if (!isLoading && !isAuthenticated && error && isUnauthorizedError(error)) {
       toast({
         title: "Authentication Required",
         description: "Please sign in to access this page.",
@@ -21,9 +23,9 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
       });
       setTimeout(() => {
         window.location.href = "/api/login";
-      }, 2000);
+      }, 3000); // Increased timeout to prevent rapid redirects
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, isLoading, error, toast]);
 
   if (isLoading) {
     return (

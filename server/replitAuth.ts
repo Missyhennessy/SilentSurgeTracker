@@ -40,6 +40,8 @@ export function getSession() {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: sessionTtl,
+      sameSite: 'lax', // WebKit compatibility - allows cookies during auth redirects
+      domain: process.env.NODE_ENV === 'production' ? undefined : undefined, // Let browser handle domain
     },
   });
 }
