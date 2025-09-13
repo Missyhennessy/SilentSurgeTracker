@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { UserFriendlyNav } from "@/components/navigation/user-friendly-nav";
 import { RealTimeIndicator } from "@/components/real-time-indicator";
@@ -54,7 +54,7 @@ export default function Dashboard() {
 
   const totalAssets = Array.isArray(assets) ? assets.length : 0;
 
-  const renderModule = () => {
+  const renderModule = useMemo(() => {
     console.log('Rendering module:', activeModule);
     
     try {
@@ -136,7 +136,7 @@ export default function Dashboard() {
       console.error('Error rendering module:', activeModule, error);
       return <div className="p-6 text-red-500">Error loading module: {activeModule}</div>;
     }
-  };
+  }, [activeModule]); // Only re-render when activeModule changes
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
@@ -216,7 +216,7 @@ export default function Dashboard() {
           <div className="flex-1 overflow-y-auto scroll-container bg-gray-900 p-2 sm:p-4 lg:p-6">
             <div className="w-full max-w-none min-h-0">
               <div className="pb-4 md:pb-6 lg:pb-8">
-                {renderModule()}
+                {renderModule}
               </div>
             </div>
           </div>
