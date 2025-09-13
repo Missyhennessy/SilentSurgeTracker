@@ -158,7 +158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
   }
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-07-30.basil" as any,
+    apiVersion: "2023-10-16",
   });
 
   // Subscription middleware to check if user has access
@@ -1021,11 +1021,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         message: 'Multi-API cryptocurrency monitoring expansion started',
         status: 'processing',
-        estimatedCompletion: '8-12 minutes',
-        targetAssets: '15,000 total assets',
-        method: 'CryptoCompare (Primary) → CoinGecko (Secondary)',
-        apiHierarchy: 'Using established multi-API redundancy system',
-        scope: 'Cryptocurrencies, NFTs, meme coins, and tokens'
+        estimatedCompletion: '10-15 minutes',
+        targetAssets: '14,500+ assets',
+        method: 'CryptoCompare (Primary) → CoinGecko (Fallback)',
+        apiHierarchy: 'Using our established multi-API redundancy system'
       });
     } catch (error) {
       res.status(500).json({ message: 'Failed to start expansion', error: error.message });
@@ -1035,8 +1034,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current monitoring statistics
   app.get('/api/crypto/monitoring-stats', isAuthenticated, async (req, res) => {
     try {
-      const { multiApiExpansionService } = await import('./multi-api-expansion');
-      const stats = await multiApiExpansionService.getCurrentStats();
+      const { coinGeckoExpansionService } = await import('./coingecko-expansion');
+      const stats = await coinGeckoExpansionService.getCurrentStats();
       
       res.json(stats);
     } catch (error) {

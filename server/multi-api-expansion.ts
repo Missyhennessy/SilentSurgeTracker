@@ -35,41 +35,26 @@ export class MultiApiExpansionService {
   private maxCryptocompareSymbols = 2000; // CryptoCompare has excellent coverage
   private batchSize = 100;
   private coinGeckoBaseUrl = 'https://api.coingecko.com/api/v3';
-  private maxCoinGeckoPages = 25; // Target ~6,250 additional assets via CoinGecko
-  private targetTotal = 15000; // Total target: ~15,000 cryptocurrencies
+  private maxCoinGeckoPages = 50; // 12,500+ assets
 
   async expandCryptocurrencyMonitoring(): Promise<void> {
-    console.log('🚀 Starting targeted 15,000 cryptocurrency expansion...');
-    console.log('API Priority: CryptoCompare (Primary) → CoinGecko (Secondary)');
+    console.log('🚀 Starting multi-API cryptocurrency monitoring expansion...');
+    console.log('API Priority: CryptoCompare (Primary) → CoinGecko (Fallback)');
     
     let totalAdded = 0;
-    const currentCount = await storage.getCryptoAssetsCount();
-    const remaining = Math.max(0, this.targetTotal - currentCount);
-    
-    console.log(`Current assets: ${currentCount}, Target: ${this.targetTotal}, Need: ${remaining}`);
-
-    if (remaining <= 0) {
-      console.log('✅ Target already reached! No expansion needed.');
-      return;
-    }
 
     try {
-      // Phase 1: Use CryptoCompare (up to 2,000 top cryptocurrencies)
-      console.log('Phase 1: CryptoCompare expansion (top 2,000 cryptocurrencies)...');
+      // Phase 1: Use CryptoCompare to get comprehensive crypto list
+      console.log('Phase 1: Using CryptoCompare for comprehensive crypto discovery...');
       const cryptoCompareAdded = await this.expandWithCryptoCompare();
       totalAdded += cryptoCompareAdded;
 
-      const stillNeeded = remaining - totalAdded;
-      if (stillNeeded > 0) {
-        // Phase 2: Use CoinGecko for remaining coverage
-        console.log(`Phase 2: CoinGecko expansion (${stillNeeded} more needed)...`);
-        const coinGeckoAdded = await this.expandWithCoinGecko(Math.min(stillNeeded, 6250));
-        totalAdded += coinGeckoAdded;
-      }
+      // Phase 2: Use CoinGecko as fallback for additional coverage
+      console.log('Phase 2: Using CoinGecko for additional cryptocurrency coverage...');
+      const coinGeckoAdded = await this.expandWithCoinGecko();
+      totalAdded += coinGeckoAdded;
 
-      const finalCount = currentCount + totalAdded;
-      console.log(`🎉 Expansion completed! Added ${totalAdded} new cryptocurrencies`);
-      console.log(`Total monitoring: ${finalCount} cryptocurrencies`);
+      console.log(`🎉 Expansion completed! Added ${totalAdded} new cryptocurrencies to monitoring`);
       
     } catch (error) {
       console.error('❌ Multi-API expansion failed:', error);
@@ -146,19 +131,16 @@ export class MultiApiExpansionService {
     return addedCount;
   }
 
-  private async expandWithCoinGecko(maxToAdd: number = 6250): Promise<number> {
+  private async expandWithCoinGecko(): Promise<number> {
     let addedCount = 0;
-    const maxPages = Math.ceil(maxToAdd / 250); // 250 per page
     
     try {
-      for (let page = 1; page <= Math.min(maxPages, this.maxCoinGeckoPages) && addedCount < maxToAdd; page++) {
+      for (let page = 1; page <= this.maxCoinGeckoPages; page++) {
         const assets = await this.fetchCoinGeckoAssets(page);
         
         if (!assets || assets.length === 0) break;
 
         for (const asset of assets) {
-          if (addedCount >= maxToAdd) break;
-          
           try {
             // Check if already exists
             const existing = await storage.getCryptoAssetBySymbol(asset.symbol.toUpperCase());
@@ -293,12 +275,10 @@ export class MultiApiExpansionService {
       return {
         totalCryptocurrencies: totalAssets,
         coverageIncrease: `${((totalAssets / 1886 - 1) * 100).toFixed(0)}%`,
-        apiSources: ['CryptoCompare (Primary)', 'CoinGecko (Secondary)', 'Mobula (When Available)'],
-        monitoringCapacity: `${totalAssets.toLocaleString()} assets monitored`,
-        targetCapacity: '15,000 cryptocurrencies, NFTs, meme coins, and tokens',
+        apiSources: ['CryptoCompare (Primary)', 'CoinGecko (Fallback)', 'Mobula (When Available)'],
+        monitoringCapacity: '14,500+ assets via multi-API approach',
         updateFrequency: 'Every 2 minutes',
-        apiHierarchy: 'CryptoCompare → CoinGecko → Mobula',
-        expansionProgress: `${((totalAssets / 15000) * 100).toFixed(1)}% of target reached`
+        apiHierarchy: 'CryptoCompare → CoinGecko → Mobula'
       };
     } catch (error) {
       console.error('Error getting expansion stats:', error);
