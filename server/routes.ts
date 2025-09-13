@@ -1,9 +1,9 @@
 import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
-// import { WebSocketServer, WebSocket } from "ws"; // Disabled to prevent refresh cycles
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-// import { cryptoDataService } from "./crypto-data-service"; // DISABLED to prevent side effects
+import { cryptoDataService } from "./crypto-data-service";
 import { insertCryptoAssetSchema, insertAlertSchema, insertVelocityDataSchema } from "@shared/schema";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { registerAuthRoutes } from "./auth-routes";
@@ -20,30 +20,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerAuthRoutes(app);
   registerSecurityRoutes(app);
 
-  // WebSocket server disabled to prevent constant refresh cycles
-  // const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // WebSocket server for real-time updates with security improvements
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  const connectionCount = new Map<string, number>();
+  const MAX_CONNECTIONS_PER_IP = 5;
   
-  // Simple broadcast function (no-op when WebSocket is disabled)
+  wss.on('connection', (ws, req) => {
+    const clientIP = req.socket.remoteAddress || 'unknown';
+    const currentConnections = connectionCount.get(clientIP) || 0;
+    
+    // Limit connections per IP
+    if (currentConnections >= MAX_CONNECTIONS_PER_IP) {
+      ws.close(1008, 'Too many connections from this IP');
+      return;
+    }
+    
+    connectionCount.set(clientIP, currentConnections + 1);
+    console.log('Client connected to WebSocket');
+    
+    // Set up heartbeat to detect dead connections
+    let isAlive = true;
+    ws.on('pong', () => { isAlive = true; });
+    
+    const heartbeat = setInterval(() => {
+      if (!isAlive) {
+        ws.terminate();
+        return;
+      }
+      isAlive = false;
+      ws.ping();
+    }, 30000);
+    
+    ws.on('message', (message) => {
+      try {
+        const messageString = message.toString();
+        
+        // Limit message size
+        if (messageString.length > 1024) {
+          ws.close(1009, 'Message too large');
+          return;
+        }
+        
+        const data = JSON.parse(messageString);
+        if (data.type === 'subscribe') {
+          // Handle subscription to specific assets or alerts
+          console.log('Client subscribed to:', data.topic);
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+        ws.close(1003, 'Invalid message format');
+      }
+    });
+
+    ws.on('close', () => {
+      console.log('Client disconnected from WebSocket');
+      clearInterval(heartbeat);
+      const connections = connectionCount.get(clientIP) || 1;
+      connectionCount.set(clientIP, Math.max(0, connections - 1));
+    });
+  });
+
+  // Broadcast updates to all connected clients
   const broadcast = (data: any) => {
-    // WebSocket broadcasting disabled - using simple polling instead
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(data));
+      }
+    });
   };
 
   // Start real-time crypto data updates
-  // cryptoDataService.startRealTimeUpdates(2); // DISABLED to prevent refresh cycles
+  cryptoDataService.startRealTimeUpdates(2); // Update every 2 minutes
   
-  // Periodic broadcasting disabled - using simple polling instead
-  // setInterval(async () => {
-  //   try {
-  //     const assets = await storage.getCryptoAssets();
-  //     broadcast({
-  //       type: 'crypto_update',
-  //       data: assets,
-  //       timestamp: new Date().toISOString()
-  //     });
-  //   } catch (error) {
-  //     console.error('Error broadcasting crypto updates:', error);
-  //   }
-  // }, 30000); // Broadcast every 30 seconds
+  // Set up periodic broadcasting of updated data
+  setInterval(async () => {
+    try {
+      const assets = await storage.getCryptoAssets();
+      broadcast({
+        type: 'crypto_update',
+        data: assets,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error broadcasting crypto updates:', error);
+    }
+  }, 30000); // Broadcast every 30 seconds
 
   // Authentication API endpoints
   registerAuthRoutes(app);
@@ -51,41 +112,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // External Security API endpoints
   registerSecurityRoutes(app);
 
-  // Phase 1 Advanced Features API endpoints - DISABLED to prevent refresh cycles
-  // const sentimentService = await import('./sentiment-analysis-service');
-  // const alertsService = await import('./advanced-alerts-service');
-  // const exchangeService = await import('./cross-exchange-service');
-  // const macroService = await import('./macro-economic-service');
+  // Phase 1 Advanced Features API endpoints
+  const sentimentService = await import('./sentiment-analysis-service');
+  const alertsService = await import('./advanced-alerts-service');
+  const exchangeService = await import('./cross-exchange-service');
+  const macroService = await import('./macro-economic-service');
   
   // Register Phase 1 service routes
-  // if (sentimentService.registerSentimentRoutes) {
-  //   sentimentService.registerSentimentRoutes(app);
-  // }
-  // if (alertsService.registerAdvancedAlertsRoutes) {
-  //   alertsService.registerAdvancedAlertsRoutes(app);
-  // }
-  // if (exchangeService.registerCrossExchangeRoutes) {
-  //   exchangeService.registerCrossExchangeRoutes(app);
-  // }
-  // if (macroService.registerMacroEconomicRoutes) {
-  //   macroService.registerMacroEconomicRoutes(app);
-  // }
+  if (sentimentService.registerSentimentRoutes) {
+    sentimentService.registerSentimentRoutes(app);
+  }
+  if (alertsService.registerAdvancedAlertsRoutes) {
+    alertsService.registerAdvancedAlertsRoutes(app);
+  }
+  if (exchangeService.registerCrossExchangeRoutes) {
+    exchangeService.registerCrossExchangeRoutes(app);
+  }
+  if (macroService.registerMacroEconomicRoutes) {
+    macroService.registerMacroEconomicRoutes(app);
+  }
 
-  // Phase 2 Advanced Features API endpoints - DISABLED to prevent refresh cycles
-  // const whaleService = await import('./whale-tracking-service');
-  // const lstmService = await import('./lstm-prediction-service');
-  // const defiService = await import('./defi-integration-service');
+  // Phase 2 Advanced Features API endpoints
+  const whaleService = await import('./whale-tracking-service');
+  const lstmService = await import('./lstm-prediction-service');
+  const defiService = await import('./defi-integration-service');
   
   // Register Phase 2 service routes
-  // if (whaleService.registerWhaleTrackingRoutes) {
-  //   whaleService.registerWhaleTrackingRoutes(app);
-  // }
-  // if (lstmService.registerLSTMRoutes) {
-  //   lstmService.registerLSTMRoutes(app);
-  // }
-  // if (defiService.registerDeFiRoutes) {
-  //   defiService.registerDeFiRoutes(app);
-  // }
+  if (whaleService.registerWhaleTrackingRoutes) {
+    whaleService.registerWhaleTrackingRoutes(app);
+  }
+  if (lstmService.registerLSTMRoutes) {
+    lstmService.registerLSTMRoutes(app);
+  }
+  if (defiService.registerDeFiRoutes) {
+    defiService.registerDeFiRoutes(app);
+  }
 
   // Phase 3 Advanced Features API endpoints
   const { blockchainForensicsService } = await import('./blockchain-forensics-service');
@@ -162,7 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.json({
             subscriptionId: subscription.id,
             status: subscription.status,
-            clientSecret: (subscription.latest_invoice as any)?.payment_intent?.client_secret,
+            clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
           });
         }
       }
@@ -202,8 +263,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stripeSubscriptionId: subscription.id,
         stripeCustomerId: customerId,
         status: subscription.status,
-        currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
-        currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
         plan: 'pro',
         priceId: priceId,
       });
@@ -214,12 +275,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionStatus: subscription.status,
         subscriptionPlan: 'pro',
         isPremium: subscription.status === 'active',
-        subscriptionEndsAt: new Date((subscription as any).current_period_end * 1000),
+        subscriptionEndsAt: new Date(subscription.current_period_end * 1000),
       });
 
       res.json({
         subscriptionId: subscription.id,
-        clientSecret: (subscription.latest_invoice as any)?.payment_intent?.client_secret,
+        clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
         status: subscription.status,
       });
 
@@ -281,7 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ 
         message: 'Subscription will be canceled at the end of the current period',
-        cancelAt: new Date((subscription as any).current_period_end * 1000)
+        cancelAt: new Date(subscription.current_period_end * 1000)
       });
 
     } catch (error: any) {
@@ -774,15 +835,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all crypto assets - CACHED to prevent refresh cycles
-  let cachedAssets: any[] | null = null;
+  // Get all crypto assets
   app.get("/api/assets", async (req, res) => {
     try {
-      // Use cached data to prevent constant re-renders that cause Vite HMR loops
-      if (!cachedAssets) {
-        cachedAssets = await storage.getCryptoAssets();
-      }
-      res.json(cachedAssets);
+      const assets = await storage.getCryptoAssets();
+      res.json(assets);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch assets" });
     }
@@ -818,11 +875,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Asset not found" });
       }
       
-      // Broadcasting disabled - using simple polling instead
-      // broadcast({
-      //   type: 'asset_update',
-      //   data: asset
-      // });
+      // Broadcast update to WebSocket clients
+      broadcast({
+        type: 'asset_update',
+        data: asset
+      });
       
       res.json(asset);
     } catch (error) {
@@ -923,15 +980,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Manual trigger for crypto data update
   app.post("/api/update-crypto-data", async (req, res) => {
     try {
-      // await cryptoDataService.updateCryptoAssets(); // DISABLED
+      await cryptoDataService.updateCryptoAssets();
       const assets = await storage.getCryptoAssets();
       
-      // Broadcasting disabled - using simple polling instead
-      // broadcast({
-      //   type: 'crypto_update',
-      //   data: assets,
-      //   timestamp: new Date().toISOString()
-      // });
+      // Broadcast the update to all connected clients
+      broadcast({
+        type: 'crypto_update',
+        data: assets,
+        timestamp: new Date().toISOString()
+      });
       
       res.json({ 
         success: true, 
@@ -950,16 +1007,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cryptocurrency monitoring expansion endpoint
   app.post('/api/crypto/expand-monitoring', isAuthenticated, async (req, res) => {
     try {
-      // const { multiApiExpansionService } = await import('./multi-api-expansion'); // DISABLED
+      const { multiApiExpansionService } = await import('./multi-api-expansion');
       
-      // Run expansion in background to avoid timeout - DISABLED
-      // multiApiExpansionService.expandCryptocurrencyMonitoring()
-      //   .then(() => {
-      //     console.log('✅ Multi-API cryptocurrency monitoring expansion completed successfully');
-      //   })
-      //   .catch((error) => {
-      //     console.error('❌ Multi-API cryptocurrency monitoring expansion failed:', error);
-      //   });
+      // Run expansion in background to avoid timeout
+      multiApiExpansionService.expandCryptocurrencyMonitoring()
+        .then(() => {
+          console.log('✅ Multi-API cryptocurrency monitoring expansion completed successfully');
+        })
+        .catch((error) => {
+          console.error('❌ Multi-API cryptocurrency monitoring expansion failed:', error);
+        });
 
       res.json({
         message: 'Multi-API cryptocurrency monitoring expansion started',
@@ -971,24 +1028,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         scope: 'Cryptocurrencies, NFTs, meme coins, and tokens'
       });
     } catch (error) {
-      res.status(500).json({ message: 'Failed to start expansion', error: error instanceof Error ? error.message : 'Unknown error' });
+      res.status(500).json({ message: 'Failed to start expansion', error: error.message });
     }
   });
 
   // Get current monitoring statistics
   app.get('/api/crypto/monitoring-stats', isAuthenticated, async (req, res) => {
     try {
-      // const { multiApiExpansionService } = await import('./multi-api-expansion'); // DISABLED
-      // const stats = await multiApiExpansionService.getCurrentStats(); // DISABLED
+      const { multiApiExpansionService } = await import('./multi-api-expansion');
+      const stats = await multiApiExpansionService.getCurrentStats();
       
-      res.json({ message: 'Monitoring stats disabled', assets: 0 });
+      res.json(stats);
     } catch (error) {
-      res.status(500).json({ message: 'Failed to get monitoring stats', error: error instanceof Error ? error.message : 'Unknown error' });
+      res.status(500).json({ message: 'Failed to get monitoring stats', error: error.message });
     }
   });
 
-  // Real-time data simulation disabled to prevent refresh cycles
-  /*
+  // Simulate real-time data updates
   setInterval(async () => {
     try {
       const assets = await storage.getCryptoAssets();
@@ -1017,7 +1073,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Broadcasting disabled - using simple polling instead
+      // Broadcast updates
       const updatedAssets = await storage.getCryptoAssets();
       broadcast({
         type: 'bulk_update',
@@ -1027,8 +1083,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error in data simulation:', error);
     }
-  }, 30000); // Update every 30 seconds - DISABLED
-  */
+  }, 30000); // Update every 30 seconds
 
   // ML Performance endpoints
   app.get("/api/ml/performance", async (req, res) => {
@@ -1618,9 +1673,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Batch update cryptocurrency database (expand to thousands)
   app.post("/api/crypto/batch-update", async (req, res) => {
     try {
-      // const CryptoDataService = (await import("./crypto-data-service")).default; // DISABLED
-      // const cryptoService = new CryptoDataService(); // DISABLED
-      // await cryptoService.updateAllCryptocurrencies(); // DISABLED
+      const CryptoDataService = (await import("./crypto-data-service")).default;
+      const cryptoService = new CryptoDataService();
+      await cryptoService.updateAllCryptocurrencies();
       
       const totalAssets = await storage.getCryptoAssetsCount();
       res.json({ 
@@ -1657,8 +1712,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get API sources status
   app.get('/api/data-sources/status', isAuthenticated, async (req, res) => {
     try {
-      // const status = cryptoDataService.getApiSourcesStatus(); // DISABLED
-      const status = { sources: [] }; // Placeholder
+      const status = cryptoDataService.getApiSourcesStatus();
       res.json(status);
     } catch (error) {
       console.error('Error fetching API sources status:', error);

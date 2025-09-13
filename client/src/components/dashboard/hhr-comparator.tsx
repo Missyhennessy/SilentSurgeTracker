@@ -33,7 +33,7 @@ export default function HHRComparator() {
 
   const { data: assets } = useQuery<CryptoAsset[]>({
     queryKey: ["/api/assets"],
-    refetchInterval: false, // Disabled to prevent refresh cycles
+    refetchInterval: 30000,
   });
 
   // Generate HHR data for all assets
@@ -222,7 +222,7 @@ export default function HHRComparator() {
                   />
                   <Scatter 
                     data={scatterData} 
-                    fill="var(--primary-blue)"
+                    fill={(entry: any) => entry.opportunityZone ? 'var(--success-green)' : 'var(--primary-blue)'}
                   >
                     {scatterData.map((entry, index) => (
                       <Cell 

@@ -18,7 +18,7 @@ interface ApiSource {
 export default function ApiStatusPage() {
   const { data: apiSources, isLoading, refetch } = useQuery<ApiSource[]>({
     queryKey: ['/api/data-sources/status'],
-    refetchInterval: false, // Disabled to prevent refresh cycles
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const getStatusIcon = (source: ApiSource) => {

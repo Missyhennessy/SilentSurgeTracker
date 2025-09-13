@@ -54,7 +54,7 @@ class LSTMPredictionService {
 
   constructor() {
     this.initializeModels();
-    // this.startPredictionUpdates(); // DISABLED for development to prevent event loop stalls
+    this.startPredictionUpdates();
   }
 
   private initializeModels() {

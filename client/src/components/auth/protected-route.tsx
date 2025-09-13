@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { isUnauthorizedError } from "@/lib/authUtils";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,11 +10,10 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading, error } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    // Only redirect if we have finished loading and are definitely not authenticated
-    if (!isLoading && !isAuthenticated && error) {
+    if (!isLoading && !isAuthenticated) {
       toast({
         title: "Authentication Required",
         description: "Please sign in to access this page.",
@@ -21,9 +21,9 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
       });
       setTimeout(() => {
         window.location.href = "/api/login";
-      }, 1500);
+      }, 2000);
     }
-  }, [isAuthenticated, isLoading, error, toast]);
+  }, [isAuthenticated, isLoading, toast]);
 
   if (isLoading) {
     return (

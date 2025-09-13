@@ -44,7 +44,7 @@ class DeFiIntegrationService {
     this.initializeProtocols();
     this.generateOpportunities();
     this.initializeLiquidityPools();
-    // this.startDeFiMonitoring(); // DISABLED for development to prevent event loop stalls
+    this.startDeFiMonitoring();
   }
 
   private initializeProtocols() {

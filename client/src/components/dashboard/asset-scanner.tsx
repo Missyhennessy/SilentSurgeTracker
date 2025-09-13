@@ -24,11 +24,7 @@ export default function AssetScanner() {
 
   const { data: assets, isLoading, error } = useQuery<CryptoAsset[]>({
     queryKey: ["/api/assets"],
-    refetchInterval: false, // Disabled to prevent refresh cycles
-    staleTime: Infinity, // Never consider stale to prevent refresh cycles
-    gcTime: Infinity, // Keep in cache indefinitely
-    refetchOnWindowFocus: false,
-    refetchOnMount: false
+    refetchInterval: 30000, // Refetch every 30 seconds
   });
 
   // Handle error toast in useEffect to avoid infinite re-renders

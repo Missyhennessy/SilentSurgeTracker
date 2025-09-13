@@ -30,12 +30,12 @@ export function ModelPerformance() {
 
   const { data: performance, isLoading, refetch } = useQuery<ModelPerformance>({
     queryKey: ['/api/ml/performance'],
-    refetchInterval: false, // Disabled to prevent refresh cycles
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const { data: metrics } = useQuery<MLMetrics>({
     queryKey: ['/api/ml/metrics'],
-    refetchInterval: false, // Disabled to prevent refresh cycles
+    refetchInterval: 30000,
   });
 
   const handleRetrain = async () => {

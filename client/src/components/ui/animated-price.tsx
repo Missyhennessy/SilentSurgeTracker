@@ -36,27 +36,22 @@ export function AnimatedPrice({
       const priceStep = (endPrice - startPrice) / steps;
       
       let currentStep = 0;
-      // Animation disabled to prevent refresh cycles
-      setDisplayPrice(endPrice);
-      setPreviousPrice(endPrice);
-      setAnimationState('neutral');
-      
-      // Original animation code disabled:
-      // const interval = setInterval(() => {
-      //   currentStep++;
-      //   const newPrice = startPrice + (priceStep * currentStep);
-      //   setDisplayPrice(newPrice);
-      //   
-      //   if (currentStep >= steps) {
-      //     clearInterval(interval);
-      //     setDisplayPrice(endPrice);
-      //     setPreviousPrice(endPrice);
-      //     
-      //     setTimeout(() => {
-      //       setAnimationState('neutral');
-      //     }, 1500);
-      //   }
-      // }, stepDuration);
+      const interval = setInterval(() => {
+        currentStep++;
+        const newPrice = startPrice + (priceStep * currentStep);
+        setDisplayPrice(newPrice);
+        
+        if (currentStep >= steps) {
+          clearInterval(interval);
+          setDisplayPrice(endPrice);
+          setPreviousPrice(endPrice);
+          
+          // Reset animation state after a delay
+          setTimeout(() => {
+            setAnimationState('neutral');
+          }, 1500);
+        }
+      }, stepDuration);
       
       return () => clearInterval(interval);
     }
@@ -105,13 +100,9 @@ export function AnimatedPercentage({
       setAnimationState(direction);
       setPreviousPercentage(percentage);
       
-      // Timer disabled to prevent refresh cycles
-      setAnimationState('neutral');
-      
-      // Original timer code disabled:
-      // setTimeout(() => {
-      //   setAnimationState('neutral');
-      // }, 1500);
+      setTimeout(() => {
+        setAnimationState('neutral');
+      }, 1500);
     }
   }, [percentage, previousPercentage]);
 
