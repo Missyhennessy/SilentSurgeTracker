@@ -1,4 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+'use client'
+
+import { useQuery } from "@tanstack/react-query"
 
 export function useAuth() {
   const { data: user, isLoading, error } = useQuery({
@@ -8,12 +10,12 @@ export function useAuth() {
     refetchOnWindowFocus: false, // Prevent refetch on focus (WebKit issue)
     refetchOnMount: false, // Prevent refetch on mount
     refetchInterval: false, // Disable automatic refetching
-  });
+  })
 
   return {
     user,
     isLoading,
     error,
     isAuthenticated: !!user && !error,
-  };
+  }
 }
