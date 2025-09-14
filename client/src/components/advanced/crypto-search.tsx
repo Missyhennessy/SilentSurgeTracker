@@ -15,7 +15,8 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 interface CryptoSearchResult {
   id: string;
@@ -51,8 +52,6 @@ interface TrendingCoin {
 export default function CryptoSearch() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResult, setSearchResult] = useState<CryptoSearchResult | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Fetch trending cryptocurrencies
@@ -61,7 +60,60 @@ export default function CryptoSearch() {
     refetchInterval: 300000, // 5 minutes
   });
 
-  const handleSearch = async () => {
+  // Search cryptocurrency mutation
+  const searchMutation = useMutation({
+    mutationFn: async (query: string): Promise<CryptoSearchResult> => {
+      const response = await apiRequest(
+        'GET',
+        `/api/crypto/search/${encodeURIComponent(query.trim())}`
+      );
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setSearchResult(data);
+      toast({
+        title: "Cryptocurrency Found",
+        description: `${data.name} (${data.symbol}) - $${data.price.toFixed(6)}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Search Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Add to tracking mutation
+  const addToTrackingMutation = useMutation({
+    mutationFn: async (symbol: string) => {
+      const response = await apiRequest(
+        'POST',
+        '/api/crypto/add',
+        { symbol }
+      );
+      return response.json();
+    },
+    onSuccess: (_, symbol) => {
+      toast({
+        title: "Added to Tracking",
+        description: `${symbol} is now being tracked in your portfolio`,
+      });
+      // Invalidate relevant caches
+      queryClient.invalidateQueries({ queryKey: ['/api/assets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/crypto'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Add",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleSearch = () => {
     if (!searchQuery.trim()) {
       toast({
         title: "Search Required",
@@ -71,60 +123,12 @@ export default function CryptoSearch() {
       return;
     }
 
-    setIsSearching(true);
-    setSearchError(null);
     setSearchResult(null);
-
-    try {
-      const response = await fetch(`/api/crypto/search/${encodeURIComponent(searchQuery.trim())}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Search failed');
-      }
-
-      setSearchResult(data);
-      toast({
-        title: "Cryptocurrency Found",
-        description: `${data.name} (${data.symbol}) - $${data.price.toFixed(6)}`,
-      });
-    } catch (error: any) {
-      setSearchError(error.message);
-      toast({
-        title: "Search Failed",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setIsSearching(false);
-    }
+    searchMutation.mutate(searchQuery);
   };
 
-  const handleAddToTracking = async (symbol: string) => {
-    try {
-      const response = await fetch('/api/crypto/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to add cryptocurrency');
-      }
-
-      toast({
-        title: "Added to Tracking",
-        description: `${symbol} is now being tracked in your portfolio`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Failed to Add",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
+  const handleAddToTracking = (symbol: string) => {
+    addToTrackingMutation.mutate(symbol);
   };
 
   const getSSSColor = (score: number) => {
@@ -163,18 +167,19 @@ export default function CryptoSearch() {
             />
             <Button 
               onClick={handleSearch} 
-              disabled={isSearching}
+              disabled={searchMutation.isPending}
               className="bg-[var(--primary-blue)] hover:bg-[var(--primary-blue)]/80"
+              data-testid="button-search"
             >
-              {isSearching ? 'Searching...' : 'Search'}
+              {searchMutation.isPending ? 'Searching...' : 'Search'}
             </Button>
           </div>
 
           {/* Search Error */}
-          {searchError && (
-            <div className="mt-4 p-3 bg-red-900/20 border border-red-500/20 rounded-lg flex items-center gap-2">
+          {searchMutation.error && (
+            <div className="mt-4 p-3 bg-red-900/20 border border-red-500/20 rounded-lg flex items-center gap-2" data-testid="alert-search-error">
               <AlertCircle className="w-4 h-4 text-red-400" />
-              <span className="text-red-400 text-sm">{searchError}</span>
+              <span className="text-red-400 text-sm">{(searchMutation.error as Error).message}</span>
             </div>
           )}
 
@@ -270,10 +275,12 @@ export default function CryptoSearch() {
 
                 <Button
                   onClick={() => handleAddToTracking(searchResult.symbol)}
+                  disabled={addToTrackingMutation.isPending}
                   className="bg-[var(--primary-blue)] hover:bg-[var(--primary-blue)]/80"
+                  data-testid="button-add-tracking"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add to Tracking
+                  {addToTrackingMutation.isPending ? 'Adding...' : 'Add to Tracking'}
                 </Button>
               </div>
             </div>
