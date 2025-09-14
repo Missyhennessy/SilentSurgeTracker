@@ -1,6 +1,9 @@
 import express, { type Request, Response, NextFunction } from "express";
+import next from 'next';
+import { createServer } from 'http';
+import { parse } from 'url';
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { log } from "./vite";
 
 const app = express();
 
@@ -42,7 +45,18 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  // Initialize Next.js
+  const dev = process.env.NODE_ENV !== 'production';
+  const nextApp = next({ dev });
+  const handle = nextApp.getRequestHandler();
+  
+  await nextApp.prepare();
+  
+  // Create HTTP server
+  const httpServer = createServer();
+  
+  // Register existing API routes and WebSocket
+  await registerRoutes(app, httpServer);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -52,27 +66,23 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+  // Handle all other routes with Next.js
+  app.all('*', (req, res) => {
+    const parsedUrl = parse(req.url!, true);
+    return handle(req, res, parsedUrl);
+  });
+  
+  // Mount Express app on HTTP server
+  httpServer.on('request', app);
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
   
   console.log(`Environment PORT: ${process.env.PORT}`);
   console.log(`Attempting to listen on port: ${port}`);
   console.log(`Host: 0.0.0.0`);
   
-  server.listen(port, "0.0.0.0", () => {
-    log(`serving on port ${port}`);
+  httpServer.listen(port, "0.0.0.0", () => {
+    log(`Next.js + Express server running on port ${port}`);
     console.log(`Server successfully started on http://0.0.0.0:${port}`);
   });
 })();
