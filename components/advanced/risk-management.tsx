@@ -1,4 +1,8 @@
+'use client'
+
 import React, { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,8 +18,10 @@ import {
   DollarSign,
   PieChart,
   BarChart3,
-  Settings
+  Settings,
+  Loader2
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface RiskMetrics {
   portfolioValue: number;
@@ -38,6 +44,7 @@ interface RiskParameters {
 }
 
 export default function RiskManagement() {
+  const { toast } = useToast();
   const [riskParams, setRiskParams] = useState<RiskParameters>({
     maxPositionSize: 20,
     maxDrawdownLimit: 15,
@@ -47,21 +54,22 @@ export default function RiskManagement() {
     takeProfitLevel: 25
   });
 
-  const mockRiskMetrics: RiskMetrics = {
-    portfolioValue: 75420,
-    maxDrawdown: 8.3,
-    sharpeRatio: 1.42,
-    volatility: 18.7,
-    betaToMarket: 0.85,
-    valueAtRisk: 3240,
-    exposureByAsset: {
-      'BTC': 35,
-      'ETH': 25,
-      'SOL': 20,
-      'ADA': 12,
-      'LINK': 8
-    },
-    riskScore: 72
+  // Fetch risk metrics from real API
+  const { data: riskMetrics, isLoading: riskLoading, error: riskError } = useQuery<RiskMetrics>({
+    queryKey: ['/api/risk-metrics'],
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
+  // Use default values if data is not yet loaded
+  const currentRiskMetrics = riskMetrics || {
+    portfolioValue: 0,
+    maxDrawdown: 0,
+    sharpeRatio: 0,
+    volatility: 0,
+    betaToMarket: 0,
+    valueAtRisk: 0,
+    exposureByAsset: {},
+    riskScore: 0
   };
 
   const getRiskColor = (score: number) => {
@@ -69,6 +77,53 @@ export default function RiskManagement() {
     if (score >= 60) return 'text-yellow-400';
     return 'text-green-400';
   };
+
+  // Handle loading states
+  if (riskLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)]">Risk Management</h2>
+            <p className="text-[var(--text-secondary)] mt-1">
+              Advanced portfolio risk analysis and protection
+            </p>
+          </div>
+          <Skeleton className="h-8 w-32" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton key={index} className="h-32 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error states
+  if (riskError) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)]">Risk Management</h2>
+            <p className="text-[var(--text-secondary)] mt-1">
+              Advanced portfolio risk analysis and protection
+            </p>
+          </div>
+        </div>
+        <div className="bg-red-400/10 border border-red-400/20 rounded-lg p-6">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 text-red-400 mr-2" />
+            <span className="text-red-400 font-medium">Failed to load risk metrics</span>
+          </div>
+          <p className="text-[var(--text-secondary)] mt-2">
+            Unable to fetch risk data. Please check your connection and try again.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -79,17 +134,17 @@ export default function RiskManagement() {
             Advanced portfolio risk analysis and protection
           </p>
         </div>
-        <Badge className={`${getRiskColor(mockRiskMetrics.riskScore)} bg-transparent border-current`}>
-          Risk Score: {mockRiskMetrics.riskScore}
+        <Badge className={`${getRiskColor(currentRiskMetrics.riskScore)} bg-transparent border-current`} data-testid="badge-risk-score">
+          Risk Score: {currentRiskMetrics.riskScore}
         </Badge>
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="exposure">Exposure</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-          <TabsTrigger value="alerts">Alerts</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4" data-testid="tabs-list-risk">
+          <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
+          <TabsTrigger value="exposure" data-testid="tab-exposure">Exposure</TabsTrigger>
+          <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
+          <TabsTrigger value="alerts" data-testid="tab-alerts">Alerts</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -101,7 +156,7 @@ export default function RiskManagement() {
                   <div>
                     <p className="text-sm text-[var(--text-secondary)]">Portfolio Value</p>
                     <p className="text-2xl font-bold text-[var(--text-primary)]">
-                      ${mockRiskMetrics.portfolioValue.toLocaleString()}
+                      ${currentRiskMetrics.portfolioValue.toLocaleString()}
                     </p>
                   </div>
                   <DollarSign className="h-8 w-8 text-[var(--primary-blue)]" />
@@ -116,7 +171,7 @@ export default function RiskManagement() {
                   <div>
                     <p className="text-sm text-[var(--text-secondary)]">Max Drawdown</p>
                     <p className="text-2xl font-bold text-red-400">
-                      -{mockRiskMetrics.maxDrawdown}%
+                      -{currentRiskMetrics.maxDrawdown}%
                     </p>
                   </div>
                   <TrendingDown className="h-8 w-8 text-red-400" />
@@ -131,7 +186,7 @@ export default function RiskManagement() {
                   <div>
                     <p className="text-sm text-[var(--text-secondary)]">Sharpe Ratio</p>
                     <p className="text-2xl font-bold text-green-400">
-                      {mockRiskMetrics.sharpeRatio}
+                      {currentRiskMetrics.sharpeRatio}
                     </p>
                   </div>
                   <Target className="h-8 w-8 text-green-400" />
@@ -146,7 +201,7 @@ export default function RiskManagement() {
                   <div>
                     <p className="text-sm text-[var(--text-secondary)]">Value at Risk (95%)</p>
                     <p className="text-2xl font-bold text-yellow-400">
-                      ${mockRiskMetrics.valueAtRisk.toLocaleString()}
+                      ${currentRiskMetrics.valueAtRisk.toLocaleString()}
                     </p>
                   </div>
                   <Shield className="h-8 w-8 text-yellow-400" />
@@ -161,7 +216,7 @@ export default function RiskManagement() {
                   <div>
                     <p className="text-sm text-[var(--text-secondary)]">Portfolio Beta</p>
                     <p className="text-2xl font-bold text-[var(--text-primary)]">
-                      {mockRiskMetrics.betaToMarket}
+                      {currentRiskMetrics.betaToMarket}
                     </p>
                   </div>
                   <BarChart3 className="h-8 w-8 text-[var(--primary-blue)]" />
@@ -176,7 +231,7 @@ export default function RiskManagement() {
                   <div>
                     <p className="text-sm text-[var(--text-secondary)]">Volatility (30d)</p>
                     <p className="text-2xl font-bold text-[var(--text-primary)]">
-                      {mockRiskMetrics.volatility}%
+                      {currentRiskMetrics.volatility}%
                     </p>
                   </div>
                   <AlertTriangle className="h-8 w-8 text-orange-400" />
@@ -194,7 +249,7 @@ export default function RiskManagement() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {Object.entries(mockRiskMetrics.exposureByAsset).map(([asset, exposure]) => (
+                {Object.entries(currentRiskMetrics.exposureByAsset).map(([asset, exposure]) => (
                   <div key={asset} className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-[var(--text-primary)] font-medium">{asset}</span>
@@ -265,7 +320,7 @@ export default function RiskManagement() {
                   />
                 </div>
               </div>
-              <Button className="w-full mt-4">
+              <Button className="w-full mt-4" data-testid="button-update-risk-settings">
                 <Settings className="w-4 h-4 mr-2" />
                 Update Risk Settings
               </Button>

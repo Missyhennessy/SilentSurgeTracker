@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,8 +17,10 @@ import {
   CheckCircle,
   XCircle,
   BarChart3,
-  Activity
+  Activity,
+  Loader2
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   LineChart, 
   Line, 
@@ -51,83 +55,38 @@ interface SignalPerformance {
   avgReturn: number;
   winRate: number;
   totalSignals: number;
+  activeSignals: number;
+  recentSignals: any[];
 }
 
 export default function TradingSignals() {
   const [selectedTimeframe, setSelectedTimeframe] = useState('1h');
+  const { toast } = useToast();
 
-  const mockSignals: TradingSignal[] = [
-    {
-      id: '1',
-      asset: 'SOL',
-      type: 'buy',
-      strength: 92,
-      confidence: 88,
-      price: 186.83,
-      targetPrice: 215.00,
-      stopLoss: 170.00,
-      timeframe: '4h',
-      reason: 'SSS breakout above 80 + volume surge',
-      sssScore: 82.6,
-      timestamp: '10 min ago',
-      status: 'active'
-    },
-    {
-      id: '2',
-      asset: 'ETH',
-      type: 'buy',
-      strength: 78,
-      confidence: 82,
-      price: 3758.13,
-      targetPrice: 4200.00,
-      stopLoss: 3500.00,
-      timeframe: '1d',
-      reason: 'Strong anchor pressure + bullish sentiment',
-      sssScore: 76.7,
-      timestamp: '25 min ago',
-      status: 'active'
-    },
-    {
-      id: '3',
-      asset: 'BTC',
-      type: 'hold',
-      strength: 65,
-      confidence: 70,
-      price: 117491.00,
-      targetPrice: 125000.00,
-      stopLoss: 110000.00,
-      timeframe: '1w',
-      reason: 'Consolidation phase, await breakout',
-      sssScore: 63.1,
-      timestamp: '1 hour ago',
-      status: 'active'
-    },
-    {
-      id: '4',
-      asset: 'ADA',
-      type: 'sell',
-      strength: 71,
-      confidence: 75,
-      price: 0.82,
-      targetPrice: 0.75,
-      stopLoss: 0.85,
-      timeframe: '2h',
-      reason: 'Weakening momentum indicators',
-      sssScore: 61.3,
-      timestamp: '2 hours ago',
-      status: 'executed'
-    }
-  ];
+  // Fetch trading signals from real API
+  const { data: signalsData, isLoading: signalsLoading, error: signalsError } = useQuery<{signals: TradingSignal[], timestamp: string, total: number}>({
+    queryKey: ['/api/trading-signals', selectedTimeframe],
+    refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
+  });
 
-  const signalPerformance: SignalPerformance = {
-    accuracy: 84.2,
-    profitability: 76.8,
-    avgReturn: 12.4,
-    winRate: 78.5,
-    totalSignals: 247
+  // Fetch signal performance metrics
+  const { data: performanceData, isLoading: performanceLoading, error: performanceError } = useQuery<SignalPerformance>({
+    queryKey: ['/api/trading-signals', 'performance'],
+    refetchInterval: 60000, // Refetch every minute
+  });
+
+  const signals = signalsData?.signals || [];
+  const signalPerformance = performanceData || {
+    accuracy: 0,
+    profitability: 0,
+    avgReturn: 0,
+    winRate: 0,
+    totalSignals: 0,
+    activeSignals: 0,
+    recentSignals: []
   };
 
-  const performanceData = [
+  const historicalPerformanceData = signalPerformance.recentSignals || [
     { date: 'Jan', accuracy: 82, signals: 28 },
     { date: 'Feb', accuracy: 85, signals: 32 },
     { date: 'Mar', accuracy: 78, signals: 41 },
@@ -163,6 +122,56 @@ export default function TradingSignals() {
     }
   };
 
+  // Handle loading states
+  if (signalsLoading || performanceLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)]">Trading Signals</h2>
+            <p className="text-[var(--text-secondary)] mt-1">
+              AI-powered trading signals based on Silent Surge Score analysis
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-6 w-32" />
+          </div>
+        </div>
+        <div className="space-y-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-48 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error states
+  if (signalsError || performanceError) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)]">Trading Signals</h2>
+            <p className="text-[var(--text-secondary)] mt-1">
+              AI-powered trading signals based on Silent Surge Score analysis
+            </p>
+          </div>
+        </div>
+        <div className="bg-red-400/10 border border-red-400/20 rounded-lg p-6">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+            <span className="text-red-400 font-medium">Failed to load trading signals</span>
+          </div>
+          <p className="text-[var(--text-secondary)] mt-2">
+            Unable to fetch trading data. Please check your connection and try again.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -173,20 +182,20 @@ export default function TradingSignals() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge className="bg-green-400/10 text-green-400 border-green-400/20">
+          <Badge className="bg-green-400/10 text-green-400 border-green-400/20" data-testid="badge-accuracy">
             {signalPerformance.accuracy}% Accuracy
           </Badge>
-          <Badge className="bg-blue-400/10 text-blue-400 border-blue-400/20">
+          <Badge className="bg-blue-400/10 text-blue-400 border-blue-400/20" data-testid="badge-total-signals">
             {signalPerformance.totalSignals} Total Signals
           </Badge>
         </div>
       </div>
 
       <Tabs defaultValue="signals" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="signals">Active Signals</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="history">Signal History</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3" data-testid="tabs-list-signals">
+          <TabsTrigger value="signals" data-testid="tab-signals">Active Signals</TabsTrigger>
+          <TabsTrigger value="performance" data-testid="tab-performance">Performance</TabsTrigger>
+          <TabsTrigger value="history" data-testid="tab-history">Signal History</TabsTrigger>
         </TabsList>
 
         <TabsContent value="signals">
@@ -235,7 +244,7 @@ export default function TradingSignals() {
                     <div>
                       <p className="text-sm text-[var(--text-secondary)]">Active Signals</p>
                       <p className="text-2xl font-bold text-[var(--text-primary)]">
-                        {mockSignals.filter(s => s.status === 'active').length}
+                        {signalPerformance.activeSignals || signals.filter(s => s.status === 'active').length}
                       </p>
                     </div>
                     <Activity className="h-8 w-8 text-[var(--primary-blue)]" />
@@ -245,8 +254,8 @@ export default function TradingSignals() {
             </div>
 
             {/* Signals List */}
-            {mockSignals.map((signal) => (
-              <Card key={signal.id} className="bg-[var(--dark-card)] border-[var(--dark-border)]">
+            {signals.map((signal) => (
+              <Card key={signal.id} className="bg-[var(--dark-card)] border-[var(--dark-border)]" data-testid={`signal-card-${signal.id}`}>
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -306,10 +315,10 @@ export default function TradingSignals() {
                     </div>
 
                     <div className="flex flex-col gap-2 ml-4">
-                      <Button size="sm" className="bg-[var(--primary-blue)]">
+                      <Button size="sm" className="bg-[var(--primary-blue)]" data-testid={`button-execute-${signal.id}`}>
                         Execute
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" data-testid={`button-details-${signal.id}`}>
                         Details
                       </Button>
                     </div>
@@ -330,7 +339,7 @@ export default function TradingSignals() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={performanceData}>
+                  <AreaChart data={historicalPerformanceData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="date" stroke="#9CA3AF" />
                     <YAxis stroke="#9CA3AF" />

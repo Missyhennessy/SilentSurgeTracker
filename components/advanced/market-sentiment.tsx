@@ -1,4 +1,8 @@
+'use client'
+
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -13,8 +17,11 @@ import {
   Heart,
   Share,
   Activity,
-  Zap
+  Zap,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   LineChart, 
   Line, 
@@ -48,24 +55,51 @@ interface SentimentMetrics {
 
 export default function MarketSentiment() {
   const [selectedTimeframe, setSelectedTimeframe] = useState('24h');
+  const { toast } = useToast();
 
-  const mockSentimentData: SentimentData[] = [
-    { timestamp: '00:00', sentiment: 65, volume: 120, fear_greed: 58, social_mentions: 1200 },
-    { timestamp: '04:00', sentiment: 72, volume: 140, fear_greed: 62, social_mentions: 1350 },
-    { timestamp: '08:00', sentiment: 68, volume: 135, fear_greed: 59, social_mentions: 1180 },
-    { timestamp: '12:00', sentiment: 75, volume: 160, fear_greed: 68, social_mentions: 1450 },
-    { timestamp: '16:00', sentiment: 70, volume: 145, fear_greed: 64, social_mentions: 1320 },
-    { timestamp: '20:00', sentiment: 78, volume: 170, fear_greed: 72, social_mentions: 1580 }
-  ];
+  // Fetch general market sentiment (using BTC as market proxy)
+  const { data: overallSentiment, isLoading: sentimentLoading, error: sentimentError } = useQuery({
+    queryKey: ['/api/sentiment', 'BTC'],
+    refetchInterval: 60000, // Refetch every minute
+  });
 
+  // Fetch fear and greed index
+  const { data: fearGreedData, isLoading: fearGreedLoading, error: fearGreedError } = useQuery({
+    queryKey: ['/api/sentiment/fear-greed'],
+    refetchInterval: 300000, // Refetch every 5 minutes
+  });
+
+  // Fetch trending topics
+  const { data: trendingData, isLoading: trendingLoading, error: trendingError } = useQuery({
+    queryKey: ['/api/sentiment/trending'],
+    refetchInterval: 180000, // Refetch every 3 minutes
+  });
+
+  // Fetch recent news
+  const { data: newsData, isLoading: newsLoading, error: newsError } = useQuery({
+    queryKey: ['/api/sentiment/news'],
+    refetchInterval: 300000, // Refetch every 5 minutes
+  });
+
+  // Extract metrics from API responses with fallback values
   const sentimentMetrics: SentimentMetrics = {
-    overall: 73,
-    fearGreedIndex: 64,
-    socialMentions: 15420,
-    influencerSentiment: 68,
-    newsImpact: 71,
-    communityEngagement: 82
+    overall: overallSentiment?.sentiment_score ? Math.round((overallSentiment.sentiment_score + 1) * 50) : 0,
+    fearGreedIndex: fearGreedData?.index || 0,
+    socialMentions: overallSentiment?.platforms ? Object.values(overallSentiment.platforms).reduce((sum: number, platform: any) => sum + (platform.volume || 0), 0) : 0,
+    influencerSentiment: overallSentiment?.top_influencers?.length ? Math.round(overallSentiment.top_influencers.filter((inf: any) => inf.recent_sentiment === 'bullish').length / overallSentiment.top_influencers.length * 100) : 0,
+    newsImpact: newsData?.length ? Math.round(newsData.filter((news: any) => news.sentiment === 'positive').length / newsData.length * 100) : 0,
+    communityEngagement: overallSentiment?.social_dominance ? Math.round(overallSentiment.social_dominance) : 0
   };
+
+  // Create timeline data from sentiment metrics (simplified for now)
+  const mockSentimentData: SentimentData[] = [
+    { timestamp: '00:00', sentiment: sentimentMetrics.overall - 8, volume: 120, fear_greed: sentimentMetrics.fearGreedIndex - 6, social_mentions: 1200 },
+    { timestamp: '04:00', sentiment: sentimentMetrics.overall - 1, volume: 140, fear_greed: sentimentMetrics.fearGreedIndex - 2, social_mentions: 1350 },
+    { timestamp: '08:00', sentiment: sentimentMetrics.overall - 5, volume: 135, fear_greed: sentimentMetrics.fearGreedIndex - 5, social_mentions: 1180 },
+    { timestamp: '12:00', sentiment: sentimentMetrics.overall + 2, volume: 160, fear_greed: sentimentMetrics.fearGreedIndex + 4, social_mentions: 1450 },
+    { timestamp: '16:00', sentiment: sentimentMetrics.overall - 3, volume: 145, fear_greed: sentimentMetrics.fearGreedIndex, social_mentions: 1320 },
+    { timestamp: '20:00', sentiment: sentimentMetrics.overall + 5, volume: 170, fear_greed: sentimentMetrics.fearGreedIndex + 8, social_mentions: 1580 }
+  ];
 
   const getSentimentColor = (value: number) => {
     if (value >= 75) return 'text-green-400';
@@ -79,6 +113,55 @@ export default function MarketSentiment() {
     return 'bg-red-400/10';
   };
 
+  // Handle loading states
+  const isLoading = sentimentLoading || fearGreedLoading || trendingLoading || newsLoading;
+  const hasError = sentimentError || fearGreedError || trendingError || newsError;
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)]">Market Sentiment</h2>
+            <p className="text-[var(--text-secondary)] mt-1">
+              Real-time social and news sentiment analysis
+            </p>
+          </div>
+          <Skeleton className="h-8 w-40" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton key={index} className="h-32 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)]">Market Sentiment</h2>
+            <p className="text-[var(--text-secondary)] mt-1">
+              Real-time social and news sentiment analysis
+            </p>
+          </div>
+        </div>
+        <div className="bg-red-400/10 border border-red-400/20 rounded-lg p-6">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+            <span className="text-red-400 font-medium">Failed to load sentiment data</span>
+          </div>
+          <p className="text-[var(--text-secondary)] mt-2">
+            Unable to fetch sentiment analysis. Please check your connection and try again.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -88,17 +171,17 @@ export default function MarketSentiment() {
             Real-time social and news sentiment analysis
           </p>
         </div>
-        <Badge className={`${getSentimentColor(sentimentMetrics.overall)} bg-transparent border-current`}>
+        <Badge className={`${getSentimentColor(sentimentMetrics.overall)} bg-transparent border-current`} data-testid="badge-overall-sentiment">
           Overall: {sentimentMetrics.overall}% Bullish
         </Badge>
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="social">Social</TabsTrigger>
-          <TabsTrigger value="news">News</TabsTrigger>
-          <TabsTrigger value="trends">Trends</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4" data-testid="tabs-list-sentiment">
+          <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
+          <TabsTrigger value="social" data-testid="tab-social">Social</TabsTrigger>
+          <TabsTrigger value="news" data-testid="tab-news">News</TabsTrigger>
+          <TabsTrigger value="trends" data-testid="tab-trends">Trends</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
