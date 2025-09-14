@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Brain, TrendingUp, Target, Zap, Activity, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 interface MLStatus {
   ml_ensemble: {
@@ -58,9 +60,7 @@ interface ComprehensiveAnalysis {
 }
 
 export function MLDashboard() {
-  const [mlStatus, setMLStatus] = useState<MLStatus | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [sssInputs, setSssInputs] = useState({
     behavioral_activity: 0.6,
     velocity_anomaly: 1.0,
@@ -93,137 +93,102 @@ export function MLDashboard() {
 
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadMLStatus();
-  }, []);
+  // Fetch ML status using useQuery
+  const { data: mlStatus, error } = useQuery<MLStatus>({
+    queryKey: ['/api/python-engine/ml-models'],
+    refetchInterval: 60000, // Refetch every minute
+  });
 
-  const loadMLStatus = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await fetch('/api/python-engine/ml-models');
-      const data = await response.json();
-      
-      if (response.ok) {
-        setMLStatus(data.ml_capabilities?.status || data.ml_capabilities);
-        toast({
-          title: "ML Status Loaded",
-          description: "Machine learning capabilities updated successfully",
-        });
-      } else {
-        throw new Error(data.error || 'Failed to load ML status');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMessage);
+  // Enhanced SSS calculation mutation
+  const enhancedSSSMutation = useMutation({
+    mutationFn: async (inputs: typeof sssInputs) => {
+      const response = await apiRequest(
+        'POST',
+        '/api/python-engine/enhanced-sss',
+        inputs
+      );
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setSssResult(data);
+      toast({
+        title: "Enhanced SSS Calculated",
+        description: `ML-enhanced SSS: ${data.ml_enhanced?.blended_sss || data.sss}`,
+      });
+    },
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: errorMessage,
+        description: error.message || "Failed to calculate SSS",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
+  });
+
+  // ML Breakout calculation mutation
+  const mlBreakoutMutation = useMutation({
+    mutationFn: async (inputs: typeof breakoutInputs) => {
+      const response = await apiRequest(
+        'POST',
+        '/api/python-engine/ml-breakout',
+        inputs
+      );
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setBreakoutResult(data);
+      toast({
+        title: "ML Breakout Calculated",
+        description: `Ensemble probability: ${data.ensemble_probability}%`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to calculate breakout probability",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Comprehensive analysis mutation
+  const comprehensiveAnalysisMutation = useMutation({
+    mutationFn: async (inputs: typeof analysisInputs) => {
+      const response = await apiRequest(
+        'POST',
+        '/api/python-engine/comprehensive-analysis',
+        inputs
+      );
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setAnalysisResult(data);
+      toast({
+        title: "Analysis Complete",
+        description: `Recommendation: ${data.final_recommendation?.action}`,
+      });
+      // Invalidate relevant caches
+      queryClient.invalidateQueries({ queryKey: ['/api/python-engine'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to run comprehensive analysis",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const calculateEnhancedSSS = () => {
+    enhancedSSSMutation.mutate(sssInputs);
   };
 
-  const calculateEnhancedSSS = async () => {
-    setLoading(true);
-    
-    try {
-      const response = await fetch('/api/python-engine/enhanced-sss', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sssInputs)
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        setSssResult(data);
-        toast({
-          title: "Enhanced SSS Calculated",
-          description: `ML-enhanced SSS: ${data.ml_enhanced?.blended_sss || data.sss}`,
-        });
-      } else {
-        throw new Error(data.error || 'Failed to calculate SSS');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+  const calculateMLBreakout = () => {
+    mlBreakoutMutation.mutate(breakoutInputs);
   };
 
-  const calculateMLBreakout = async () => {
-    setLoading(true);
-    
-    try {
-      const response = await fetch('/api/python-engine/ml-breakout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(breakoutInputs)
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        setBreakoutResult(data);
-        toast({
-          title: "ML Breakout Calculated",
-          description: `Ensemble probability: ${data.ensemble_probability}%`,
-        });
-      } else {
-        throw new Error(data.error || 'Failed to calculate breakout probability');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const runComprehensiveAnalysis = async () => {
-    setLoading(true);
-    
-    try {
-      const response = await fetch('/api/python-engine/comprehensive-analysis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(analysisInputs)
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        setAnalysisResult(data);
-        toast({
-          title: "Analysis Complete",
-          description: `Recommendation: ${data.final_recommendation?.action}`,
-        });
-      } else {
-        throw new Error(data.error || 'Failed to run comprehensive analysis');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+  const runComprehensiveAnalysis = () => {
+    comprehensiveAnalysisMutation.mutate(analysisInputs);
   };
 
   const getStatusColor = (status: string) => {
@@ -259,8 +224,8 @@ export function MLDashboard() {
           </p>
         </div>
         <Button 
-          onClick={loadMLStatus} 
-          disabled={loading}
+          onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/python-engine/ml-models'] })} 
+          disabled={false}
           data-testid="button-refresh-status"
         >
           Refresh Status
@@ -389,11 +354,11 @@ export function MLDashboard() {
               
               <Button 
                 onClick={calculateEnhancedSSS} 
-                disabled={loading}
+                disabled={enhancedSSSMutation.isPending}
                 className="w-full"
                 data-testid="button-calculate-sss"
               >
-                Calculate Enhanced SSS
+                {enhancedSSSMutation.isPending ? 'Calculating...' : 'Calculate Enhanced SSS'}
               </Button>
 
               {sssResult && (
@@ -460,11 +425,11 @@ export function MLDashboard() {
               
               <Button 
                 onClick={calculateMLBreakout} 
-                disabled={loading}
+                disabled={mlBreakoutMutation.isPending}
                 className="w-full"
                 data-testid="button-calculate-breakout"
               >
-                Calculate ML Breakout Probability
+                {mlBreakoutMutation.isPending ? 'Calculating...' : 'Calculate ML Breakout Probability'}
               </Button>
 
               {breakoutResult && (
@@ -554,11 +519,11 @@ export function MLDashboard() {
               
               <Button 
                 onClick={runComprehensiveAnalysis} 
-                disabled={loading}
+                disabled={comprehensiveAnalysisMutation.isPending}
                 className="w-full"
                 data-testid="button-run-analysis"
               >
-                Run Comprehensive Analysis
+                {comprehensiveAnalysisMutation.isPending ? 'Analyzing...' : 'Run Comprehensive Analysis'}
               </Button>
 
               {analysisResult && (
