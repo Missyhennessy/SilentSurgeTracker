@@ -2,8 +2,8 @@
 
 import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import Landing from '@/components/pages/landing'
-import Dashboard from '@/components/pages/dashboard'
+import Landing from '../pages/landing'
+import Dashboard from '../pages/dashboard'
 
 export function AuthChecker() {
   const { isAuthenticated, isLoading } = useAuth()
