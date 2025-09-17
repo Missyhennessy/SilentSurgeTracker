@@ -2,14 +2,8 @@
 const nextConfig = {
   // Moved from experimental.serverComponentsExternalPackages (deprecated)
   serverExternalPackages: ['@neondatabase/serverless'],
-  // Allow cross-origin requests from Replit domains
   experimental: {
-    allowedDevOrigins: [
-      'localhost',
-      '127.0.0.1',
-      '*.replit.dev',
-      '*.picard.replit.dev',
-    ],
+    // Future Next.js features can be configured here
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
