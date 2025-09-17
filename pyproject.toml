@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
+    "cython>=3.1.4",
+    "joblib>=1.5.1",
     "keras>=3.11.2",
     "matplotlib>=3.10.5",
     "numpy>=2.3.2",
