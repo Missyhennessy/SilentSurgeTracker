@@ -4,16 +4,22 @@ import { log } from './vite';
 import { storage } from './storage';
 
 // Redis connection for BullMQ - SECURITY: Proper configuration
-const redisConnection = new Redis({
+// ENTERPRISE: Guard Redis connection based on availability with explicit boolean parsing
+const REDIS_ENABLED = process.env.REDIS_URL && (process.env.DISABLE_REDIS !== 'true');
+
+const redisConnection = REDIS_ENABLED ? new Redis({
   host: 'localhost',
   port: 6379,
-  maxRetriesPerRequest: null, // Required by BullMQ for security
+  maxRetriesPerRequest: 1, // Prevent retry spam
+  retryStrategy: () => null, // No automatic retries
+  enableReadyCheck: true,
+  enableOfflineQueue: false, // Prevent queuing when offline
   lazyConnect: true,
-  connectTimeout: 5000,
-  commandTimeout: 3000,
+  connectTimeout: 3000,
+  commandTimeout: 2000,
   retryDelayOnFailover: 100,
   onClusterError: () => console.log('BullMQ using fallback processing'),
-});
+}) : null;
 
 // Job types for ML processing
 export interface MLJobData {
@@ -32,52 +38,70 @@ export interface JobResult {
 }
 
 class BackgroundJobService {
-  private mlQueue: Queue;
-  private worker: Worker;
+  private mlQueue: Queue | null = null;
+  private worker: Worker | null = null;
   private isRedisConnected: boolean = false;
   private fallbackJobs: Map<string, () => Promise<any>> = new Map();
 
   constructor() {
-    // Initialize BullMQ queue for ML processing
-    this.mlQueue = new Queue('ml-processing', {
-      connection: redisConnection,
-      defaultJobOptions: {
-        removeOnComplete: 10, // Keep last 10 completed jobs
-        removeOnFail: 5,      // Keep last 5 failed jobs
-        attempts: 2,          // Retry failed jobs once
-        backoff: {
-          type: 'exponential',
-          delay: 5000,
-        },
-      },
-    });
+    // ENTERPRISE: Only initialize BullMQ if Redis is available
+    if (REDIS_ENABLED && redisConnection) {
+      try {
+        // Initialize BullMQ queue for ML processing
+        this.mlQueue = new Queue('ml-processing', {
+          connection: redisConnection,
+          defaultJobOptions: {
+            removeOnComplete: 10, // Keep last 10 completed jobs
+            removeOnFail: 5,      // Keep last 5 failed jobs
+            attempts: 2,          // Retry failed jobs once
+            backoff: {
+              type: 'exponential',
+              delay: 5000,
+            },
+          },
+        });
 
-    // Initialize worker to process jobs
-    this.worker = new Worker(
-      'ml-processing',
-      this.processJob.bind(this),
-      {
-        connection: redisConnection,
-        concurrency: 2, // Process 2 jobs simultaneously max
+        // Initialize worker to process jobs
+        this.worker = new Worker(
+          'ml-processing',
+          this.processJob.bind(this),
+          {
+            connection: redisConnection,
+            concurrency: 2, // Process 2 jobs simultaneously max
+          }
+        );
+
+        this.setupEventHandlers();
+        this.checkRedisConnection();
+      } catch (error) {
+        console.log('BullMQ initialization failed - using fallback mode');
+        this.isRedisConnected = false;
       }
-    );
-
-    this.setupEventHandlers();
-    this.checkRedisConnection();
+    } else {
+      log('BullMQ running in fallback mode - processing jobs synchronously');
+      this.isRedisConnected = false;
+    }
   }
 
   private async checkRedisConnection() {
+    if (!redisConnection) {
+      this.isRedisConnected = false;
+      return;
+    }
+    
     try {
       await redisConnection.ping();
       this.isRedisConnected = true;
       log('✅ BullMQ connected - background processing enabled');
     } catch (error) {
       this.isRedisConnected = false;
-      log('BullMQ running in fallback mode - processing jobs synchronously');
+      // Graceful fallback message without error spam
     }
   }
 
   private setupEventHandlers() {
+    if (!this.worker) return;
+    
     this.worker.on('completed', (job: Job, result: JobResult) => {
       log(`✅ ML job completed: ${job.data.type} (${result.processingTime}ms)`);
     });
@@ -87,7 +111,10 @@ class BackgroundJobService {
     });
 
     this.worker.on('error', (err) => {
-      console.error('BullMQ worker error:', err);
+      // ENTERPRISE: Suppress Redis connection errors to prevent log spam
+      if (!err.message.includes('ECONNREFUSED') && !err.message.includes('Connection is closed')) {
+        console.error('BullMQ worker error:', err);
+      }
     });
   }
 

@@ -4,7 +4,8 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { cryptoDataService } from "./crypto-data-service";
-import { insertCryptoAssetSchema, insertAlertSchema, insertVelocityDataSchema } from "@shared/schema";
+import { insertCryptoAssetSchema, insertAlertSchema, insertVelocityDataSchema, insertApiKeySchema } from "@shared/schema";
+import { apiKeyAuth, requireScope, generateApiKey } from './api-key-auth';
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { registerAuthRoutes } from "./auth-routes";
 import { registerSecurityRoutes } from "./security-integrations";
@@ -1902,6 +1903,188 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching API sources status:', error);
       res.status(500).json({ message: 'Failed to fetch API sources status' });
+    }
+  });
+
+  // ======== API KEY MANAGEMENT ROUTES ========
+
+  // Create a new API key for authenticated users
+  app.post('/api/keys', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      // Validate request body with security constraints
+      const validatedData = insertApiKeySchema.parse(req.body);
+      
+      // SECURITY: Validate scopes against allowlist
+      const allowedScopes = ['read', 'write', 'admin'];
+      const requestedScopes = validatedData.scopes || ['read'];
+      if (!Array.isArray(requestedScopes) || !requestedScopes.every(scope => allowedScopes.includes(scope))) {
+        return res.status(400).json({ 
+          error: 'Invalid scopes', 
+          message: `Allowed scopes: ${allowedScopes.join(', ')}` 
+        });
+      }
+      
+      // SECURITY: Enforce rate limit bounds (max 10,000 requests per hour)
+      const maxRateLimit = 10000;
+      const requestedRateLimit = validatedData.rateLimit || 1000;
+      if (requestedRateLimit > maxRateLimit) {
+        return res.status(400).json({ 
+          error: 'Rate limit too high', 
+          message: `Maximum allowed rate limit: ${maxRateLimit} requests per hour` 
+        });
+      }
+
+      // Generate a secure API key
+      const fullKey = generateApiKey();
+
+      // Store API key securely
+      const apiKey = await storage.createApiKey({
+        ...validatedData,
+        userId,
+        fullKey,
+      });
+
+      // SECURITY: Return API key info WITHOUT sensitive data (no keyHash leak)
+      res.status(201).json({
+        id: apiKey.id,
+        keyName: apiKey.keyName,
+        keyPrefix: apiKey.keyPrefix,
+        scopes: apiKey.scopes,
+        isActive: apiKey.isActive,
+        expiresAt: apiKey.expiresAt,
+        rateLimit: apiKey.rateLimit,
+        createdAt: apiKey.createdAt,
+        fullKey, // Show the key once for user to copy
+        message: 'API key created successfully. Please save this key securely - it will not be shown again.',
+      });
+    } catch (error) {
+      console.error('Error creating API key:', error);
+      res.status(500).json({ error: 'Failed to create API key' });
+    }
+  });
+
+  // List user's API keys (without sensitive data)
+  app.get('/api/keys', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      const apiKeys = await storage.getApiKeys(userId);
+      
+      // Remove sensitive data before sending
+      const sanitizedKeys = apiKeys.map(key => ({
+        id: key.id,
+        keyName: key.keyName,
+        keyPrefix: key.keyPrefix,
+        scopes: key.scopes,
+        isActive: key.isActive,
+        lastUsedAt: key.lastUsedAt,
+        expiresAt: key.expiresAt,
+        usageCount: key.usageCount,
+        rateLimit: key.rateLimit,
+        createdAt: key.createdAt,
+      }));
+
+      res.json(sanitizedKeys);
+    } catch (error) {
+      console.error('Error fetching API keys:', error);
+      res.status(500).json({ error: 'Failed to fetch API keys' });
+    }
+  });
+
+  // Revoke an API key
+  app.delete('/api/keys/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      const keyId = parseInt(req.params.id);
+      if (isNaN(keyId)) {
+        return res.status(400).json({ error: 'Invalid API key ID' });
+      }
+
+      const success = await storage.revokeApiKey(keyId, userId);
+      if (!success) {
+        return res.status(404).json({ error: 'API key not found or already revoked' });
+      }
+
+      res.json({ message: 'API key revoked successfully' });
+    } catch (error) {
+      console.error('Error revoking API key:', error);
+      res.status(500).json({ error: 'Failed to revoke API key' });
+    }
+  });
+
+  // Get API key usage statistics
+  app.get('/api/keys/:id/usage', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      const keyId = parseInt(req.params.id);
+      if (isNaN(keyId)) {
+        return res.status(400).json({ error: 'Invalid API key ID' });
+      }
+
+      // Verify the key belongs to the user
+      const userKeys = await storage.getApiKeys(userId);
+      const keyExists = userKeys.some(key => key.id === keyId);
+      if (!keyExists) {
+        return res.status(404).json({ error: 'API key not found' });
+      }
+
+      const limit = parseInt(req.query.limit as string) || 100;
+      const usage = await storage.getApiKeyUsage(keyId, limit);
+
+      res.json(usage);
+    } catch (error) {
+      console.error('Error fetching API key usage:', error);
+      res.status(500).json({ error: 'Failed to fetch API key usage' });
+    }
+  });
+
+  // ======== PROTECTED API ROUTES USING API KEY AUTH ========
+
+  // Example: Get assets with API key authentication
+  app.get('/api/v1/assets', apiKeyAuth, requireScope('read'), async (req: any, res) => {
+    try {
+      const assets = await storage.getCryptoAssets();
+      res.json({
+        data: assets,
+        apiKey: {
+          name: req.apiKey?.keyName,
+          usage: `${req.apiKey?.rateLimit ? Math.round((1 / req.apiKey.rateLimit) * 100) : 0}% of rate limit used`,
+        },
+      });
+    } catch (error) {
+      console.error('Error fetching assets via API:', error);
+      res.status(500).json({ error: 'Failed to fetch assets' });
+    }
+  });
+
+  // Example: Create alert with API key authentication  
+  app.post('/api/v1/alerts', apiKeyAuth, requireScope('write'), async (req: any, res) => {
+    try {
+      const validatedData = insertAlertSchema.parse(req.body);
+      const alert = await storage.createAlert(validatedData);
+      res.status(201).json({
+        data: alert,
+        message: 'Alert created successfully via API',
+      });
+    } catch (error) {
+      console.error('Error creating alert via API:', error);
+      res.status(500).json({ error: 'Failed to create alert' });
     }
   });
 
