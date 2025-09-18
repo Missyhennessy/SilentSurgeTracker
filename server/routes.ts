@@ -9,6 +9,7 @@ import { apiKeyAuth, requireScope, generateApiKey } from './api-key-auth';
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { registerAuthRoutes } from "./auth-routes";
 import { registerSecurityRoutes } from "./security-integrations";
+import { registerFlowIntelligenceRoutes } from "./flow-intelligence-service";
 import { redisCacheService } from "./redis-cache-service";
 import { backgroundJobService } from "./background-job-service";
 import _ from "lodash";
@@ -25,6 +26,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register additional auth and security routes
   registerAuthRoutes(app);
   registerSecurityRoutes(app);
+  registerFlowIntelligenceRoutes(app);
 
   // WebSocket server for real-time updates with security improvements
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
