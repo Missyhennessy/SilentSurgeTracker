@@ -41,10 +41,10 @@ export function UserFriendlyNav({
   
   // Beginner-friendly modules
   const beginnerModules = [
-    { key: "scanner", label: "Find Crypto", description: "Discover new cryptocurrencies", icon: <Search className="w-4 h-4" /> },
-    { key: "watchlist", label: "My Favorites", description: "Track cryptocurrencies you like", icon: <Eye className="w-4 h-4" /> },
-    { key: "portfolio", label: "My Portfolio", description: "See how your investments are doing", icon: <TrendingUp className="w-4 h-4" /> },
-    { key: "alerts", label: "Price Alerts", description: "Get notified when prices change", icon: <Bell className="w-4 h-4" /> }
+    { key: "scanner" as DashboardModule, label: "Find Crypto", description: "Discover new cryptocurrencies", icon: <Search className="w-4 h-4" /> },
+    { key: "watchlist" as DashboardModule, label: "My Favorites", description: "Track cryptocurrencies you like", icon: <Eye className="w-4 h-4" /> },
+    { key: "portfolio" as DashboardModule, label: "My Portfolio", description: "See how your investments are doing", icon: <TrendingUp className="w-4 h-4" /> },
+    { key: "alerts" as DashboardModule, label: "Price Alerts", description: "Get notified when prices change", icon: <Bell className="w-4 h-4" /> }
   ];
 
   // Advanced trader modules grouped by category
@@ -53,48 +53,48 @@ export function UserFriendlyNav({
       title: "Market Discovery",
       icon: <Search className="w-4 h-4" />,
       modules: [
-        { key: "scanner", label: "Asset Scanner", description: "AI-powered crypto discovery" },
+        { key: "scanner" as DashboardModule, label: "Asset Scanner", description: "AI-powered crypto discovery" },
         { key: "search" as DashboardModule, label: "Advanced Search", description: "Search 1,886+ cryptocurrencies" },
-        { key: "scanner" as DashboardModule, label: "Market Scanner", description: "Real-time market anomaly detection" }
+        { key: "market-scanner" as DashboardModule, label: "Market Scanner", description: "Real-time market anomaly detection" }
       ]
     },
     {
       title: "Analysis & Insights",
       icon: <BarChart3 className="w-4 h-4" />,
       modules: [
-        { key: "heatmap", label: "Market Heatmap", description: "Behavioral pattern visualization" },
-        { key: "velocity", label: "Velocity Tracking", description: "Token movement analysis" },
-        { key: "sentiment", label: "Market Sentiment", description: "Social media & news analysis" },
-        { key: "analytics", label: "Historical Analysis", description: "Long-term trend analysis" }
+        { key: "heatmap" as DashboardModule, label: "Market Heatmap", description: "Behavioral pattern visualization" },
+        { key: "velocity" as DashboardModule, label: "Velocity Tracking", description: "Token movement analysis" },
+        { key: "sentiment" as DashboardModule, label: "Market Sentiment", description: "Social media & news analysis" },
+        { key: "analytics" as DashboardModule, label: "Historical Analysis", description: "Long-term trend analysis" }
       ]
     },
     {
       title: "Portfolio & Trading",
       icon: <TrendingUp className="w-4 h-4" />,
       modules: [
-        { key: "portfolio", label: "Portfolio Tracker", description: "Advanced portfolio analytics" },
-        { key: "signals", label: "AI Trading Signals", description: "Machine learning recommendations" },
-        { key: "backtest", label: "Strategy Testing", description: "Backtest trading strategies" },
-        { key: "optimization", label: "Portfolio Optimizer", description: "AI-powered asset allocation" }
+        { key: "portfolio" as DashboardModule, label: "Portfolio Tracker", description: "Advanced portfolio analytics" },
+        { key: "signals" as DashboardModule, label: "AI Trading Signals", description: "Machine learning recommendations" },
+        { key: "backtest" as DashboardModule, label: "Strategy Testing", description: "Backtest trading strategies" },
+        { key: "optimization" as DashboardModule, label: "Portfolio Optimizer", description: "AI-powered asset allocation" }
       ]
     },
     {
       title: "Risk Management",
       icon: <Shield className="w-4 h-4" />,
       modules: [
-        { key: "risk", label: "Risk Analysis", description: "Portfolio risk monitoring" },
-        { key: "alerts", label: "Smart Alerts", description: "Multi-parameter alert system" },
-        { key: "api-keys", label: "API Keys", description: "Manage API access & authentication" }
+        { key: "risk" as DashboardModule, label: "Risk Analysis", description: "Portfolio risk monitoring" },
+        { key: "alerts" as DashboardModule, label: "Smart Alerts", description: "Multi-parameter alert system" },
+        { key: "api-keys" as DashboardModule, label: "API Keys", description: "Manage API access & authentication" }
       ]
     },
     {
       title: "Professional Tools",
       icon: <Brain className="w-4 h-4" />,
       modules: [
-        { key: "ml", label: "AI Models", description: "Machine learning insights" },
-        { key: "anchor", label: "Anchor Pressure", description: "Price support analysis" },
-        { key: "composite", label: "SSS Rating", description: "Silent Surge Score analysis" },
-        { key: "api-status", label: "System Status", description: "Monitor data sources" }
+        { key: "ml" as DashboardModule, label: "AI Models", description: "Machine learning insights" },
+        { key: "anchor" as DashboardModule, label: "Anchor Pressure", description: "Price support analysis" },
+        { key: "composite" as DashboardModule, label: "SSS Rating", description: "Silent Surge Score analysis" },
+        { key: "api-status" as DashboardModule, label: "System Status", description: "Monitor data sources" }
       ]
     }
   ];
