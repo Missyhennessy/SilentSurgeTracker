@@ -16,11 +16,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { ApiKey, InsertApiKey } from "@shared/schema";
+import { ApiKey, InsertApiKey, insertApiKeySchema } from "@shared/schema";
 
-// Form validation schema
-const createApiKeySchema = z.object({
-  keyName: z.string().min(1, "Key name is required").max(50, "Key name must be 50 characters or less"),
+// Extend the shared schema with UI-specific validation
+const createApiKeySchema = insertApiKeySchema.extend({
   scopes: z.array(z.string()).min(1, "At least one scope must be selected"),
   rateLimit: z.number().min(1, "Rate limit must be at least 1").max(10000, "Rate limit cannot exceed 10,000"),
   expiresAt: z.string().optional(),
@@ -40,21 +39,29 @@ export default function ApiKeysPage() {
   const [revealedKeys, setRevealedKeys] = useState<Set<number>>(new Set());
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
 
-  // Fetch API keys
-  const { data: apiKeys = [], isLoading, error } = useQuery({
+  // Fetch API keys with proper typing
+  const { data: apiKeys = [], isLoading, error } = useQuery<ApiKey[]>({
     queryKey: ["/api/api-keys"],
-    queryFn: () => fetch("/api/api-keys").then(res => res.json()),
   });
 
-  // Fetch usage statistics
-  const { data: usageStats = {} } = useQuery({
+  // Fetch usage statistics with proper typing
+  const { data: usageStats = {} } = useQuery<{
+    totalRequests?: number;
+    requestsToday?: number;
+  }>({
     queryKey: ["/api/api-keys/usage"],
-    queryFn: () => fetch("/api/api-keys/usage").then(res => res.json()),
   });
+
+  // Type for create API key response
+  type CreateApiKeyResponse = {
+    id: number;
+    fullKey: string;
+    keyPrefix: string;
+  };
 
   // Create API key mutation
   const createApiKeyMutation = useMutation({
-    mutationFn: async (data: CreateApiKeyForm) => {
+    mutationFn: async (data: CreateApiKeyForm): Promise<CreateApiKeyResponse> => {
       const response = await apiRequest("/api/api-keys", {
         method: "POST",
         body: JSON.stringify({
@@ -65,13 +72,24 @@ export default function ApiKeysPage() {
       return response;
     },
     onSuccess: (data) => {
+      // Invalidate both API keys list and usage stats
       queryClient.invalidateQueries({ queryKey: ["/api/api-keys"] });
-      setNewApiKey(data.fullKey);
-      setShowCreateDialog(false);
-      toast({
-        title: "API Key Created",
-        description: "Your new API key has been generated successfully. Make sure to copy it now!",
-      });
+      queryClient.invalidateQueries({ queryKey: ["/api/api-keys/usage"] });
+      
+      if (data.fullKey) {
+        setNewApiKey(data.fullKey);
+        setShowCreateDialog(false);
+        toast({
+          title: "API Key Created",
+          description: "Your new API key has been generated successfully. Make sure to copy it now!",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "API key was created but the full key could not be retrieved. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
     onError: (error: any) => {
       toast({
@@ -90,7 +108,9 @@ export default function ApiKeysPage() {
       });
     },
     onSuccess: () => {
+      // Invalidate both API keys list and usage stats
       queryClient.invalidateQueries({ queryKey: ["/api/api-keys"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/api-keys/usage"] });
       toast({
         title: "API Key Revoked",
         description: "The API key has been revoked successfully.",
