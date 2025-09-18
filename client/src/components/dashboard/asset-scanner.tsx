@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import AssetCard from "./asset-card";
 import SSSBreakdown from "./sss-breakdown";
 import VelocityChart from "./velocity-chart";
+import { SSSBreakdown as EnhancedSSSBreakdown, SSSScoreBadge } from "@/components/ui/sss-breakdown";
 import { CryptoAsset } from "@/types/crypto";
 import { useToast } from "@/hooks/use-toast";
 
