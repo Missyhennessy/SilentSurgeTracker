@@ -13,6 +13,7 @@ import BehavioralHeatmap from "@/components/dashboard/behavioral-heatmap";
 import VelocityTracking from "@/components/dashboard/velocity-tracking";
 import CohesionAnalyzer from "@/components/dashboard/cohesion-analyzer";
 import AnchorPressure from "@/components/dashboard/anchor-pressure";
+import VolumeAnomalyDetector from "@/components/dashboard/volume-anomaly-detector";
 import HHRComparator from "@/components/dashboard/hhr-comparator";
 import CompositeRating from "@/components/dashboard/composite-rating";
 import HistoricalSSSTracker from "@/components/analytics/historical-sss-tracker";
@@ -110,6 +111,8 @@ export default function Dashboard() {
         case "flow-intelligence":
           window.location.href = '/flow-intelligence';
           return <div className="p-6">Redirecting to Flow Intelligence...</div>;
+        case "volume-anomaly":
+          return <VolumeAnomalyDetector />;
         default:
           return <AssetScanner />;
       }
