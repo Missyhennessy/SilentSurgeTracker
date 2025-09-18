@@ -43,8 +43,8 @@ app.use(helmet({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
-// Security: Set trust proxy for accurate IP addresses
-app.set('trust proxy', 1);
+// Security: Set trust proxy for accurate IP addresses (including API key auth)
+app.set('trust proxy', true);
 
 app.use((req, res, next) => {
   const start = Date.now();

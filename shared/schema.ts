@@ -115,9 +115,60 @@ export const insertVelocityDataSchema = createInsertSchema(velocityData).omit({
   id: true,
 });
 
+// API Keys for enterprise access
+export const apiKeys = pgTable("api_keys", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  keyName: varchar("key_name").notNull(), // User-friendly name for the key
+  keyPrefix: varchar("key_prefix").notNull(), // First 8 chars for identification (e.g., "sst_1234")
+  keyHash: varchar("key_hash").notNull(), // Hashed version of the full key
+  scopes: jsonb("scopes").$type<string[]>().notNull().default(['read']), // Array of permissions: read, write, admin
+  isActive: boolean("is_active").default(true),
+  lastUsedAt: timestamp("last_used_at"),
+  expiresAt: timestamp("expires_at"), // Optional expiration
+  usageCount: integer("usage_count").default(0),
+  rateLimit: integer("rate_limit").default(1000), // Requests per hour
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// API Key usage tracking
+export const apiKeyUsage = pgTable("api_key_usage", {
+  id: serial("id").primaryKey(),
+  apiKeyId: integer("api_key_id").references(() => apiKeys.id).notNull(),
+  endpoint: varchar("endpoint").notNull(),
+  method: varchar("method").notNull(),
+  responseCode: integer("response_code").notNull(),
+  responseTime: integer("response_time"), // milliseconds
+  userAgent: varchar("user_agent"),
+  ipAddress: varchar("ip_address"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertApiKeySchema = createInsertSchema(apiKeys).omit({
+  id: true,
+  keyHash: true,
+  keyPrefix: true,
+  usageCount: true,
+  lastUsedAt: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  expirationDays: z.number().optional(), // Helper field for easier expiration setting
+});
+
+export const insertApiKeyUsageSchema = createInsertSchema(apiKeyUsage).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type CryptoAsset = typeof cryptoAssets.$inferSelect;
 export type InsertCryptoAsset = z.infer<typeof insertCryptoAssetSchema>;
 export type Alert = typeof alerts.$inferSelect;
 export type InsertAlert = z.infer<typeof insertAlertSchema>;
 export type VelocityData = typeof velocityData.$inferSelect;
 export type InsertVelocityData = z.infer<typeof insertVelocityDataSchema>;
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
+export type ApiKeyUsage = typeof apiKeyUsage.$inferSelect;
+export type InsertApiKeyUsage = z.infer<typeof insertApiKeyUsageSchema>;

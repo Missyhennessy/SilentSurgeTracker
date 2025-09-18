@@ -1,7 +1,7 @@
-import { CryptoAsset, InsertCryptoAsset, Alert, InsertAlert, VelocityData, InsertVelocityData, User, UpsertUser, Subscription, InsertSubscription, PaymentHistory, InsertPaymentHistory } from "@shared/schema";
-import { cryptoAssets, alerts, velocityData, users, subscriptions, paymentHistory } from "@shared/schema";
+import { CryptoAsset, InsertCryptoAsset, Alert, InsertAlert, VelocityData, InsertVelocityData, User, UpsertUser, Subscription, InsertSubscription, PaymentHistory, InsertPaymentHistory, ApiKey, InsertApiKey, ApiKeyUsage, InsertApiKeyUsage } from "@shared/schema";
+import { cryptoAssets, alerts, velocityData, users, subscriptions, paymentHistory, apiKeys, apiKeyUsage } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, count, ilike, or } from "drizzle-orm";
+import { eq, desc, count, ilike, or, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Crypto Assets
@@ -41,6 +41,16 @@ export interface IStorage {
   // Payment history
   createPaymentRecord(payment: InsertPaymentHistory): Promise<PaymentHistory>;
   getPaymentHistory(userId: string): Promise<PaymentHistory[]>;
+  
+  // API Key management
+  createApiKey(apiKey: InsertApiKey & { fullKey: string }): Promise<ApiKey>;
+  getApiKeys(userId: string): Promise<ApiKey[]>;
+  getApiKeyByPrefix(keyPrefix: string): Promise<ApiKey | undefined>;
+  validateApiKey(keyHash: string): Promise<ApiKey | undefined>;
+  updateApiKeyUsage(apiKeyId: number): Promise<void>;
+  revokeApiKey(id: number, userId: string): Promise<boolean>;
+  trackApiKeyUsage(usage: InsertApiKeyUsage): Promise<ApiKeyUsage>;
+  getApiKeyUsage(apiKeyId: number, limit?: number): Promise<ApiKeyUsage[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -462,6 +472,182 @@ export class DatabaseStorage implements IStorage {
         .orderBy(desc(paymentHistory.createdAt));
     } catch (error) {
       console.error('Error getting payment history:', error);
+      return [];
+    }
+  }
+
+  // API Key management methods
+  async createApiKey(apiKeyData: InsertApiKey & { fullKey: string }): Promise<ApiKey> {
+    try {
+      const { fullKey, expirationDays, ...keyData } = apiKeyData;
+      
+      // Generate key prefix (first 8 chars for display)
+      const keyPrefix = fullKey.substring(0, 8);
+      
+      // Hash the full key for secure storage
+      const crypto = await import('crypto');
+      const keyHash = crypto.createHash('sha256').update(fullKey).digest('hex');
+      
+      // Calculate expiration date if provided
+      const expiresAt = expirationDays 
+        ? new Date(Date.now() + expirationDays * 24 * 60 * 60 * 1000)
+        : null;
+
+      const [newApiKey] = await db
+        .insert(apiKeys)
+        .values({
+          ...keyData,
+          keyPrefix,
+          keyHash,
+          expiresAt,
+        })
+        .returning();
+      
+      return newApiKey;
+    } catch (error) {
+      console.error('Error creating API key:', error);
+      throw error;
+    }
+  }
+
+  async getApiKeys(userId: string): Promise<ApiKey[]> {
+    try {
+      return await db
+        .select()
+        .from(apiKeys)
+        .where(eq(apiKeys.userId, userId))
+        .orderBy(desc(apiKeys.createdAt));
+    } catch (error) {
+      console.error('Error getting API keys:', error);
+      return [];
+    }
+  }
+
+  async getApiKeyByPrefix(keyPrefix: string): Promise<ApiKey | undefined> {
+    try {
+      const [apiKey] = await db
+        .select()
+        .from(apiKeys)
+        .where(eq(apiKeys.keyPrefix, keyPrefix));
+      return apiKey;
+    } catch (error) {
+      console.error('Error getting API key by prefix:', error);
+      return undefined;
+    }
+  }
+
+  async validateApiKey(fullKey: string): Promise<ApiKey | undefined> {
+    try {
+      // ENTERPRISE SECURITY: Import crypto for HMAC-based validation
+      const crypto = await import('crypto');
+      const { constantTimeCompare } = await import('./api-key-auth');
+      
+      // Extract key prefix for lookup optimization
+      const keyPrefix = fullKey.substring(0, 12); // Extract "sst_XXXXXXXX"
+      
+      // Get candidate keys by prefix for efficiency
+      const candidateKeys = await db
+        .select()
+        .from(apiKeys)
+        .where(eq(apiKeys.keyPrefix, keyPrefix));
+      
+      // ENTERPRISE SECURITY: Use HMAC with server pepper + constant-time comparison
+      const SERVER_PEPPER = process.env.API_KEY_PEPPER || (() => {
+        const isDev = process.env.NODE_ENV === 'development';
+        if (!isDev) {
+          throw new Error('CRITICAL: API_KEY_PEPPER environment variable is required for production security');
+        }
+        return 'dev-fallback-pepper-not-for-production-2024';
+      })();
+      const providedKeyHash = crypto.createHmac('sha256', SERVER_PEPPER).update(fullKey).digest('hex');
+      
+      let validApiKey: ApiKey | undefined;
+      for (const candidate of candidateKeys) {
+        // Constant-time comparison to prevent timing attacks
+        if (constantTimeCompare(providedKeyHash, candidate.keyHash)) {
+          validApiKey = candidate;
+          break;
+        }
+      }
+      
+      // ENTERPRISE SECURITY: Enforce strict validation - active and not expired
+      if (!validApiKey) {
+        return undefined;
+      }
+      
+      if (!validApiKey.isActive) {
+        console.warn(`Attempt to use revoked API key: ${validApiKey.keyPrefix}`);
+        return undefined;
+      }
+      
+      if (validApiKey.expiresAt && new Date() > new Date(validApiKey.expiresAt)) {
+        console.warn(`Attempt to use expired API key: ${validApiKey.keyPrefix}`);
+        return undefined;
+      }
+      
+      return validApiKey;
+    } catch (error) {
+      console.error('Error validating API key:', error);
+      return undefined;
+    }
+  }
+
+  async updateApiKeyUsage(apiKeyId: number): Promise<void> {
+    try {
+      await db
+        .update(apiKeys)
+        .set({
+          usageCount: sql`${apiKeys.usageCount} + 1`,
+          lastUsedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(apiKeys.id, apiKeyId));
+    } catch (error) {
+      console.error('Error updating API key usage:', error);
+    }
+  }
+
+  async revokeApiKey(id: number, userId: string): Promise<boolean> {
+    try {
+      const [updatedKey] = await db
+        .update(apiKeys)
+        .set({
+          isActive: false,
+          updatedAt: new Date(),
+        })
+        .where(eq(apiKeys.id, id) && eq(apiKeys.userId, userId))
+        .returning();
+      
+      return !!updatedKey;
+    } catch (error) {
+      console.error('Error revoking API key:', error);
+      return false;
+    }
+  }
+
+  async trackApiKeyUsage(usage: InsertApiKeyUsage): Promise<ApiKeyUsage> {
+    try {
+      const [newUsage] = await db
+        .insert(apiKeyUsage)
+        .values(usage)
+        .returning();
+      return newUsage;
+    } catch (error) {
+      console.error('Error tracking API key usage:', error);
+      throw error;
+    }
+  }
+
+  async getApiKeyUsage(apiKeyId: number, limit: number = 100): Promise<ApiKeyUsage[]> {
+    try {
+      return await db
+        .select()
+        .from(apiKeyUsage)
+        .where(eq(apiKeyUsage.apiKeyId, apiKeyId))
+        .orderBy(desc(apiKeyUsage.createdAt))
+        .limit(limit);
+    } catch (error) {
+      console.error('Error getting API key usage:', error);
       return [];
     }
   }
