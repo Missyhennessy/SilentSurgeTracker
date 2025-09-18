@@ -1,4 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
+import compression from "compression";
+import helmet from "helmet";
 import next from 'next';
 import { createServer } from 'http';
 import { parse } from 'url';
@@ -6,6 +8,36 @@ import { registerRoutes } from "./routes";
 import { log } from "./vite";
 
 const app = express();
+
+// Performance: Enable gzip/deflate compression for all responses
+app.use(compression({
+  threshold: 1024, // Only compress responses > 1KB
+  level: 6, // Balanced compression level (1-9, 6 is default)
+  filter: (req, res) => {
+    // Don't compress images or already compressed content
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  }
+}));
+
+// Security: Set security headers + performance headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https:"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https:", "ws:", "wss:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Disable for Next.js compatibility
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
+}));
 
 // Security: Limit request size to prevent DoS attacks
 app.use(express.json({ limit: '10mb' }));
