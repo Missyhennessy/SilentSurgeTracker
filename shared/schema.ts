@@ -311,3 +311,108 @@ export type SmartMoneyWallet = typeof smartMoneyWallets.$inferSelect;
 export type InsertSmartMoneyWallet = z.infer<typeof insertSmartMoneyWalletSchema>;
 export type CohortFlow = typeof cohortFlows.$inferSelect;
 export type InsertCohortFlow = z.infer<typeof insertCohortFlowSchema>;
+
+// Volume Anomaly Detection
+export const volumeAnomalies = pgTable("volume_anomalies", {
+  id: serial("id").primaryKey(),
+  assetId: integer("asset_id").references(() => cryptoAssets.id).notNull(),
+  assetSymbol: varchar("asset_symbol").notNull(),
+  timestamp: timestamp("timestamp").defaultNow(),
+  currentVolume: real("current_volume").notNull(),
+  historicalAverage: real("historical_average").notNull(),
+  percentageChange: real("percentage_change").notNull(),
+  zScore: real("z_score").notNull(),
+  anomalyScore: real("anomaly_score").notNull(), // 0-100 confidence score
+  anomalyType: varchar("anomaly_type").notNull(), // 'spike', 'drop', 'sustained_high', 'sustained_low'
+  severity: varchar("severity").notNull(), // 'low', 'medium', 'high', 'critical'
+  detectionMethod: varchar("detection_method").notNull(), // 'zscore', 'iqr', 'ml_ensemble', 'isolation_forest'
+  priceCorrelation: real("price_correlation"), // Correlation with price movement
+  marketCapImpact: real("market_cap_impact"), // Impact on market cap
+  exchangeBreakdown: jsonb("exchange_breakdown").$type<Record<string, number>>(), // Volume by exchange
+  timeframe: varchar("timeframe").notNull().default("24h"), // '1h', '4h', '24h', '7d'
+  isConfirmed: boolean("is_confirmed").default(false),
+  alertTriggered: boolean("alert_triggered").default(false),
+  sssImpact: real("sss_impact"), // Impact on SSS score
+  volumePattern: jsonb("volume_pattern").$type<{
+    trend: 'increasing' | 'decreasing' | 'volatile' | 'stable';
+    momentum: number;
+    acceleration: number;
+    volatility: number;
+  }>(),
+  metadata: jsonb("metadata").$type<{
+    news?: string[];
+    social_sentiment?: number;
+    whale_activity?: boolean;
+    exchange_listings?: string[];
+    technical_indicators?: Record<string, number>;
+  }>(),
+});
+
+// Volume Pattern Analysis
+export const volumePatterns = pgTable("volume_patterns", {
+  id: serial("id").primaryKey(),
+  assetId: integer("asset_id").references(() => cryptoAssets.id).notNull(),
+  patternType: varchar("pattern_type").notNull(), // 'accumulation', 'distribution', 'breakout', 'reversal'
+  confidence: real("confidence").notNull(), // 0-1 confidence score
+  duration: integer("duration").notNull(), // Pattern duration in hours
+  volumeProfile: jsonb("volume_profile").$type<{
+    peak_times: string[];
+    distribution: Record<string, number>;
+    intensity: number;
+  }>(),
+  priceAction: jsonb("price_action").$type<{
+    support_levels: number[];
+    resistance_levels: number[];
+    breakout_probability: number;
+  }>(),
+  startedAt: timestamp("started_at").notNull(),
+  endedAt: timestamp("ended_at"),
+  isActive: boolean("is_active").default(true),
+  accuracy: real("accuracy"), // Historical accuracy of this pattern type
+});
+
+// ML Model Performance for Volume Detection
+export const volumeModelPerformance = pgTable("volume_model_performance", {
+  id: serial("id").primaryKey(),
+  modelName: varchar("model_name").notNull(),
+  modelVersion: varchar("model_version").notNull(),
+  testPeriod: jsonb("test_period").$type<{
+    start_date: string;
+    end_date: string;
+    sample_size: number;
+  }>(),
+  metrics: jsonb("metrics").$type<{
+    accuracy: number;
+    precision: number;
+    recall: number;
+    f1_score: number;
+    false_positive_rate: number;
+    auc_roc: number;
+  }>(),
+  anomalyTypeAccuracy: jsonb("anomaly_type_accuracy").$type<Record<string, number>>(),
+  lastEvaluatedAt: timestamp("last_evaluated_at").defaultNow(),
+  isActive: boolean("is_active").default(true),
+});
+
+// Insert schemas for volume anomaly detection
+export const insertVolumeAnomalySchema = createInsertSchema(volumeAnomalies).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertVolumePatternSchema = createInsertSchema(volumePatterns).omit({
+  id: true,
+});
+
+export const insertVolumeModelPerformanceSchema = createInsertSchema(volumeModelPerformance).omit({
+  id: true,
+  lastEvaluatedAt: true,
+});
+
+// Volume Anomaly Types
+export type VolumeAnomaly = typeof volumeAnomalies.$inferSelect;
+export type InsertVolumeAnomaly = z.infer<typeof insertVolumeAnomalySchema>;
+export type VolumePattern = typeof volumePatterns.$inferSelect;
+export type InsertVolumePattern = z.infer<typeof insertVolumePatternSchema>;
+export type VolumeModelPerformance = typeof volumeModelPerformance.$inferSelect;
+export type InsertVolumeModelPerformance = z.infer<typeof insertVolumeModelPerformanceSchema>;
