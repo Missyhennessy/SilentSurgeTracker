@@ -3,12 +3,15 @@ import Redis from 'ioredis';
 import { log } from './vite';
 import { storage } from './storage';
 
-// Redis connection for BullMQ
+// Redis connection for BullMQ - SECURITY: Proper configuration
 const redisConnection = new Redis({
   host: 'localhost',
   port: 6379,
-  maxRetriesPerRequest: 1,
+  maxRetriesPerRequest: null, // Required by BullMQ for security
   lazyConnect: true,
+  connectTimeout: 5000,
+  commandTimeout: 3000,
+  retryDelayOnFailover: 100,
   onClusterError: () => console.log('BullMQ using fallback processing'),
 });
 
