@@ -20,6 +20,7 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import SubscriptionPage from "@/pages/SubscriptionPage";
 import ApiStatusPage from "@/pages/ApiStatusPage";
 import ApiKeysPage from "@/pages/api-keys";
+import FlowIntelligencePage from "@/pages/flow-intelligence";
 
 function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<"light" | "dark">("dark");
@@ -116,6 +117,13 @@ function Router() {
             {() => (
               <ProtectedRoute>
                 <ApiKeysPage />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/flow-intelligence">
+            {() => (
+              <ProtectedRoute>
+                <FlowIntelligencePage />
               </ProtectedRoute>
             )}
           </Route>

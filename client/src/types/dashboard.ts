@@ -24,4 +24,5 @@ export type DashboardModule =
   | "search"
   | "python-engine"
   | "api-status"
-  | "api-keys";
+  | "api-keys"
+  | "flow-intelligence";
