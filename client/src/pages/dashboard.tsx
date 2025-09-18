@@ -107,6 +107,9 @@ export default function Dashboard() {
         case "api-keys":
           window.location.href = '/api-keys';
           return <div className="p-6">Redirecting to API Keys Management...</div>;
+        case "flow-intelligence":
+          window.location.href = '/flow-intelligence';
+          return <div className="p-6">Redirecting to Flow Intelligence...</div>;
         default:
           return <AssetScanner />;
       }
