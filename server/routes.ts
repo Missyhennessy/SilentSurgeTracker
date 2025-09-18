@@ -685,6 +685,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API Routes
 
   // Health check endpoint (no auth required)
+  // Base API route handler for health checks
+  app.all("/api", (req, res) => {
+    res.json({ status: "ok", message: "Silent Surge Tracker API", timestamp: new Date().toISOString() });
+  });
+
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
