@@ -25,4 +25,5 @@ export type DashboardModule =
   | "python-engine"
   | "api-status"
   | "api-keys"
-  | "flow-intelligence";
+  | "flow-intelligence"
+  | "volume-anomaly";

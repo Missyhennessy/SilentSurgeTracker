@@ -5,6 +5,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { cryptoDataService } from "./crypto-data-service";
 import { insertCryptoAssetSchema, insertAlertSchema, insertVelocityDataSchema, insertApiKeySchema } from "@shared/schema";
+import { volumeAnomalyService } from "./volume-anomaly-service";
 import { apiKeyAuth, requireScope, generateApiKey } from './api-key-auth';
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { registerAuthRoutes } from "./auth-routes";
@@ -2092,6 +2093,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error creating alert via API:', error);
       res.status(500).json({ error: 'Failed to create alert' });
+    }
+  });
+
+  // ======== VOLUME ANOMALY DETECTION ROUTES ========
+  
+  // Get comprehensive volume anomaly analysis
+  app.get('/api/volume/anomalies', isAuthenticated, async (req, res) => {
+    try {
+      const assets = await storage.getCryptoAssets();
+      const analysis = await volumeAnomalyService.detectAnomalies(assets);
+      res.json(analysis);
+    } catch (error) {
+      console.error('Error analyzing volume anomalies:', error);
+      res.status(500).json({ error: 'Failed to analyze volume anomalies' });
+    }
+  });
+
+  // Get anomalies for specific asset
+  app.get('/api/volume/anomalies/:assetId', isAuthenticated, async (req, res) => {
+    try {
+      const assetId = parseInt(req.params.assetId);
+      const anomalies = await volumeAnomalyService.getAnomaliesByAsset(assetId);
+      const patterns = await volumeAnomalyService.getPatternsByAsset(assetId);
+      
+      res.json({
+        anomalies,
+        patterns,
+        assetId
+      });
+    } catch (error) {
+      console.error('Error fetching asset anomalies:', error);
+      res.status(500).json({ error: 'Failed to fetch asset anomalies' });
+    }
+  });
+
+  // Get anomalies by severity level
+  app.get('/api/volume/anomalies/severity/:level', isAuthenticated, async (req, res) => {
+    try {
+      const severity = req.params.level as 'low' | 'medium' | 'high' | 'critical';
+      
+      if (!['low', 'medium', 'high', 'critical'].includes(severity)) {
+        return res.status(400).json({ error: 'Invalid severity level' });
+      }
+      
+      const anomalies = await volumeAnomalyService.getAnomaliesBySeverity(severity);
+      res.json({
+        anomalies,
+        severity,
+        count: anomalies.length
+      });
+    } catch (error) {
+      console.error('Error fetching anomalies by severity:', error);
+      res.status(500).json({ error: 'Failed to fetch anomalies by severity' });
+    }
+  });
+
+  // Get ML model performance metrics
+  app.get('/api/volume/model-performance', isAuthenticated, async (req, res) => {
+    try {
+      const performance = await volumeAnomalyService.getModelPerformanceMetrics();
+      res.json({
+        models: performance,
+        summary: {
+          totalModels: performance.length,
+          averageAccuracy: performance.reduce((sum, model) => sum + model.metrics.accuracy, 0) / performance.length,
+          bestModel: performance.reduce((best, model) => 
+            model.metrics.accuracy > best.metrics.accuracy ? model : best
+          )
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching model performance:', error);
+      res.status(500).json({ error: 'Failed to fetch model performance' });
+    }
+  });
+
+  // API Key protected endpoints
+  app.get('/api/v1/volume/anomalies', apiKeyAuth, requireScope('read'), async (req: any, res) => {
+    try {
+      const assets = await storage.getCryptoAssets();
+      const analysis = await volumeAnomalyService.detectAnomalies(assets);
+      res.json({
+        data: analysis,
+        apiKey: {
+          name: req.apiKey?.keyName,
+          usage: `${req.apiKey?.rateLimit ? Math.round((1 / req.apiKey.rateLimit) * 100) : 0}% of rate limit used`,
+        },
+      });
+    } catch (error) {
+      console.error('Error analyzing volume anomalies via API:', error);
+      res.status(500).json({ error: 'Failed to analyze volume anomalies' });
     }
   });
 

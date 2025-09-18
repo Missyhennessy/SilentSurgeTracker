@@ -64,6 +64,7 @@ export function UserFriendlyNav({
       icon: <BarChart3 className="w-4 h-4" />,
       modules: [
         { key: "flow-intelligence" as DashboardModule, label: "Flow Intelligence", description: "Smart money & whale tracking" },
+        { key: "volume-anomaly" as DashboardModule, label: "Volume Anomaly AI", description: "AI-powered volume anomaly detection" },
         { key: "heatmap" as DashboardModule, label: "Market Heatmap", description: "Behavioral pattern visualization" },
         { key: "velocity" as DashboardModule, label: "Velocity Tracking", description: "Token movement analysis" },
         { key: "sentiment" as DashboardModule, label: "Market Sentiment", description: "Social media & news analysis" },
