@@ -168,7 +168,146 @@ export type Alert = typeof alerts.$inferSelect;
 export type InsertAlert = z.infer<typeof insertAlertSchema>;
 export type VelocityData = typeof velocityData.$inferSelect;
 export type InsertVelocityData = z.infer<typeof insertVelocityDataSchema>;
+// Flow Intelligence - Whale Transactions
+export const whaleTransactions = pgTable("whale_transactions", {
+  id: serial("id").primaryKey(),
+  transactionHash: varchar("transaction_hash").unique().notNull(),
+  assetSymbol: varchar("asset_symbol").notNull(),
+  fromAddress: varchar("from_address").notNull(),
+  toAddress: varchar("to_address").notNull(),
+  amount: real("amount").notNull(),
+  amountUsd: real("amount_usd").notNull(),
+  transactionType: varchar("transaction_type").notNull(), // 'buy', 'sell', 'transfer'
+  exchangeName: varchar("exchange_name"), // null if not exchange-related
+  blockNumber: integer("block_number"),
+  blockTimestamp: timestamp("block_timestamp").notNull(),
+  gasUsed: integer("gas_used"),
+  gasPriceGwei: real("gas_price_gwei"),
+  sssScoreAtTime: real("sss_score_at_time"), // SSS score when transaction occurred
+  priceImpact: real("price_impact"), // Price impact percentage
+  isSmartMoney: boolean("is_smart_money").default(false),
+  walletLabel: varchar("wallet_label"), // Exchange, Institution, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Exchange Flow Analytics
+export const exchangeFlows = pgTable("exchange_flows", {
+  id: serial("id").primaryKey(),
+  exchangeName: varchar("exchange_name").notNull(),
+  assetSymbol: varchar("asset_symbol").notNull(),
+  flowType: varchar("flow_type").notNull(), // 'inflow', 'outflow'
+  amount: real("amount").notNull(),
+  amountUsd: real("amount_usd").notNull(),
+  avgTransactionSize: real("avg_transaction_size"),
+  transactionCount: integer("transaction_count").default(1),
+  timeframe: varchar("timeframe").notNull(), // '1h', '24h', '7d'
+  netFlow: real("net_flow"), // inflow - outflow
+  flowVelocity: real("flow_velocity"), // rate of flow change
+  isAnomaly: boolean("is_anomaly").default(false),
+  anomalyScore: real("anomaly_score").default(0),
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
+// Liquidity Pool Events
+export const liquidityEvents = pgTable("liquidity_events", {
+  id: serial("id").primaryKey(),
+  poolAddress: varchar("pool_address").notNull(),
+  dexName: varchar("dex_name").notNull(), // Uniswap, SushiSwap, etc.
+  token0Symbol: varchar("token0_symbol").notNull(),
+  token1Symbol: varchar("token1_symbol").notNull(),
+  eventType: varchar("event_type").notNull(), // 'mint', 'burn', 'swap'
+  amount0: real("amount0").notNull(),
+  amount1: real("amount1").notNull(),
+  amountUsd: real("amount_usd").notNull(),
+  liquidityChange: real("liquidity_change"), // positive for add, negative for remove
+  priceAfter: real("price_after"),
+  priceBefore: real("price_before"),
+  priceImpact: real("price_impact"),
+  transactionHash: varchar("transaction_hash").notNull(),
+  blockNumber: integer("block_number"),
+  logIndex: integer("log_index"),
+  userAddress: varchar("user_address"),
+  isLargeTransaction: boolean("is_large_transaction").default(false),
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
+// Smart Money Wallets
+export const smartMoneyWallets = pgTable("smart_money_wallets", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address").unique().notNull(),
+  walletLabel: varchar("wallet_label").notNull(), // Institution name, Known Trader, etc.
+  walletType: varchar("wallet_type").notNull(), // 'institution', 'whale', 'smart_trader', 'exchange'
+  totalBalance: real("total_balance"),
+  balanceUsd: real("balance_usd"),
+  successRate: real("success_rate").default(0), // Historical success rate
+  avgHoldTime: integer("avg_hold_time"), // Average holding time in hours
+  riskScore: real("risk_score").default(50), // 0-100 risk assessment
+  isActive: boolean("is_active").default(true),
+  firstSeenAt: timestamp("first_seen_at"),
+  lastActivityAt: timestamp("last_activity_at"),
+  totalTransactions: integer("total_transactions").default(0),
+  profitLoss: real("profit_loss").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Cohort Flow Analysis
+export const cohortFlows = pgTable("cohort_flows", {
+  id: serial("id").primaryKey(),
+  cohortType: varchar("cohort_type").notNull(), // 'whale', 'retail', 'institution', 'smart_money'
+  assetSymbol: varchar("asset_symbol").notNull(),
+  flowDirection: varchar("flow_direction").notNull(), // 'accumulating', 'distributing', 'holding'
+  totalAmount: real("total_amount").notNull(),
+  totalAmountUsd: real("total_amount_usd").notNull(),
+  transactionCount: integer("transaction_count").notNull(),
+  uniqueWallets: integer("unique_wallets").notNull(),
+  avgTransactionSize: real("avg_transaction_size"),
+  flowStrength: real("flow_strength"), // 0-100 intensity of the flow
+  timeframe: varchar("timeframe").notNull(), // '1h', '4h', '24h'
+  correlationWithSss: real("correlation_with_sss"), // Correlation with SSS changes
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
+// Insert schemas
+export const insertWhaleTransactionSchema = createInsertSchema(whaleTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertExchangeFlowSchema = createInsertSchema(exchangeFlows).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertLiquidityEventSchema = createInsertSchema(liquidityEvents).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertSmartMoneyWalletSchema = createInsertSchema(smartMoneyWallets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCohortFlowSchema = createInsertSchema(cohortFlows).omit({
+  id: true,
+  timestamp: true,
+});
+
 export type ApiKey = typeof apiKeys.$inferSelect;
 export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
 export type ApiKeyUsage = typeof apiKeyUsage.$inferSelect;
 export type InsertApiKeyUsage = z.infer<typeof insertApiKeyUsageSchema>;
+
+// Flow Intelligence Types
+export type WhaleTransaction = typeof whaleTransactions.$inferSelect;
+export type InsertWhaleTransaction = z.infer<typeof insertWhaleTransactionSchema>;
+export type ExchangeFlow = typeof exchangeFlows.$inferSelect;
+export type InsertExchangeFlow = z.infer<typeof insertExchangeFlowSchema>;
+export type LiquidityEvent = typeof liquidityEvents.$inferSelect;
+export type InsertLiquidityEvent = z.infer<typeof insertLiquidityEventSchema>;
+export type SmartMoneyWallet = typeof smartMoneyWallets.$inferSelect;
+export type InsertSmartMoneyWallet = z.infer<typeof insertSmartMoneyWalletSchema>;
+export type CohortFlow = typeof cohortFlows.$inferSelect;
+export type InsertCohortFlow = z.infer<typeof insertCohortFlowSchema>;
