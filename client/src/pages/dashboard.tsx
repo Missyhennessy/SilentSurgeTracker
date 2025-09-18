@@ -104,6 +104,9 @@ export default function Dashboard() {
         case "api-status":
           window.location.href = '/api-status';
           return <div className="p-6">Redirecting to API Status Dashboard...</div>;
+        case "api-keys":
+          window.location.href = '/api-keys';
+          return <div className="p-6">Redirecting to API Keys Management...</div>;
         default:
           return <AssetScanner />;
       }

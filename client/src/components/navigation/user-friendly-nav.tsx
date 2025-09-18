@@ -83,7 +83,8 @@ export function UserFriendlyNav({
       icon: <Shield className="w-4 h-4" />,
       modules: [
         { key: "risk", label: "Risk Analysis", description: "Portfolio risk monitoring" },
-        { key: "alerts", label: "Smart Alerts", description: "Multi-parameter alert system" }
+        { key: "alerts", label: "Smart Alerts", description: "Multi-parameter alert system" },
+        { key: "api-keys", label: "API Keys", description: "Manage API access & authentication" }
       ]
     },
     {

@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import SubscriptionPage from "@/pages/SubscriptionPage";
 import ApiStatusPage from "@/pages/ApiStatusPage";
+import ApiKeysPage from "@/pages/api-keys";
 
 function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<"light" | "dark">("dark");
@@ -108,6 +109,13 @@ function Router() {
             {() => (
               <ProtectedRoute>
                 <ApiStatusPage />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/api-keys">
+            {() => (
+              <ProtectedRoute>
+                <ApiKeysPage />
               </ProtectedRoute>
             )}
           </Route>
