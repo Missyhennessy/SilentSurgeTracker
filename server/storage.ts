@@ -1,5 +1,5 @@
-import { CryptoAsset, InsertCryptoAsset, Alert, InsertAlert, VelocityData, InsertVelocityData, User, UpsertUser, Subscription, InsertSubscription, PaymentHistory, InsertPaymentHistory, ApiKey, InsertApiKey, ApiKeyUsage, InsertApiKeyUsage } from "@shared/schema";
-import { cryptoAssets, alerts, velocityData, users, subscriptions, paymentHistory, apiKeys, apiKeyUsage } from "@shared/schema";
+import { CryptoAsset, InsertCryptoAsset, Alert, InsertAlert, VelocityData, InsertVelocityData, User, UpsertUser, Subscription, InsertSubscription, PaymentHistory, InsertPaymentHistory, ApiKey, InsertApiKey, ApiKeyUsage, InsertApiKeyUsage, HistoricalVolumeData, InsertHistoricalVolumeData } from "@shared/schema";
+import { cryptoAssets, alerts, velocityData, users, subscriptions, paymentHistory, apiKeys, apiKeyUsage, historicalVolumeData } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, ilike, or, sql } from "drizzle-orm";
 
@@ -51,6 +51,12 @@ export interface IStorage {
   revokeApiKey(id: number, userId: string): Promise<boolean>;
   trackApiKeyUsage(usage: InsertApiKeyUsage): Promise<ApiKeyUsage>;
   getApiKeyUsage(apiKeyId: number, limit?: number): Promise<ApiKeyUsage[]>;
+  
+  // Historical Volume Data for Anomaly Detection
+  createHistoricalVolumeData(data: InsertHistoricalVolumeData): Promise<HistoricalVolumeData>;
+  getHistoricalVolumeData(assetId: number, days?: number): Promise<HistoricalVolumeData[]>;
+  getHistoricalVolumeDataBySymbol(symbol: string, days?: number): Promise<HistoricalVolumeData[]>;
+  cleanupOldHistoricalData(daysToKeep?: number): Promise<number>; // Returns number of records deleted
 }
 
 export class DatabaseStorage implements IStorage {
@@ -650,6 +656,49 @@ export class DatabaseStorage implements IStorage {
       console.error('Error getting API key usage:', error);
       return [];
     }
+  }
+
+  // Historical Volume Data Implementation
+  async createHistoricalVolumeData(data: InsertHistoricalVolumeData): Promise<HistoricalVolumeData> {
+    const [created] = await db.insert(historicalVolumeData).values(data).returning();
+    return created;
+  }
+
+  async getHistoricalVolumeData(assetId: number, days: number = 30): Promise<HistoricalVolumeData[]> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    
+    return await db
+      .select()
+      .from(historicalVolumeData)
+      .where(
+        sql`${historicalVolumeData.assetId} = ${assetId} AND ${historicalVolumeData.timestamp} >= ${cutoffDate}`
+      )
+      .orderBy(desc(historicalVolumeData.timestamp));
+  }
+
+  async getHistoricalVolumeDataBySymbol(symbol: string, days: number = 30): Promise<HistoricalVolumeData[]> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    
+    return await db
+      .select()
+      .from(historicalVolumeData)
+      .where(
+        sql`${historicalVolumeData.assetSymbol} = ${symbol} AND ${historicalVolumeData.timestamp} >= ${cutoffDate}`
+      )
+      .orderBy(desc(historicalVolumeData.timestamp));
+  }
+
+  async cleanupOldHistoricalData(daysToKeep: number = 90): Promise<number> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+    
+    const result = await db
+      .delete(historicalVolumeData)
+      .where(sql`${historicalVolumeData.timestamp} < ${cutoffDate}`);
+    
+    return result.rowCount || 0;
   }
 }
 
