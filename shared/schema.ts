@@ -312,6 +312,19 @@ export type InsertSmartMoneyWallet = z.infer<typeof insertSmartMoneyWalletSchema
 export type CohortFlow = typeof cohortFlows.$inferSelect;
 export type InsertCohortFlow = z.infer<typeof insertCohortFlowSchema>;
 
+// Historical Volume Data for Real Anomaly Detection
+export const historicalVolumeData = pgTable("historical_volume_data", {
+  id: serial("id").primaryKey(),
+  assetId: integer("asset_id").references(() => cryptoAssets.id).notNull(),
+  assetSymbol: varchar("asset_symbol").notNull(),
+  volume24h: real("volume_24h").notNull(),
+  price: real("price").notNull(),
+  marketCap: real("market_cap"),
+  timestamp: timestamp("timestamp").notNull(),
+  source: varchar("source").notNull(), // 'coingecko', 'cryptocompare', 'mobula'
+  timeframe: varchar("timeframe").notNull().default("24h"), // '1h', '4h', '24h'
+});
+
 // Volume Anomaly Detection
 export const volumeAnomalies = pgTable("volume_anomalies", {
   id: serial("id").primaryKey(),
@@ -395,6 +408,10 @@ export const volumeModelPerformance = pgTable("volume_model_performance", {
 });
 
 // Insert schemas for volume anomaly detection
+export const insertHistoricalVolumeDataSchema = createInsertSchema(historicalVolumeData).omit({
+  id: true,
+});
+
 export const insertVolumeAnomalySchema = createInsertSchema(volumeAnomalies).omit({
   id: true,
   timestamp: true,
@@ -410,6 +427,8 @@ export const insertVolumeModelPerformanceSchema = createInsertSchema(volumeModel
 });
 
 // Volume Anomaly Types
+export type HistoricalVolumeData = typeof historicalVolumeData.$inferSelect;
+export type InsertHistoricalVolumeData = z.infer<typeof insertHistoricalVolumeDataSchema>;
 export type VolumeAnomaly = typeof volumeAnomalies.$inferSelect;
 export type InsertVolumeAnomaly = z.infer<typeof insertVolumeAnomalySchema>;
 export type VolumePattern = typeof volumePatterns.$inferSelect;
