@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { cryptoDataService } from "./crypto-data-service";
-import { insertCryptoAssetSchema, insertAlertSchema, insertVelocityDataSchema, insertApiKeySchema } from "@shared/schema";
+import { insertCryptoAssetSchema, insertAlertSchema, insertVelocityDataSchema, insertApiKeySchema, insertMarketSentimentSchema, insertPortfolioSchema, insertRiskMetricsSchema, insertTradingSignalSchema, insertAdvancedAlertSchema, insertBacktestResultSchema } from "@shared/schema";
 import { volumeAnomalyService } from "./volume-anomaly-service";
 import { apiKeyAuth, requireScope, generateApiKey } from './api-key-auth';
 import { setupAuth, isAuthenticated } from "./replitAuth";
@@ -2184,6 +2184,375 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error analyzing volume anomalies via API:', error);
       res.status(500).json({ error: 'Failed to analyze volume anomalies' });
+    }
+  });
+
+  // COMPREHENSIVE INSTITUTIONAL FEATURES API ROUTES
+
+  // Market Sentiment Routes
+  app.post('/api/market-sentiment', isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertMarketSentimentSchema.parse(req.body);
+      const sentiment = await storage.createMarketSentiment(validatedData);
+      res.status(201).json(sentiment);
+    } catch (error) {
+      console.error('Error creating market sentiment:', error);
+      res.status(500).json({ error: 'Failed to create market sentiment' });
+    }
+  });
+
+  app.get('/api/market-sentiment/:assetId', async (req, res) => {
+    try {
+      const assetId = parseInt(req.params.assetId);
+      const hours = parseInt(req.query.hours as string) || 24;
+      const sentiment = await storage.getMarketSentiment(assetId, hours);
+      res.json(sentiment);
+    } catch (error) {
+      console.error('Error fetching market sentiment:', error);
+      res.status(500).json({ error: 'Failed to fetch market sentiment' });
+    }
+  });
+
+  app.get('/api/market-sentiment/overall', async (req, res) => {
+    try {
+      const sentiment = await storage.getOverallMarketSentiment();
+      res.json(sentiment);
+    } catch (error) {
+      console.error('Error fetching overall market sentiment:', error);
+      res.status(500).json({ error: 'Failed to fetch overall market sentiment' });
+    }
+  });
+
+  // Portfolio Management Routes
+  app.post('/api/portfolios', isAuthenticated, async (req: any, res) => {
+    try {
+      const validatedData = insertPortfolioSchema.parse({
+        ...req.body,
+        userId: req.user.id
+      });
+      const portfolio = await storage.createPortfolio(validatedData);
+      res.status(201).json(portfolio);
+    } catch (error) {
+      console.error('Error creating portfolio:', error);
+      res.status(500).json({ error: 'Failed to create portfolio' });
+    }
+  });
+
+  app.get('/api/portfolios', isAuthenticated, async (req: any, res) => {
+    try {
+      const portfolios = await storage.getUserPortfolios(req.user.id);
+      res.json(portfolios);
+    } catch (error) {
+      console.error('Error fetching portfolios:', error);
+      res.status(500).json({ error: 'Failed to fetch portfolios' });
+    }
+  });
+
+  app.put('/api/portfolios/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const portfolio = await storage.updatePortfolio(id, updates);
+      res.json(portfolio);
+    } catch (error) {
+      console.error('Error updating portfolio:', error);
+      res.status(500).json({ error: 'Failed to update portfolio' });
+    }
+  });
+
+  app.delete('/api/portfolios/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deletePortfolio(id, req.user.id);
+      if (success) {
+        res.status(204).send();
+      } else {
+        res.status(404).json({ error: 'Portfolio not found' });
+      }
+    } catch (error) {
+      console.error('Error deleting portfolio:', error);
+      res.status(500).json({ error: 'Failed to delete portfolio' });
+    }
+  });
+
+  // Risk Management Routes
+  app.post('/api/risk-metrics', isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertRiskMetricsSchema.parse(req.body);
+      const metrics = await storage.createRiskMetrics(validatedData);
+      res.status(201).json(metrics);
+    } catch (error) {
+      console.error('Error creating risk metrics:', error);
+      res.status(500).json({ error: 'Failed to create risk metrics' });
+    }
+  });
+
+  app.get('/api/risk-metrics/portfolio/:portfolioId', async (req, res) => {
+    try {
+      const portfolioId = parseInt(req.params.portfolioId);
+      const days = parseInt(req.query.days as string) || 30;
+      const metrics = await storage.getPortfolioRiskMetrics(portfolioId, days);
+      res.json(metrics);
+    } catch (error) {
+      console.error('Error fetching risk metrics:', error);
+      res.status(500).json({ error: 'Failed to fetch risk metrics' });
+    }
+  });
+
+  app.get('/api/risk-metrics/latest/:portfolioId', async (req, res) => {
+    try {
+      const portfolioId = parseInt(req.params.portfolioId);
+      const metrics = await storage.getLatestRiskMetrics(portfolioId);
+      if (metrics) {
+        res.json(metrics);
+      } else {
+        res.status(404).json({ error: 'No risk metrics found' });
+      }
+    } catch (error) {
+      console.error('Error fetching latest risk metrics:', error);
+      res.status(500).json({ error: 'Failed to fetch latest risk metrics' });
+    }
+  });
+
+  // Trading Signals Routes
+  app.post('/api/trading-signals', isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertTradingSignalSchema.parse(req.body);
+      const signal = await storage.createTradingSignal(validatedData);
+      res.status(201).json(signal);
+    } catch (error) {
+      console.error('Error creating trading signal:', error);
+      res.status(500).json({ error: 'Failed to create trading signal' });
+    }
+  });
+
+  app.get('/api/trading-signals/active', async (req, res) => {
+    try {
+      const assetId = req.query.assetId ? parseInt(req.query.assetId as string) : undefined;
+      const signals = await storage.getActiveTradingSignals(assetId);
+      res.json(signals);
+    } catch (error) {
+      console.error('Error fetching active trading signals:', error);
+      res.status(500).json({ error: 'Failed to fetch active trading signals' });
+    }
+  });
+
+  app.get('/api/trading-signals/performance/:modelName', async (req, res) => {
+    try {
+      const modelName = req.params.modelName;
+      const days = parseInt(req.query.days as string) || 30;
+      const performance = await storage.getSignalPerformance(modelName, days);
+      res.json(performance);
+    } catch (error) {
+      console.error('Error fetching signal performance:', error);
+      res.status(500).json({ error: 'Failed to fetch signal performance' });
+    }
+  });
+
+  app.put('/api/trading-signals/:id/performance', isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { accuracy } = req.body;
+      await storage.updateSignalPerformance(id, accuracy);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error updating signal performance:', error);
+      res.status(500).json({ error: 'Failed to update signal performance' });
+    }
+  });
+
+  // Advanced Alerts Routes
+  app.post('/api/advanced-alerts', isAuthenticated, async (req: any, res) => {
+    try {
+      const validatedData = insertAdvancedAlertSchema.parse({
+        ...req.body,
+        userId: req.user.id
+      });
+      const alert = await storage.createAdvancedAlert(validatedData);
+      res.status(201).json(alert);
+    } catch (error) {
+      console.error('Error creating advanced alert:', error);
+      res.status(500).json({ error: 'Failed to create advanced alert' });
+    }
+  });
+
+  app.get('/api/advanced-alerts', isAuthenticated, async (req: any, res) => {
+    try {
+      const alerts = await storage.getUserAlerts(req.user.id);
+      res.json(alerts);
+    } catch (error) {
+      console.error('Error fetching advanced alerts:', error);
+      res.status(500).json({ error: 'Failed to fetch advanced alerts' });
+    }
+  });
+
+  app.put('/api/advanced-alerts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const alert = await storage.updateAlert(id, updates);
+      res.json(alert);
+    } catch (error) {
+      console.error('Error updating advanced alert:', error);
+      res.status(500).json({ error: 'Failed to update advanced alert' });
+    }
+  });
+
+  app.delete('/api/advanced-alerts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteAdvancedAlert(id, req.user.id);
+      if (success) {
+        res.status(204).send();
+      } else {
+        res.status(404).json({ error: 'Alert not found' });
+      }
+    } catch (error) {
+      console.error('Error deleting advanced alert:', error);
+      res.status(500).json({ error: 'Failed to delete advanced alert' });
+    }
+  });
+
+  app.post('/api/advanced-alerts/:id/trigger', isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.updateAlertTriggerCount(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error triggering alert:', error);
+      res.status(500).json({ error: 'Failed to trigger alert' });
+    }
+  });
+
+  // Backtesting Routes
+  app.post('/api/backtests', isAuthenticated, async (req: any, res) => {
+    try {
+      const validatedData = insertBacktestResultSchema.parse({
+        ...req.body,
+        userId: req.user.id
+      });
+      const backtest = await storage.createBacktestResult(validatedData);
+      res.status(201).json(backtest);
+    } catch (error) {
+      console.error('Error creating backtest:', error);
+      res.status(500).json({ error: 'Failed to create backtest' });
+    }
+  });
+
+  app.get('/api/backtests', isAuthenticated, async (req: any, res) => {
+    try {
+      const backtests = await storage.getUserBacktests(req.user.id);
+      res.json(backtests);
+    } catch (error) {
+      console.error('Error fetching backtests:', error);
+      res.status(500).json({ error: 'Failed to fetch backtests' });
+    }
+  });
+
+  app.get('/api/backtests/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const backtest = await storage.getBacktestResult(id, req.user.id);
+      if (backtest) {
+        res.json(backtest);
+      } else {
+        res.status(404).json({ error: 'Backtest not found' });
+      }
+    } catch (error) {
+      console.error('Error fetching backtest result:', error);
+      res.status(500).json({ error: 'Failed to fetch backtest result' });
+    }
+  });
+
+  app.delete('/api/backtests/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteBacktestResult(id, req.user.id);
+      if (success) {
+        res.status(204).send();
+      } else {
+        res.status(404).json({ error: 'Backtest not found' });
+      }
+    } catch (error) {
+      console.error('Error deleting backtest:', error);
+      res.status(500).json({ error: 'Failed to delete backtest' });
+    }
+  });
+
+  // Enhanced Dashboard Analytics Routes
+  app.get('/api/analytics/dashboard-overview', isAuthenticated, async (req: any, res) => {
+    try {
+      // Get comprehensive dashboard data
+      const assets = await storage.getCryptoAssets();
+      const portfolios = await storage.getUserPortfolios(req.user.id);
+      const activeSignals = await storage.getActiveTradingSignals();
+      const userAlerts = await storage.getUserAlerts(req.user.id);
+      
+      // Calculate aggregated analytics
+      const topPerformers = assets
+        .sort((a, b) => b.change24h - a.change24h)
+        .slice(0, 10);
+        
+      const topSSSScores = assets
+        .sort((a, b) => b.sssScore - a.sssScore)
+        .slice(0, 10);
+        
+      const totalPortfolioValue = portfolios.reduce((sum, p) => 
+        sum + (p.totalValue || 0), 0);
+        
+      const marketSentiment = await storage.getOverallMarketSentiment();
+
+      res.json({
+        overview: {
+          totalAssets: assets.length,
+          totalPortfolios: portfolios.length,
+          totalPortfolioValue,
+          activeSignals: activeSignals.length,
+          activeAlerts: userAlerts.filter(a => a.isActive).length
+        },
+        topPerformers,
+        topSSSScores,
+        activeSignals: activeSignals.slice(0, 5),
+        recentSentiment: marketSentiment.slice(0, 10)
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard overview:', error);
+      res.status(500).json({ error: 'Failed to fetch dashboard overview' });
+    }
+  });
+
+  // Comprehensive Analytics Routes
+  app.get('/api/analytics/market-overview', async (req, res) => {
+    try {
+      const assets = await storage.getCryptoAssets();
+      
+      const marketCap = assets.reduce((sum, asset) => sum + asset.marketCap, 0);
+      const volume24h = assets.reduce((sum, asset) => sum + asset.volume24h, 0);
+      const avgChange = assets.reduce((sum, asset) => sum + asset.change24h, 0) / assets.length;
+      const avgSSS = assets.reduce((sum, asset) => sum + asset.sssScore, 0) / assets.length;
+      
+      const gainers = assets.filter(a => a.change24h > 0).length;
+      const losers = assets.filter(a => a.change24h < 0).length;
+      const neutral = assets.length - gainers - losers;
+
+      res.json({
+        totalMarketCap: marketCap,
+        totalVolume24h: volume24h,
+        averageChange24h: avgChange,
+        averageSSS: avgSSS,
+        marketSentiment: {
+          gainers,
+          losers,
+          neutral,
+          sentiment: avgChange > 0 ? 'bullish' : avgChange < 0 ? 'bearish' : 'neutral'
+        },
+        topGainers: assets.sort((a, b) => b.change24h - a.change24h).slice(0, 5),
+        topLosers: assets.sort((a, b) => a.change24h - b.change24h).slice(0, 5),
+        highestSSS: assets.sort((a, b) => b.sssScore - a.sssScore).slice(0, 5)
+      });
+    } catch (error) {
+      console.error('Error fetching market overview:', error);
+      res.status(500).json({ error: 'Failed to fetch market overview' });
     }
   });
 
