@@ -407,6 +407,133 @@ export const volumeModelPerformance = pgTable("volume_model_performance", {
   isActive: boolean("is_active").default(true),
 });
 
+// Comprehensive Schema Extensions for Institutional Features
+
+// Market Sentiment Analysis
+export const marketSentiment = pgTable("market_sentiment", {
+  id: serial("id").primaryKey(),
+  assetId: integer("asset_id").references(() => cryptoAssets.id),
+  timestamp: timestamp("timestamp").defaultNow(),
+  overallScore: real("overall_score").notNull(), // -100 to 100
+  sources: jsonb("sources").$type<{
+    twitter: number;
+    reddit: number;
+    discord: number;
+    telegram: number;
+    news: number;
+  }>(),
+  fearGreedIndex: real("fear_greed_index"),
+  trendingTopics: jsonb("trending_topics").$type<string[]>(),
+  influencerScore: real("influencer_score"),
+});
+
+// Portfolio Tracking
+export const portfolios = pgTable("portfolios", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  name: varchar("name").notNull(),
+  totalValue: real("total_value").default(0),
+  allocations: jsonb("allocations").$type<Record<string, number>>(), // symbol -> percentage
+  riskProfile: varchar("risk_profile").default("moderate"), // conservative, moderate, aggressive
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Risk Management Metrics
+export const riskMetrics = pgTable("risk_metrics", {
+  id: serial("id").primaryKey(),
+  portfolioId: integer("portfolio_id").references(() => portfolios.id),
+  timestamp: timestamp("timestamp").defaultNow(),
+  var95: real("var_95"), // Value at Risk 95%
+  var99: real("var_99"), // Value at Risk 99%
+  sharpeRatio: real("sharpe_ratio"),
+  maxDrawdown: real("max_drawdown"),
+  beta: real("beta"), // Market beta
+  correlation: jsonb("correlation").$type<Record<string, number>>(),
+  exposures: jsonb("exposures").$type<{
+    byAsset: Record<string, number>;
+    bySector: Record<string, number>;
+    byExchange: Record<string, number>;
+  }>(),
+});
+
+// Trading Signals
+export const tradingSignals = pgTable("trading_signals", {
+  id: serial("id").primaryKey(),
+  assetId: integer("asset_id").references(() => cryptoAssets.id),
+  signalType: varchar("signal_type").notNull(), // buy, sell, hold
+  confidence: real("confidence").notNull(), // 0-100
+  aiModel: varchar("ai_model").notNull(), // lstm, ensemble, hybrid
+  technicalScore: real("technical_score"),
+  fundamentalScore: real("fundamental_score"),
+  sentimentScore: real("sentiment_score"),
+  targetPrice: real("target_price"),
+  stopLoss: real("stop_loss"),
+  timeHorizon: varchar("time_horizon"), // short, medium, long
+  accuracy: real("accuracy"), // Historical accuracy
+  isActive: boolean("is_active").default(true),
+  triggeredAt: timestamp("triggered_at").defaultNow(),
+});
+
+// Advanced Alert System
+export const advancedAlerts = pgTable("advanced_alerts", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  name: varchar("name").notNull(),
+  conditions: jsonb("conditions").$type<{
+    assets: string[];
+    triggers: {
+      type: 'price' | 'volume' | 'sss' | 'sentiment' | 'whale' | 'technical';
+      operator: 'above' | 'below' | 'crosses' | 'diverges';
+      value: number;
+      timeframe?: string;
+    }[];
+    logic: 'AND' | 'OR';
+  }>(),
+  channels: jsonb("channels").$type<{
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+    discord?: string;
+  }>(),
+  isActive: boolean("is_active").default(true),
+  triggeredCount: integer("triggered_count").default(0),
+  lastTriggered: timestamp("last_triggered"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Backtesting Results
+export const backtestResults = pgTable("backtest_results", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  strategyName: varchar("strategy_name").notNull(),
+  parameters: jsonb("parameters").$type<Record<string, any>>(),
+  timeframe: jsonb("timeframe").$type<{
+    start: string;
+    end: string;
+  }>(),
+  assets: jsonb("assets").$type<string[]>(),
+  results: jsonb("results").$type<{
+    totalReturn: number;
+    annualizedReturn: number;
+    sharpeRatio: number;
+    maxDrawdown: number;
+    winRate: number;
+    totalTrades: number;
+    profitFactor: number;
+    sortino: number;
+  }>(),
+  trades: jsonb("trades").$type<{
+    timestamp: string;
+    asset: string;
+    action: 'buy' | 'sell';
+    price: number;
+    quantity: number;
+    pnl?: number;
+  }[]>(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas for volume anomaly detection
 export const insertHistoricalVolumeDataSchema = createInsertSchema(historicalVolumeData).omit({
   id: true,
@@ -435,3 +562,53 @@ export type VolumePattern = typeof volumePatterns.$inferSelect;
 export type InsertVolumePattern = z.infer<typeof insertVolumePatternSchema>;
 export type VolumeModelPerformance = typeof volumeModelPerformance.$inferSelect;
 export type InsertVolumeModelPerformance = z.infer<typeof insertVolumeModelPerformanceSchema>;
+
+// Comprehensive Feature Types
+export type MarketSentiment = typeof marketSentiment.$inferSelect;
+export type Portfolio = typeof portfolios.$inferSelect;
+export type RiskMetrics = typeof riskMetrics.$inferSelect;
+export type TradingSignal = typeof tradingSignals.$inferSelect;
+export type AdvancedAlert = typeof advancedAlerts.$inferSelect;
+export type BacktestResult = typeof backtestResults.$inferSelect;
+
+// Insert schemas for comprehensive features
+export const insertMarketSentimentSchema = createInsertSchema(marketSentiment).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertPortfolioSchema = createInsertSchema(portfolios).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRiskMetricsSchema = createInsertSchema(riskMetrics).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertTradingSignalSchema = createInsertSchema(tradingSignals).omit({
+  id: true,
+  triggeredAt: true,
+});
+
+export const insertAdvancedAlertSchema = createInsertSchema(advancedAlerts).omit({
+  id: true,
+  triggeredCount: true,
+  lastTriggered: true,
+  createdAt: true,
+});
+
+export const insertBacktestResultSchema = createInsertSchema(backtestResults).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Insert types
+export type InsertMarketSentiment = z.infer<typeof insertMarketSentimentSchema>;
+export type InsertPortfolio = z.infer<typeof insertPortfolioSchema>;
+export type InsertRiskMetrics = z.infer<typeof insertRiskMetricsSchema>;
+export type InsertTradingSignal = z.infer<typeof insertTradingSignalSchema>;
+export type InsertAdvancedAlert = z.infer<typeof insertAdvancedAlertSchema>;
+export type InsertBacktestResult = z.infer<typeof insertBacktestResultSchema>;
