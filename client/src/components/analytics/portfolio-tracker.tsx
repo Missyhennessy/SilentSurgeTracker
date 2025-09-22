@@ -114,29 +114,24 @@ export default function PortfolioTracker() {
     refetchInterval: 60000,
   });
 
-  // Legacy holdings for backward compatibility
-  const [holdings, setHoldings] = useState<PortfolioHolding[]>([
-    {
-      id: '1',
-      symbol: 'BTC',
-      amount: 0.5,
-      avgBuyPrice: 65000,
-      currentPrice: 117149,
-      sssAtPurchase: 75,
-      currentSSS: 61.6,
-      purchaseDate: new Date('2024-01-15')
-    },
-    {
-      id: '2',
-      symbol: 'ETH',
-      amount: 3,
-      avgBuyPrice: 2800,
-      currentPrice: 3733,
-      sssAtPurchase: 82,
-      currentSSS: 84.5,
-      purchaseDate: new Date('2024-02-01')
-    }
-  ]);
+  // Real portfolio holdings derived from selected portfolio
+  const selectedPortfolioData = selectedPortfolio ? portfolios?.find(p => p.id === selectedPortfolio) : portfolios?.[0];
+  
+  // Convert portfolio allocations to holdings format for UI compatibility
+  const holdings: PortfolioHolding[] = selectedPortfolioData ? 
+    Object.entries(selectedPortfolioData.allocations || {}).map(([ symbol, amount ], index) => {
+      const asset = assets?.find(a => a.symbol === symbol);
+      return {
+        id: `${selectedPortfolioData.id}-${symbol}`,
+        symbol,
+        amount,
+        avgBuyPrice: asset?.price || 0, // In real app, this would be stored
+        currentPrice: asset?.price || 0,
+        sssAtPurchase: asset?.sssScore || 0, // Would be stored historically
+        currentSSS: asset?.sssScore || 0,
+        purchaseDate: new Date(selectedPortfolioData.createdAt)
+      };
+    }) : [];
 
   const [newHolding, setNewHolding] = useState({
     symbol: '',
@@ -177,22 +172,7 @@ export default function PortfolioTracker() {
 
   const performance = calculatePerformance();
 
-  // Update holdings with current prices
-  useEffect(() => {
-    if (assets) {
-      setHoldings(prev => prev.map(holding => {
-        const asset = assets.find(a => a.symbol === holding.symbol);
-        if (asset) {
-          return {
-            ...holding,
-            currentPrice: asset.price,
-            currentSSS: asset.sssScore
-          };
-        }
-        return holding;
-      }));
-    }
-  }, [assets]);
+  // Holdings are now dynamically calculated from real portfolio data and current asset prices
 
   const addHolding = () => {
     if (!newHolding.symbol || !newHolding.amount || !newHolding.avgBuyPrice) return;
