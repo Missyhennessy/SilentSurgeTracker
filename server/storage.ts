@@ -1,7 +1,7 @@
-import { CryptoAsset, InsertCryptoAsset, Alert, InsertAlert, VelocityData, InsertVelocityData, User, UpsertUser, Subscription, InsertSubscription, PaymentHistory, InsertPaymentHistory, ApiKey, InsertApiKey, ApiKeyUsage, InsertApiKeyUsage, HistoricalVolumeData, InsertHistoricalVolumeData } from "@shared/schema";
-import { cryptoAssets, alerts, velocityData, users, subscriptions, paymentHistory, apiKeys, apiKeyUsage, historicalVolumeData } from "@shared/schema";
+import { CryptoAsset, InsertCryptoAsset, Alert, InsertAlert, VelocityData, InsertVelocityData, User, UpsertUser, Subscription, InsertSubscription, PaymentHistory, InsertPaymentHistory, ApiKey, InsertApiKey, ApiKeyUsage, InsertApiKeyUsage, HistoricalVolumeData, InsertHistoricalVolumeData, MarketSentiment, InsertMarketSentiment, Portfolio, InsertPortfolio, RiskMetrics, InsertRiskMetrics, TradingSignal, InsertTradingSignal, AdvancedAlert, InsertAdvancedAlert, BacktestResult, InsertBacktestResult } from "@shared/schema";
+import { cryptoAssets, alerts, velocityData, users, subscriptions, paymentHistory, apiKeys, apiKeyUsage, historicalVolumeData, marketSentiment, portfolios, riskMetrics, tradingSignals, advancedAlerts, backtestResults } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, count, ilike, or, sql } from "drizzle-orm";
+import { eq, desc, count, ilike, or, sql, gte } from "drizzle-orm";
 
 export interface IStorage {
   // Crypto Assets
@@ -57,6 +57,41 @@ export interface IStorage {
   getHistoricalVolumeData(assetId: number, days?: number): Promise<HistoricalVolumeData[]>;
   getHistoricalVolumeDataBySymbol(symbol: string, days?: number): Promise<HistoricalVolumeData[]>;
   cleanupOldHistoricalData(daysToKeep?: number): Promise<number>; // Returns number of records deleted
+  
+  // Comprehensive Market Sentiment
+  createMarketSentiment(sentiment: InsertMarketSentiment): Promise<MarketSentiment>;
+  getMarketSentiment(assetId: number, hours?: number): Promise<MarketSentiment[]>;
+  getOverallMarketSentiment(): Promise<MarketSentiment[]>;
+  
+  // Portfolio Management
+  createPortfolio(portfolio: InsertPortfolio): Promise<Portfolio>;
+  getUserPortfolios(userId: string): Promise<Portfolio[]>;
+  updatePortfolio(id: number, updates: Partial<InsertPortfolio>): Promise<Portfolio>;
+  deletePortfolio(id: number, userId: string): Promise<boolean>;
+  
+  // Risk Management
+  createRiskMetrics(metrics: InsertRiskMetrics): Promise<RiskMetrics>;
+  getPortfolioRiskMetrics(portfolioId: number, days?: number): Promise<RiskMetrics[]>;
+  getLatestRiskMetrics(portfolioId: number): Promise<RiskMetrics | undefined>;
+  
+  // Trading Signals
+  createTradingSignal(signal: InsertTradingSignal): Promise<TradingSignal>;
+  getActiveTradingSignals(assetId?: number): Promise<TradingSignal[]>;
+  getSignalPerformance(modelName: string, days?: number): Promise<TradingSignal[]>;
+  updateSignalPerformance(id: number, accuracy: number): Promise<void>;
+  
+  // Advanced Alerts
+  createAdvancedAlert(alert: InsertAdvancedAlert): Promise<AdvancedAlert>;
+  getUserAlerts(userId: string): Promise<AdvancedAlert[]>;
+  updateAlert(id: number, updates: Partial<InsertAdvancedAlert>): Promise<AdvancedAlert>;
+  deleteAdvancedAlert(id: number, userId: string): Promise<boolean>;
+  updateAlertTriggerCount(id: number): Promise<void>;
+  
+  // Backtesting
+  createBacktestResult(result: InsertBacktestResult): Promise<BacktestResult>;
+  getUserBacktests(userId: string): Promise<BacktestResult[]>;
+  getBacktestResult(id: number, userId: string): Promise<BacktestResult | undefined>;
+  deleteBacktestResult(id: number, userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -699,6 +734,172 @@ export class DatabaseStorage implements IStorage {
       .where(sql`${historicalVolumeData.timestamp} < ${cutoffDate}`);
     
     return result.rowCount || 0;
+  }
+
+  // Comprehensive Market Sentiment Implementation
+  async createMarketSentiment(sentiment: InsertMarketSentiment): Promise<MarketSentiment> {
+    const [result] = await db.insert(marketSentiment).values(sentiment).returning();
+    return result;
+  }
+
+  async getMarketSentiment(assetId: number, hours: number = 24): Promise<MarketSentiment[]> {
+    const hoursAgo = new Date(Date.now() - hours * 60 * 60 * 1000);
+    return await db.select().from(marketSentiment)
+      .where(eq(marketSentiment.assetId, assetId))
+      .where(gte(marketSentiment.timestamp, hoursAgo))
+      .orderBy(desc(marketSentiment.timestamp));
+  }
+
+  async getOverallMarketSentiment(): Promise<MarketSentiment[]> {
+    const hoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    return await db.select().from(marketSentiment)
+      .where(gte(marketSentiment.timestamp, hoursAgo))
+      .orderBy(desc(marketSentiment.timestamp))
+      .limit(100);
+  }
+
+  // Portfolio Management Implementation
+  async createPortfolio(portfolio: InsertPortfolio): Promise<Portfolio> {
+    const [result] = await db.insert(portfolios).values(portfolio).returning();
+    return result;
+  }
+
+  async getUserPortfolios(userId: string): Promise<Portfolio[]> {
+    return await db.select().from(portfolios)
+      .where(eq(portfolios.userId, userId))
+      .orderBy(desc(portfolios.updatedAt));
+  }
+
+  async updatePortfolio(id: number, updates: Partial<InsertPortfolio>): Promise<Portfolio> {
+    const [result] = await db.update(portfolios)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(portfolios.id, id))
+      .returning();
+    return result;
+  }
+
+  async deletePortfolio(id: number, userId: string): Promise<boolean> {
+    const result = await db.delete(portfolios)
+      .where(eq(portfolios.id, id))
+      .where(eq(portfolios.userId, userId));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Risk Management Implementation
+  async createRiskMetrics(metrics: InsertRiskMetrics): Promise<RiskMetrics> {
+    const [result] = await db.insert(riskMetrics).values(metrics).returning();
+    return result;
+  }
+
+  async getPortfolioRiskMetrics(portfolioId: number, days: number = 30): Promise<RiskMetrics[]> {
+    const daysAgo = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    return await db.select().from(riskMetrics)
+      .where(eq(riskMetrics.portfolioId, portfolioId))
+      .where(gte(riskMetrics.timestamp, daysAgo))
+      .orderBy(desc(riskMetrics.timestamp));
+  }
+
+  async getLatestRiskMetrics(portfolioId: number): Promise<RiskMetrics | undefined> {
+    const results = await db.select().from(riskMetrics)
+      .where(eq(riskMetrics.portfolioId, portfolioId))
+      .orderBy(desc(riskMetrics.timestamp))
+      .limit(1);
+    return results[0];
+  }
+
+  // Trading Signals Implementation
+  async createTradingSignal(signal: InsertTradingSignal): Promise<TradingSignal> {
+    const [result] = await db.insert(tradingSignals).values(signal).returning();
+    return result;
+  }
+
+  async getActiveTradingSignals(assetId?: number): Promise<TradingSignal[]> {
+    let query = db.select().from(tradingSignals)
+      .where(eq(tradingSignals.isActive, true))
+      .orderBy(desc(tradingSignals.confidence));
+    
+    if (assetId) {
+      query = query.where(eq(tradingSignals.assetId, assetId));
+    }
+    
+    return await query;
+  }
+
+  async getSignalPerformance(modelName: string, days: number = 30): Promise<TradingSignal[]> {
+    const daysAgo = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    return await db.select().from(tradingSignals)
+      .where(eq(tradingSignals.aiModel, modelName))
+      .where(gte(tradingSignals.triggeredAt, daysAgo))
+      .orderBy(desc(tradingSignals.triggeredAt));
+  }
+
+  async updateSignalPerformance(id: number, accuracy: number): Promise<void> {
+    await db.update(tradingSignals)
+      .set({ accuracy, isActive: false })
+      .where(eq(tradingSignals.id, id));
+  }
+
+  // Advanced Alerts Implementation
+  async createAdvancedAlert(alert: InsertAdvancedAlert): Promise<AdvancedAlert> {
+    const [result] = await db.insert(advancedAlerts).values(alert).returning();
+    return result;
+  }
+
+  async getUserAlerts(userId: string): Promise<AdvancedAlert[]> {
+    return await db.select().from(advancedAlerts)
+      .where(eq(advancedAlerts.userId, userId))
+      .orderBy(desc(advancedAlerts.createdAt));
+  }
+
+  async updateAlert(id: number, updates: Partial<InsertAdvancedAlert>): Promise<AdvancedAlert> {
+    const [result] = await db.update(advancedAlerts)
+      .set(updates)
+      .where(eq(advancedAlerts.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteAdvancedAlert(id: number, userId: string): Promise<boolean> {
+    const result = await db.delete(advancedAlerts)
+      .where(eq(advancedAlerts.id, id))
+      .where(eq(advancedAlerts.userId, userId));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async updateAlertTriggerCount(id: number): Promise<void> {
+    await db.update(advancedAlerts)
+      .set({ 
+        triggeredCount: sql`${advancedAlerts.triggeredCount} + 1`,
+        lastTriggered: new Date()
+      })
+      .where(eq(advancedAlerts.id, id));
+  }
+
+  // Backtesting Implementation
+  async createBacktestResult(result: InsertBacktestResult): Promise<BacktestResult> {
+    const [backtest] = await db.insert(backtestResults).values(result).returning();
+    return backtest;
+  }
+
+  async getUserBacktests(userId: string): Promise<BacktestResult[]> {
+    return await db.select().from(backtestResults)
+      .where(eq(backtestResults.userId, userId))
+      .orderBy(desc(backtestResults.createdAt));
+  }
+
+  async getBacktestResult(id: number, userId: string): Promise<BacktestResult | undefined> {
+    const results = await db.select().from(backtestResults)
+      .where(eq(backtestResults.id, id))
+      .where(eq(backtestResults.userId, userId))
+      .limit(1);
+    return results[0];
+  }
+
+  async deleteBacktestResult(id: number, userId: string): Promise<boolean> {
+    const result = await db.delete(backtestResults)
+      .where(eq(backtestResults.id, id))
+      .where(eq(backtestResults.userId, userId));
+    return (result.rowCount || 0) > 0;
   }
 }
 
