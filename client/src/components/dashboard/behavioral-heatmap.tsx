@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, TrendingUp, Users, Zap } from "lucide-react";
+import { Activity, TrendingUp, Users, Zap, X, Eye, BarChart3, AlertTriangle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { CryptoAsset } from "@/types/crypto";
 import { generateWhaleActivity, generateSentimentData } from "@/lib/mock-data";
 
@@ -20,6 +23,8 @@ interface BehavioralCell {
 export default function BehavioralHeatmap() {
   const [timeframe, setTimeframe] = useState("24h");
   const [filterType, setFilterType] = useState("all");
+  const [selectedAsset, setSelectedAsset] = useState<BehavioralCell | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   const { data: assets } = useQuery<CryptoAsset[]>({
     queryKey: ["/api/assets"],
@@ -65,6 +70,33 @@ export default function BehavioralHeatmap() {
     if (deviation > 0) return "Moderate";
     if (deviation > -15) return "Low";
     return "Minimal";
+  };
+
+  const handleCardClick = (asset: BehavioralCell) => {
+    setSelectedAsset(asset);
+    setShowDetails(true);
+  };
+
+  const generateDetailedAnalysis = (asset: BehavioralCell) => {
+    // Generate additional behavioral analytics for the modal
+    return {
+      walletCount: Math.floor(Math.random() * 500) + 100,
+      avgTransactionSize: (Math.random() * 50 + 10).toFixed(2),
+      velocityScore: Math.floor(Math.random() * 100),
+      concentrationRisk: Math.floor(Math.random() * 100),
+      hodlerPercentage: Math.floor(Math.random() * 60) + 20,
+      whaleActivity: {
+        large_transactions: Math.floor(Math.random() * 20),
+        accumulation_score: Math.floor(Math.random() * 100),
+        distribution_pressure: Math.floor(Math.random() * 100)
+      },
+      riskFactors: [
+        { factor: "Whale Concentration", level: Math.floor(Math.random() * 100) },
+        { factor: "Social Sentiment", level: Math.floor(Math.random() * 100) },
+        { factor: "Network Activity", level: Math.floor(Math.random() * 100) },
+        { factor: "Exchange Flow", level: Math.floor(Math.random() * 100) }
+      ]
+    };
   };
 
   return (
@@ -133,7 +165,12 @@ export default function BehavioralHeatmap() {
         {behavioralData
           .filter(item => filterType === "all" || item.activity === filterType)
           .map((item) => (
-            <Card key={item.symbol} className="bg-[var(--dark-panel)] border-[var(--dark-border)] hover:border-[var(--primary-blue)]/40 transition-all cursor-pointer">
+            <Card 
+              key={item.symbol} 
+              className="bg-[var(--dark-panel)] border-[var(--dark-border)] hover:border-[var(--primary-blue)]/40 transition-all cursor-pointer transform hover:scale-105"
+              onClick={() => handleCardClick(item)}
+              data-testid={`behavioral-card-${item.symbol}`}
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-semibold text-[var(--text-primary)]">
@@ -180,6 +217,13 @@ export default function BehavioralHeatmap() {
                     <span className="text-[var(--text-primary)] font-semibold">
                       {getIntensityLabel(item.deviation)}
                     </span>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-[var(--dark-border)]">
+                  <div className="flex items-center justify-center text-xs text-[var(--primary-blue)] hover:text-[var(--primary-blue)]/80">
+                    <Eye className="w-3 h-3 mr-1" />
+                    Click for details
                   </div>
                 </div>
               </CardContent>
@@ -233,6 +277,177 @@ export default function BehavioralHeatmap() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Detailed Analysis Modal */}
+      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-[var(--dark-panel)] border-[var(--dark-border)]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-[var(--primary-blue)]" />
+              Behavioral Analysis: {selectedAsset?.symbol}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedAsset && (
+            <div className="space-y-6">
+              {/* Asset Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="bg-[var(--dark-bg)] border-[var(--dark-border)]">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-[var(--text-secondary)]">Current Activity</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2">
+                      {getActivityIcon(selectedAsset.activity)}
+                      <span className="text-lg font-semibold text-[var(--text-primary)] capitalize">
+                        {selectedAsset.activity}
+                      </span>
+                    </div>
+                    <div className="text-sm text-[var(--text-secondary)] mt-1">
+                      Confidence: {selectedAsset.confidence}%
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-[var(--dark-bg)] border-[var(--dark-border)]">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-[var(--text-secondary)]">Deviation Score</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className={`text-lg font-semibold ${
+                      selectedAsset.deviation > 15 ? 'text-[var(--danger-red)]' :
+                      selectedAsset.deviation > 0 ? 'text-[var(--warning-amber)]' :
+                      'text-[var(--success-green)]'
+                    }`}>
+                      {selectedAsset.deviation > 0 ? '+' : ''}{selectedAsset.deviation}%
+                    </div>
+                    <div className="text-sm text-[var(--text-secondary)] mt-1">
+                      {getIntensityLabel(selectedAsset.deviation)} intensity
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-[var(--dark-bg)] border-[var(--dark-border)]">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-[var(--text-secondary)]">Influence Rating</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-lg font-semibold text-[var(--primary-blue)]">
+                      {selectedAsset.influence}/100
+                    </div>
+                    <Progress value={selectedAsset.influence} className="mt-2" />
+                  </CardContent>
+                </Card>
+              </div>
+
+              {(() => {
+                const analysis = generateDetailedAnalysis(selectedAsset);
+                return (
+                  <>
+                    {/* Detailed Metrics */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Card className="bg-[var(--dark-bg)] border-[var(--dark-border)]">
+                        <CardHeader>
+                          <CardTitle className="text-sm text-[var(--text-secondary)]">Wallet Analytics</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-[var(--text-secondary)]">Active Wallets</span>
+                            <span className="text-[var(--text-primary)] font-semibold">{analysis.walletCount}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[var(--text-secondary)]">Avg Transaction</span>
+                            <span className="text-[var(--text-primary)] font-semibold">${analysis.avgTransactionSize}K</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[var(--text-secondary)]">HODL %</span>
+                            <span className="text-[var(--success-green)] font-semibold">{analysis.hodlerPercentage}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[var(--text-secondary)]">Velocity Score</span>
+                            <span className="text-[var(--primary-blue)] font-semibold">{analysis.velocityScore}</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="bg-[var(--dark-bg)] border-[var(--dark-border)]">
+                        <CardHeader>
+                          <CardTitle className="text-sm text-[var(--text-secondary)]">Whale Activity</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-[var(--text-secondary)]">Large Transactions</span>
+                            <span className="text-[var(--text-primary)] font-semibold">{analysis.whaleActivity.large_transactions}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[var(--text-secondary)]">Accumulation</span>
+                            <span className="text-[var(--success-green)] font-semibold">{analysis.whaleActivity.accumulation_score}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[var(--text-secondary)]">Distribution</span>
+                            <span className="text-[var(--danger-red)] font-semibold">{analysis.whaleActivity.distribution_pressure}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[var(--text-secondary)]">Concentration Risk</span>
+                            <span className="text-[var(--warning-amber)] font-semibold">{analysis.concentrationRisk}%</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Risk Factors */}
+                    <Card className="bg-[var(--dark-bg)] border-[var(--dark-border)]">
+                      <CardHeader>
+                        <CardTitle className="text-sm text-[var(--text-secondary)] flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4" />
+                          Risk Factor Analysis
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {analysis.riskFactors.map((risk, index) => (
+                            <div key={index} className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-[var(--text-secondary)]">{risk.factor}</span>
+                                <span className={`font-semibold ${
+                                  risk.level > 70 ? 'text-[var(--danger-red)]' :
+                                  risk.level > 40 ? 'text-[var(--warning-amber)]' :
+                                  'text-[var(--success-green)]'
+                                }`}>
+                                  {risk.level}%
+                                </span>
+                              </div>
+                              <Progress value={risk.level} className="h-2" />
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                );
+              })()}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-2 pt-4 border-t border-[var(--dark-border)]">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDetails(false)}
+                  className="bg-[var(--dark-bg)] border-[var(--dark-border)]"
+                  data-testid="close-behavioral-details"
+                >
+                  Close
+                </Button>
+                <Button 
+                  className="bg-[var(--primary-blue)] hover:bg-[var(--primary-blue)]/80"
+                  data-testid="add-to-watchlist"
+                >
+                  Add to Watchlist
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
