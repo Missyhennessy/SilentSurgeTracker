@@ -115,8 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }, 30000); // Broadcast every 30 seconds
 
-  // Authentication API endpoints
-  registerAuthRoutes(app);
+  // Authentication API endpoints (already registered above)
   
   // External Security API endpoints
   registerSecurityRoutes(app);

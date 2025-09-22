@@ -67,14 +67,24 @@ export default function RiskManagement() {
     takeProfitLevel: 25
   });
 
-  // Fetch risk metrics from real API
-  const { data: riskMetrics, isLoading: riskLoading, error: riskError } = useQuery<RiskMetrics>({
-    queryKey: ['/api/risk-metrics'],
-    refetchInterval: 30000, // Refetch every 30 seconds
+  // Fetch user portfolios to get portfolio IDs
+  const { data: portfolios } = useQuery<Portfolio[]>({
+    queryKey: ['/api/portfolios'],
+    refetchInterval: 30000,
   });
 
-  // Use default values if data is not yet loaded
-  const currentRiskMetrics = riskMetrics || {
+  // Use first portfolio for risk metrics (in production, user would select)
+  const selectedPortfolioId = portfolios?.[0]?.id;
+
+  // Fetch risk metrics for selected portfolio
+  const { data: riskMetrics, isLoading: riskLoading, error: riskError } = useQuery<RiskMetrics[]>({
+    queryKey: ['/api/risk-metrics/portfolio', selectedPortfolioId],
+    enabled: !!selectedPortfolioId,
+    refetchInterval: 30000,
+  });
+
+  // Use latest risk metrics or default values
+  const currentRiskMetrics = riskMetrics?.[0] || {
     id: 0,
     portfolioId: 0,
     var95: 0,
