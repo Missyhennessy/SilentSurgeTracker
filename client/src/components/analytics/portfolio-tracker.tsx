@@ -1,13 +1,30 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { Plus, TrendingUp, TrendingDown, DollarSign, Target, Award, AlertTriangle } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, Target, Award, AlertTriangle, Loader2 } from 'lucide-react';
 import { CryptoAsset } from '@/types/crypto';
+import { useToast } from '@/hooks/use-toast';
+
+interface Portfolio {
+  id: number;
+  userId: string;
+  name: string;
+  description?: string;
+  allocations: { [symbol: string]: number };
+  totalValue: number;
+  baseValue: number;
+  performance: number;
+  riskScore: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 interface PortfolioHolding {
   id: string;
@@ -30,6 +47,74 @@ interface PortfolioPerformance {
 }
 
 export default function PortfolioTracker() {
+  const { toast } = useToast();
+  const [selectedPortfolio, setSelectedPortfolio] = useState<number | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newPortfolio, setNewPortfolio] = useState({
+    name: '',
+    description: '',
+    allocations: {} as { [symbol: string]: number }
+  });
+
+  // Fetch user portfolios from new API
+  const { data: portfolios, isLoading: portfoliosLoading, error: portfoliosError } = useQuery<Portfolio[]>({
+    queryKey: ['/api/portfolios'],
+    refetchInterval: 30000,
+  });
+
+  // Create portfolio mutation
+  const createPortfolioMutation = useMutation({
+    mutationFn: async (portfolioData: any) => {
+      const response = await fetch('/api/portfolios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(portfolioData),
+      });
+      if (!response.ok) throw new Error('Failed to create portfolio');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/portfolios'] });
+      toast({ title: "Portfolio created successfully!" });
+      setShowCreateModal(false);
+      setNewPortfolio({ name: '', description: '', allocations: {} });
+    },
+    onError: () => {
+      toast({ title: "Failed to create portfolio", variant: "destructive" });
+    }
+  });
+
+  // Delete portfolio mutation
+  const deletePortfolioMutation = useMutation({
+    mutationFn: async (portfolioId: number) => {
+      const response = await fetch(`/api/portfolios/${portfolioId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete portfolio');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/portfolios'] });
+      toast({ title: "Portfolio deleted successfully!" });
+      setSelectedPortfolio(null);
+    },
+    onError: () => {
+      toast({ title: "Failed to delete portfolio", variant: "destructive" });
+    }
+  });
+
+  const { data: assets } = useQuery<CryptoAsset[]>({
+    queryKey: ['/api/assets'],
+    refetchInterval: 30000,
+  });
+
+  // Get analytics overview
+  const { data: dashboardOverview } = useQuery({
+    queryKey: ['/api/analytics/dashboard-overview'],
+    refetchInterval: 60000,
+  });
+
+  // Legacy holdings for backward compatibility
   const [holdings, setHoldings] = useState<PortfolioHolding[]>([
     {
       id: '1',
@@ -50,16 +135,6 @@ export default function PortfolioTracker() {
       sssAtPurchase: 82,
       currentSSS: 84.5,
       purchaseDate: new Date('2024-02-01')
-    },
-    {
-      id: '3',
-      symbol: 'SOL',
-      amount: 25,
-      avgBuyPrice: 120,
-      currentPrice: 180.69,
-      sssAtPurchase: 68,
-      currentSSS: 84.4,
-      purchaseDate: new Date('2024-02-20')
     }
   ]);
 
@@ -67,10 +142,6 @@ export default function PortfolioTracker() {
     symbol: '',
     amount: '',
     avgBuyPrice: ''
-  });
-
-  const { data: assets } = useQuery<CryptoAsset[]>({
-    queryKey: ['/api/assets'],
   });
 
   // Calculate portfolio performance
