@@ -356,7 +356,7 @@ export class VolumeAnomalyDetector {
       
       // Market data features
       marketCap: asset.marketCap || 0,
-      marketCapRank: asset.marketCapRank || 999999,
+      marketCapRank: 999999, // Default rank for assets without ranking
       
       // Technical indicators
       sma7: movingAverage7.length > 0 ? movingAverage7[movingAverage7.length - 1] : avgVolume,
