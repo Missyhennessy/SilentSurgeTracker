@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,13 +23,27 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface RiskMetrics {
-  portfolioValue: number;
-  maxDrawdown: number;
+  id: number;
+  portfolioId: number;
+  var95: number;
+  var99: number;
+  expectedShortfall: number;
   sharpeRatio: number;
+  maxDrawdown: number;
   volatility: number;
-  betaToMarket: number;
-  valueAtRisk: number;
-  exposureByAsset: { [key: string]: number };
+  beta: number;
+  correlation: number;
+  concentration: number;
+  liquidityRisk: number;
+  riskScore: number;
+  timestamp: Date;
+}
+
+interface Portfolio {
+  id: number;
+  name: string;
+  totalValue: number;
+  performance: number;
   riskScore: number;
 }
 
@@ -60,14 +75,20 @@ export default function RiskManagement() {
 
   // Use default values if data is not yet loaded
   const currentRiskMetrics = riskMetrics || {
-    portfolioValue: 0,
-    maxDrawdown: 0,
+    id: 0,
+    portfolioId: 0,
+    var95: 0,
+    var99: 0,
+    expectedShortfall: 0,
     sharpeRatio: 0,
+    maxDrawdown: 0,
     volatility: 0,
-    betaToMarket: 0,
-    valueAtRisk: 0,
-    exposureByAsset: {},
-    riskScore: 0
+    beta: 0,
+    correlation: 0,
+    concentration: 0,
+    liquidityRisk: 0,
+    riskScore: 0,
+    timestamp: new Date()
   };
 
   const getRiskColor = (score: number) => {
