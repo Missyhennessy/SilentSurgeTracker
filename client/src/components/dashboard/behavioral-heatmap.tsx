@@ -1,12 +1,11 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, TrendingUp, Activity, Users, Zap, BarChart3, Target, AlertTriangle } from "lucide-react";
+import { Search, TrendingUp, Activity, Users, Zap, BarChart3, Target } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Cell, PieChart, Pie, BarChart, Bar } from "recharts";
 import { CryptoAsset } from "@/types/crypto";
 import { generateWhaleActivity } from "@/lib/mock-data";
 
@@ -18,13 +17,6 @@ interface BehavioralData {
   deviation: number;
   influence: number;
   color: string;
-  heatmapData: {
-    timeframe: string;
-    walletActivity: number;
-    txVolume: number;
-    sentiment: number;
-    concentration: number;
-  }[];
   behavioralMetrics: {
     whaleMovements: number;
     retailActivity: number;
@@ -33,6 +25,7 @@ interface BehavioralData {
     tradingVelocity: number;
     socialSentiment: number;
   };
+  heatmapValues: number[][];
 }
 
 export default function BehavioralHeatmap() {
@@ -52,15 +45,6 @@ export default function BehavioralHeatmap() {
       const deviation = (Math.random() - 0.5) * 60 + 20;
       const influence = Math.random() * 100;
       
-      // Generate heatmap time series data
-      const heatmapData = Array.from({ length: 24 }, (_, i) => ({
-        timeframe: `${23 - i}h ago`,
-        walletActivity: Math.floor(Math.random() * 100),
-        txVolume: Math.floor(Math.random() * 100),
-        sentiment: Math.floor(Math.random() * 100),
-        concentration: Math.floor(Math.random() * 100),
-      }));
-
       // Generate behavioral metrics
       const behavioralMetrics = {
         whaleMovements: Math.floor(Math.random() * 100),
@@ -70,6 +54,11 @@ export default function BehavioralHeatmap() {
         tradingVelocity: Math.floor(Math.random() * 100),
         socialSentiment: Math.floor(Math.random() * 100),
       };
+
+      // Generate 24x7 heatmap grid (24 hours x 7 days)
+      const heatmapValues = Array.from({ length: 24 }, () => 
+        Array.from({ length: 7 }, () => Math.floor(Math.random() * 100))
+      );
 
       let color = "bg-gray-600";
       if (deviation > 30) color = "bg-red-600";
@@ -86,8 +75,8 @@ export default function BehavioralHeatmap() {
         deviation: Math.round(deviation),
         influence: Math.round(influence),
         color,
-        heatmapData,
         behavioralMetrics,
+        heatmapValues,
       };
     });
   }, [assets]);
@@ -110,14 +99,6 @@ export default function BehavioralHeatmap() {
     }
   };
 
-  const getIntensityLabel = (deviation: number) => {
-    if (deviation > 30) return "Extreme";
-    if (deviation > 15) return "High";
-    if (deviation > 0) return "Moderate";
-    if (deviation > -15) return "Low";
-    return "Minimal";
-  };
-
   const handleAssetSelect = (asset: BehavioralData) => {
     setSelectedAsset(asset);
     setSearchTerm(asset.symbol);
@@ -130,12 +111,16 @@ export default function BehavioralHeatmap() {
     }
   };
 
-  const generateHeatmapColors = (value: number) => {
-    if (value > 80) return '#dc2626'; // Red
-    if (value > 60) return '#ea580c'; // Orange
-    if (value > 40) return '#eab308'; // Yellow
-    if (value > 20) return '#16a34a'; // Green
-    return '#2563eb'; // Blue
+  const getHeatmapColor = (value: number) => {
+    if (value > 80) return 'bg-red-500';
+    if (value > 60) return 'bg-orange-500';
+    if (value > 40) return 'bg-yellow-500';
+    if (value > 20) return 'bg-green-500';
+    return 'bg-blue-500';
+  };
+
+  const handleClickOutside = () => {
+    setShowDropdown(false);
   };
 
   return (
@@ -227,12 +212,12 @@ export default function BehavioralHeatmap() {
             </div>
           </div>
 
-          {/* Behavioral Metrics Heatmap */}
+          {/* Behavioral Metrics Grid */}
           <Card className="bg-[var(--dark-panel)] border-[var(--dark-border)]">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-[var(--primary-blue)]" />
-                Behavioral Intensity Heatmap
+                Behavioral Intensity Metrics
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -243,12 +228,12 @@ export default function BehavioralHeatmap() {
                     <div key={key} className="bg-[var(--dark-bg)] rounded-lg p-4 border border-[var(--dark-border)]">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-[var(--text-secondary)]">{label}</span>
-                        <span 
-                          className="px-2 py-1 rounded text-xs font-semibold text-white"
-                          style={{ backgroundColor: generateHeatmapColors(value) }}
+                        <Badge 
+                          variant={value > 70 ? "destructive" : value > 40 ? "default" : "secondary"}
+                          className="text-xs"
                         >
                           {value}%
-                        </span>
+                        </Badge>
                       </div>
                       <Progress value={value} className="h-2" />
                       <div className="mt-2 text-xs text-[var(--text-secondary)]">
@@ -264,139 +249,67 @@ export default function BehavioralHeatmap() {
             </CardContent>
           </Card>
 
-          {/* Time-based Activity Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Wallet Activity Over Time */}
-            <Card className="bg-[var(--dark-panel)] border-[var(--dark-border)]">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-[var(--text-primary)]">Wallet Activity (24h)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={selectedAsset.heatmapData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      dataKey="timeframe" 
-                      tick={{ fontSize: 10, fill: '#9CA3AF' }}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1F2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="walletActivity" 
-                      stroke="#3B82F6" 
-                      fill="#3B82F6" 
-                      fillOpacity={0.3}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Transaction Volume Heatmap */}
-            <Card className="bg-[var(--dark-panel)] border-[var(--dark-border)]">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-[var(--text-primary)]">Transaction Volume (24h)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={selectedAsset.heatmapData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      dataKey="timeframe" 
-                      tick={{ fontSize: 10, fill: '#9CA3AF' }}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1F2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Bar dataKey="txVolume" fill="#EF4444" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sentiment & Concentration Analysis */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="bg-[var(--dark-panel)] border-[var(--dark-border)]">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-[var(--text-primary)]">Sentiment Analysis</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={selectedAsset.heatmapData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      dataKey="timeframe" 
-                      tick={{ fontSize: 10, fill: '#9CA3AF' }}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1F2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="sentiment" 
-                      stroke="#10B981" 
-                      fill="#10B981" 
-                      fillOpacity={0.3}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-[var(--dark-panel)] border-[var(--dark-border)]">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-[var(--text-primary)]">Whale Concentration</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={selectedAsset.heatmapData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      dataKey="timeframe" 
-                      tick={{ fontSize: 10, fill: '#9CA3AF' }}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1F2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="concentration" 
-                      stroke="#F59E0B" 
-                      fill="#F59E0B" 
-                      fillOpacity={0.3}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Visual Heatmap Grid */}
+          <Card className="bg-[var(--dark-panel)] border-[var(--dark-border)]">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-[var(--text-primary)]">24-Hour Activity Heatmap</CardTitle>
+              <p className="text-sm text-[var(--text-secondary)]">Behavioral intensity patterns over the last 7 days (rows = hours, columns = days)</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {/* Hour labels */}
+                <div className="flex">
+                  <div className="w-12"></div>
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+                    <div key={index} className="flex-1 text-center text-xs text-[var(--text-secondary)] font-medium">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Heatmap grid */}
+                {selectedAsset.heatmapValues.map((hourRow, hourIndex) => (
+                  <div key={hourIndex} className="flex items-center gap-1">
+                    <div className="w-10 text-right text-xs text-[var(--text-secondary)]">
+                      {hourIndex.toString().padStart(2, '0')}:00
+                    </div>
+                    {hourRow.map((value, dayIndex) => (
+                      <div
+                        key={dayIndex}
+                        className={`flex-1 h-6 rounded-sm ${getHeatmapColor(value)} opacity-80 hover:opacity-100 transition-opacity cursor-pointer`}
+                        title={`${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][dayIndex]} ${hourIndex}:00 - Activity: ${value}%`}
+                      ></div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Legend */}
+              <div className="mt-4 flex items-center justify-center gap-4 text-xs">
+                <span className="text-[var(--text-secondary)]">Activity Level:</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-blue-500 rounded-sm"></div>
+                  <span className="text-[var(--text-secondary)]">Low</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-500 rounded-sm"></div>
+                  <span className="text-[var(--text-secondary)]">Moderate</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-yellow-500 rounded-sm"></div>
+                  <span className="text-[var(--text-secondary)]">High</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-orange-500 rounded-sm"></div>
+                  <span className="text-[var(--text-secondary)]">Very High</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-500 rounded-sm"></div>
+                  <span className="text-[var(--text-secondary)]">Extreme</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       ) : (
         /* No Selection State */
@@ -421,7 +334,13 @@ export default function BehavioralHeatmap() {
         </div>
       )}
 
-
+      {/* Click outside handler */}
+      {showDropdown && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={handleClickOutside}
+        ></div>
+      )}
     </div>
   );
 }
