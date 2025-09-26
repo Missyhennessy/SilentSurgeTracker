@@ -1063,7 +1063,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get random crypto assets (40 for main page)
+  // Get random crypto assets (40 for main page display)
   app.get("/api/assets", async (req, res) => {
     try {
       // Get 40 random assets instead of all assets for better performance
@@ -1086,6 +1086,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(assets);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch assets" });
+    }
+  });
+
+  // Search endpoint for ALL 7000+ assets
+  app.get("/api/assets/search", async (req, res) => {
+    try {
+      const { q, limit = 20 } = req.query;
+      
+      if (!q || typeof q !== 'string' || q.length < 2) {
+        return res.status(400).json({ error: "Search query must be at least 2 characters" });
+      }
+
+      const cacheKey = `crypto:search:${q.toLowerCase()}:${limit}`;
+      const cachedResults = await redisCacheService.getCachedCryptoAssets(cacheKey);
+      
+      if (cachedResults) {
+        res.set('X-Cache', 'HIT');
+        return res.json(cachedResults);
+      }
+
+      // Search through ALL assets (not just random 40)
+      const searchResults = await storage.searchCryptoAssets(q as string, parseInt(limit as string));
+      
+      // Cache search results for 5 minutes
+      await redisCacheService.cacheCryptoAssets(cacheKey, searchResults, 300);
+      
+      res.set('X-Cache', 'MISS');
+      res.json(searchResults);
+    } catch (error) {
+      console.error('Search error:', error);
+      res.status(500).json({ error: "Search failed" });
     }
   });
 
