@@ -1,22 +1,21 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, TrendingUp, Activity, Users, Zap, BarChart3, Target } from "lucide-react";
+import { Search, TrendingUp, Activity, Users, Zap, BarChart3, Target, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { CryptoAsset } from "@/types/crypto";
-import { generateWhaleActivity } from "@/lib/mock-data";
 
-interface BehavioralData {
+interface BehavioralHeatmapData {
   symbol: string;
   name: string;
-  activity: string;
+  price: number;
+  sssScore: number;
   confidence: number;
   deviation: number;
   influence: number;
-  color: string;
   behavioralMetrics: {
     whaleMovements: number;
     retailActivity: number;
@@ -25,12 +24,20 @@ interface BehavioralData {
     tradingVelocity: number;
     socialSentiment: number;
   };
-  heatmapValues: number[][];
+  timeSlots: {
+    hour: number;
+    day: number;
+    activity: number;
+    whaleCount: number;
+    volume: number;
+    sentiment: number;
+  }[][];
+  lastUpdated: string;
 }
 
 export default function BehavioralHeatmap() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedAsset, setSelectedAsset] = useState<BehavioralData | null>(null);
+  const [selectedSymbol, setSelectedSymbol] = useState<string>("");
   const [showDropdown, setShowDropdown] = useState(false);
 
   const { data: assets } = useQuery<CryptoAsset[]>({
@@ -38,69 +45,46 @@ export default function BehavioralHeatmap() {
     refetchInterval: 30000,
   });
 
-  // Generate behavioral data for search
-  const behavioralAssets: BehavioralData[] = useMemo(() => {
-    return (assets || []).map(asset => {
-      const whaleActivity = generateWhaleActivity();
-      const deviation = (Math.random() - 0.5) * 60 + 20;
-      const influence = Math.random() * 100;
-      
-      // Generate behavioral metrics
-      const behavioralMetrics = {
-        whaleMovements: Math.floor(Math.random() * 100),
-        retailActivity: Math.floor(Math.random() * 100),
-        institutionalFlow: Math.floor(Math.random() * 100),
-        hodlerBehavior: Math.floor(Math.random() * 100),
-        tradingVelocity: Math.floor(Math.random() * 100),
-        socialSentiment: Math.floor(Math.random() * 100),
-      };
+  // Fetch behavioral heatmap data for selected asset
+  const { data: selectedAsset, isLoading: isLoadingHeatmap, error: heatmapError } = useQuery<BehavioralHeatmapData>({
+    queryKey: ["/api/behavioral-heatmap", selectedSymbol],
+    enabled: !!selectedSymbol,
+    refetchInterval: 60000, // Refresh every minute
+  });
 
-      // Generate 24x7 heatmap grid (24 hours x 7 days)
-      const heatmapValues = Array.from({ length: 24 }, () => 
-        Array.from({ length: 7 }, () => Math.floor(Math.random() * 100))
-      );
-
-      let color = "bg-gray-600";
-      if (deviation > 30) color = "bg-red-600";
-      else if (deviation > 15) color = "bg-orange-500";
-      else if (deviation > 0) color = "bg-yellow-500";
-      else if (deviation > -15) color = "bg-green-500";
-      else color = "bg-blue-500";
-
-      return {
-        symbol: asset.symbol,
-        name: asset.name,
-        activity: whaleActivity.activity,
-        confidence: whaleActivity.confidence,
-        deviation: Math.round(deviation),
-        influence: Math.round(influence),
-        color,
-        behavioralMetrics,
-        heatmapValues,
-      };
-    });
-  }, [assets]);
-
-  // Filter assets based on search term
+  // Filter assets based on search term - using real asset data
   const filteredAssets = useMemo(() => {
-    if (!searchTerm) return behavioralAssets.slice(0, 10); // Show top 10 by default
-    return behavioralAssets.filter(asset => 
+    if (!searchTerm) return (assets || []).slice(0, 10); // Show top 10 by default
+    return (assets || []).filter(asset => 
       asset.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
       asset.name.toLowerCase().includes(searchTerm.toLowerCase())
     ).slice(0, 20); // Limit results
-  }, [behavioralAssets, searchTerm]);
+  }, [assets, searchTerm]);
 
-  const getActivityIcon = (activity: string) => {
-    switch (activity) {
-      case 'accumulating': return <TrendingUp className="w-4 h-4 text-green-400" />;
-      case 'distributing': return <Activity className="w-4 h-4 text-red-400" />;
-      case 'holding': return <Users className="w-4 h-4 text-blue-400" />;
-      default: return <Zap className="w-4 h-4 text-gray-400" />;
-    }
+  const getActivityIcon = (deviation: number) => {
+    if (deviation > 15) return <Activity className="w-4 h-4 text-red-400" />;
+    if (deviation > 0) return <TrendingUp className="w-4 h-4 text-green-400" />;
+    if (deviation > -15) return <Users className="w-4 h-4 text-blue-400" />;
+    return <Zap className="w-4 h-4 text-gray-400" />;
   };
 
-  const handleAssetSelect = (asset: BehavioralData) => {
-    setSelectedAsset(asset);
+  const getActivityText = (deviation: number) => {
+    if (deviation > 15) return "High Activity";
+    if (deviation > 0) return "Accumulating";
+    if (deviation > -15) return "Holding";
+    return "Low Activity";
+  };
+
+  const getActivityColor = (deviation: number) => {
+    if (deviation > 30) return "bg-red-600";
+    if (deviation > 15) return "bg-orange-500";
+    if (deviation > 0) return "bg-yellow-500";
+    if (deviation > -15) return "bg-green-500";
+    return "bg-blue-500";
+  };
+
+  const handleAssetSelect = (asset: CryptoAsset) => {
+    setSelectedSymbol(asset.symbol);
     setSearchTerm(asset.symbol);
     setShowDropdown(false);
   };
@@ -164,7 +148,10 @@ export default function BehavioralHeatmap() {
                       <div className="text-[var(--text-primary)] font-semibold">{asset.symbol}</div>
                       <div className="text-[var(--text-secondary)] text-sm truncate">{asset.name}</div>
                     </div>
-                    <div className={`w-3 h-3 ${asset.color} rounded-full`}></div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-[var(--text-secondary)]">SSS: {asset.sssScore}</span>
+                      <div className={`w-3 h-3 ${getActivityColor(asset.change24h || 0)} rounded-full`}></div>
+                    </div>
                   </div>
                 </button>
               ))}
@@ -174,43 +161,65 @@ export default function BehavioralHeatmap() {
       </div>
 
       {/* Visual Behavioral Heatmap for Selected Asset */}
-      {selectedAsset ? (
+      {selectedSymbol && (
         <div className="space-y-6">
-          {/* Asset Header */}
-          <div className="bg-[var(--dark-panel)] rounded-xl border border-[var(--dark-border)] p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className={`w-8 h-8 ${selectedAsset.color} rounded-full`}></div>
-              <div>
-                <h3 className="text-2xl font-bold text-[var(--text-primary)]">{selectedAsset.symbol}</h3>
-                <p className="text-[var(--text-secondary)]">{selectedAsset.name}</p>
-              </div>
-              <div className="ml-auto flex items-center gap-2">
-                {getActivityIcon(selectedAsset.activity)}
-                <span className="text-[var(--text-primary)] font-semibold capitalize">{selectedAsset.activity}</span>
-              </div>
+          {isLoadingHeatmap ? (
+            <div className="bg-[var(--dark-panel)] rounded-xl border border-[var(--dark-border)] p-12 text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-[var(--primary-blue)] mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Loading Behavioral Data</h3>
+              <p className="text-[var(--text-secondary)]">Analyzing behavioral patterns for {selectedSymbol}...</p>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-[var(--primary-blue)]">{selectedAsset.confidence}%</div>
-                <div className="text-sm text-[var(--text-secondary)]">Confidence</div>
-              </div>
-              <div className="text-center">
-                <div className={`text-2xl font-bold ${
-                  selectedAsset.deviation > 15 ? 'text-[var(--danger-red)]' :
-                  selectedAsset.deviation > 0 ? 'text-[var(--warning-amber)]' :
-                  'text-[var(--success-green)]'
-                }`}>
-                  {selectedAsset.deviation > 0 ? '+' : ''}{selectedAsset.deviation}%
+          ) : heatmapError ? (
+            <div className="bg-[var(--dark-panel)] rounded-xl border border-[var(--dark-border)] p-12 text-center">
+              <Activity className="w-16 h-16 text-[var(--danger-red)] mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">Data Not Available</h3>
+              <p className="text-[var(--text-secondary)] mb-4">Unable to load behavioral data for {selectedSymbol}</p>
+              <Button onClick={() => setSelectedSymbol("")} variant="outline">
+                Try Another Asset
+              </Button>
+            </div>
+          ) : selectedAsset ? (
+            <>
+              {/* Asset Header */}
+              <div className="bg-[var(--dark-panel)] rounded-xl border border-[var(--dark-border)] p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className={`w-8 h-8 ${getActivityColor(selectedAsset.deviation)} rounded-full`}></div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-[var(--text-primary)]">{selectedAsset.symbol}</h3>
+                    <p className="text-[var(--text-secondary)]">{selectedAsset.name}</p>
+                    <p className="text-lg font-semibold text-[var(--primary-blue)]">${selectedAsset.price.toFixed(4)}</p>
+                  </div>
+                  <div className="ml-auto flex items-center gap-2">
+                    {getActivityIcon(selectedAsset.deviation)}
+                    <span className="text-[var(--text-primary)] font-semibold">{getActivityText(selectedAsset.deviation)}</span>
+                  </div>
                 </div>
-                <div className="text-sm text-[var(--text-secondary)]">Deviation</div>
+            
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-[var(--primary-blue)]">{selectedAsset.sssScore}</div>
+                    <div className="text-sm text-[var(--text-secondary)]">SSS Score</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-[var(--primary-blue)]">{selectedAsset.confidence}%</div>
+                    <div className="text-sm text-[var(--text-secondary)]">Confidence</div>
+                  </div>
+                  <div className="text-center">
+                    <div className={`text-2xl font-bold ${
+                      selectedAsset.deviation > 15 ? 'text-[var(--danger-red)]' :
+                      selectedAsset.deviation > 0 ? 'text-[var(--warning-amber)]' :
+                      'text-[var(--success-green)]'
+                    }`}>
+                      {selectedAsset.deviation > 0 ? '+' : ''}{selectedAsset.deviation}%
+                    </div>
+                    <div className="text-sm text-[var(--text-secondary)]">Price Change</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-[var(--text-primary)]">{selectedAsset.influence}/100</div>
+                    <div className="text-sm text-[var(--text-secondary)]">Market Influence</div>
+                  </div>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-[var(--text-primary)]">{selectedAsset.influence}/100</div>
-                <div className="text-sm text-[var(--text-secondary)]">Influence</div>
-              </div>
-            </div>
-          </div>
 
           {/* Behavioral Metrics Grid */}
           <Card className="bg-[var(--dark-panel)] border-[var(--dark-border)]">
@@ -268,16 +277,16 @@ export default function BehavioralHeatmap() {
                 </div>
                 
                 {/* Heatmap grid */}
-                {selectedAsset.heatmapValues.map((hourRow, hourIndex) => (
+                {selectedAsset.timeSlots.map((hourRow, hourIndex) => (
                   <div key={hourIndex} className="flex items-center gap-1">
                     <div className="w-10 text-right text-xs text-[var(--text-secondary)]">
                       {hourIndex.toString().padStart(2, '0')}:00
                     </div>
-                    {hourRow.map((value, dayIndex) => (
+                    {hourRow.map((timeSlot, dayIndex) => (
                       <div
                         key={dayIndex}
-                        className={`flex-1 h-6 rounded-sm ${getHeatmapColor(value)} opacity-80 hover:opacity-100 transition-opacity cursor-pointer`}
-                        title={`${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][dayIndex]} ${hourIndex}:00 - Activity: ${value}%`}
+                        className={`flex-1 h-6 rounded-sm ${getHeatmapColor(timeSlot.activity)} opacity-80 hover:opacity-100 transition-opacity cursor-pointer`}
+                        title={`${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][dayIndex]} ${hourIndex}:00 - Activity: ${timeSlot.activity}% | Whales: ${timeSlot.whaleCount} | Volume: $${(timeSlot.volume / 1000).toFixed(0)}K | Sentiment: ${timeSlot.sentiment}%`}
                       ></div>
                     ))}
                   </div>
@@ -310,15 +319,21 @@ export default function BehavioralHeatmap() {
               </div>
             </CardContent>
           </Card>
+            </>
+          ) : null
+        }
         </div>
-      ) : (
+      )}
+
+      {/* No Selection State */}
+      {!selectedSymbol && (
         /* No Selection State */
         <div className="bg-[var(--dark-panel)] rounded-xl border border-[var(--dark-border)] p-12 text-center">
           <Target className="w-16 h-16 text-[var(--text-secondary)] mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">Select a Cryptocurrency</h3>
           <p className="text-[var(--text-secondary)] mb-6">Use the search bar above to find and select a cryptocurrency to view its behavioral heatmap visualization</p>
           <div className="flex flex-wrap justify-center gap-2">
-            {behavioralAssets.slice(0, 6).map((asset) => (
+            {(assets || []).slice(0, 6).map((asset) => (
               <Button
                 key={asset.symbol}
                 variant="outline"

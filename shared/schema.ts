@@ -168,6 +168,38 @@ export type Alert = typeof alerts.$inferSelect;
 export type InsertAlert = z.infer<typeof insertAlertSchema>;
 export type VelocityData = typeof velocityData.$inferSelect;
 export type InsertVelocityData = z.infer<typeof insertVelocityDataSchema>;
+
+// Behavioral Heatmap Data Types
+export interface BehavioralMetrics {
+  whaleMovements: number;
+  retailActivity: number;
+  institutionalFlow: number;
+  hodlerBehavior: number;
+  tradingVelocity: number;
+  socialSentiment: number;
+}
+
+export interface TimeSlotData {
+  hour: number;
+  day: number;
+  activity: number;
+  whaleCount: number;
+  volume: number;
+  sentiment: number;
+}
+
+export interface BehavioralHeatmapData {
+  symbol: string;
+  name: string;
+  price: number;
+  sssScore: number;
+  confidence: number;
+  deviation: number;
+  influence: number;
+  behavioralMetrics: BehavioralMetrics;
+  timeSlots: TimeSlotData[][];
+  lastUpdated: string;
+}
 // Flow Intelligence - Whale Transactions
 export const whaleTransactions = pgTable("whale_transactions", {
   id: serial("id").primaryKey(),

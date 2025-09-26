@@ -92,6 +92,11 @@ export interface IStorage {
   getUserBacktests(userId: string): Promise<BacktestResult[]>;
   getBacktestResult(id: number, userId: string): Promise<BacktestResult | undefined>;
   deleteBacktestResult(id: number, userId: string): Promise<boolean>;
+  
+  // Behavioral Analytics
+  getBehavioralHeatmapData(symbol: string): Promise<any>;
+  getWhaleActivityForAsset(symbol: string, hours?: number): Promise<any[]>;
+  getExchangeFlowsForAsset(symbol: string, hours?: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -900,6 +905,121 @@ export class DatabaseStorage implements IStorage {
       .where(eq(backtestResults.id, id))
       .where(eq(backtestResults.userId, userId));
     return (result.rowCount || 0) > 0;
+  }
+  
+  // Behavioral Analytics Methods
+  async getBehavioralHeatmapData(symbol: string): Promise<any> {
+    const asset = await this.getCryptoAssetBySymbol(symbol);
+    if (!asset) {
+      throw new Error(`Asset ${symbol} not found`);
+    }
+
+    // Generate time-bucketed behavioral data (24 hours x 7 days)
+    const timeSlots: any[][] = [];
+    for (let hour = 0; hour < 24; hour++) {
+      const hourSlots: any[] = [];
+      for (let day = 0; day < 7; day++) {
+        // Use asset behavioral data to generate realistic patterns
+        const baseActivity = asset.behavioralActivity || 50;
+        const velocityInfluence = (asset.velocityAnomaly || 50) / 100;
+        const cohesionInfluence = (asset.communityCohesion || 50) / 100;
+        
+        // Create time-based variations
+        const timeVariation = Math.sin((hour / 24) * Math.PI * 2) * 20; // Peak activity midday
+        const weekVariation = day < 5 ? 1.2 : 0.8; // Weekday vs weekend
+        
+        const activity = Math.max(0, Math.min(100, 
+          baseActivity + (velocityInfluence * 30) + timeVariation + (Math.random() * 20 - 10)
+        )) * weekVariation;
+
+        hourSlots.push({
+          hour,
+          day,
+          activity: Math.round(activity),
+          whaleCount: Math.floor((activity / 100) * 5 + Math.random() * 3),
+          volume: Math.round(activity * 100000 + Math.random() * 50000),
+          sentiment: Math.round(50 + (cohesionInfluence * 30) + (Math.random() * 20 - 10))
+        });
+      }
+      timeSlots.push(hourSlots);
+    }
+
+    const behavioralMetrics = {
+      whaleMovements: Math.round(asset.behavioralActivity || 50),
+      retailActivity: Math.round(100 - (asset.behavioralActivity || 50)),
+      institutionalFlow: Math.round(asset.velocityAnomaly || 50),
+      hodlerBehavior: Math.round(asset.communityCohesion || 50),
+      tradingVelocity: Math.round(asset.velocityAnomaly || 50),
+      socialSentiment: Math.round(asset.communityCohesion || 50),
+    };
+
+    // Calculate derived metrics
+    const deviation = asset.change24h || 0;
+    const confidence = Math.round(
+      (asset.behavioralActivity || 50) * 0.4 + 
+      (asset.velocityAnomaly || 50) * 0.3 + 
+      (asset.communityCohesion || 50) * 0.3
+    );
+    const influence = Math.round(
+      (asset.sssScore || 50) * 0.6 + 
+      (asset.behavioralActivity || 50) * 0.4
+    );
+
+    return {
+      symbol: asset.symbol,
+      name: asset.name,
+      price: asset.price,
+      sssScore: asset.sssScore,
+      confidence,
+      deviation: Math.round(deviation),
+      influence,
+      behavioralMetrics,
+      timeSlots,
+      lastUpdated: asset.lastUpdated?.toISOString() || new Date().toISOString()
+    };
+  }
+
+  async getWhaleActivityForAsset(symbol: string, hours: number = 24): Promise<any[]> {
+    // For now, generate based on asset behavioral data
+    // In production, this would query whaleTransactions table
+    const asset = await this.getCryptoAssetBySymbol(symbol);
+    if (!asset) return [];
+
+    const whaleActivity = [];
+    const baseActivity = asset.behavioralActivity || 50;
+    const activityCount = Math.floor((baseActivity / 100) * 10 + Math.random() * 5);
+
+    for (let i = 0; i < activityCount; i++) {
+      whaleActivity.push({
+        timestamp: new Date(Date.now() - Math.random() * hours * 60 * 60 * 1000),
+        amount: Math.random() * 10000000 + 1000000,
+        type: Math.random() > 0.5 ? 'BUY' : 'SELL',
+        confidence: Math.round(70 + Math.random() * 30)
+      });
+    }
+
+    return whaleActivity;
+  }
+
+  async getExchangeFlowsForAsset(symbol: string, hours: number = 24): Promise<any[]> {
+    // For now, generate based on asset data
+    // In production, this would query exchangeFlows table
+    const asset = await this.getCryptoAssetBySymbol(symbol);
+    if (!asset) return [];
+
+    const exchangeFlows = [];
+    const flowCount = Math.floor((asset.velocityAnomaly || 50) / 20);
+
+    for (let i = 0; i < flowCount; i++) {
+      exchangeFlows.push({
+        exchange: ['Binance', 'Coinbase', 'Kraken', 'OKX'][Math.floor(Math.random() * 4)],
+        flowType: Math.random() > 0.5 ? 'inflow' : 'outflow',
+        amount: Math.random() * 5000000 + 500000,
+        timestamp: new Date(Date.now() - Math.random() * hours * 60 * 60 * 1000)
+      });
+    }
+
+    return exchangeFlows;
   }
 }
 
