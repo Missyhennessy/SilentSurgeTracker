@@ -12,7 +12,7 @@ import { Phase1Features } from "@/pages/phase1-features";
 import { Phase2Features } from "@/pages/phase2-features";
 import Phase3Features from "@/pages/phase3-features";
 import SimpleTest from "@/pages/simple-test";
-import CryptoDetail from "@/pages/crypto-detail";
+import CryptoDetail from "@/pages/CryptoDetail";
 import PythonEnginePage from "@/pages/python-engine";
 import { MLDashboard } from "@/components/MLDashboard";
 import { useAuth } from "@/hooks/useAuth";

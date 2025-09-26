@@ -13,7 +13,7 @@ export interface IStorage {
   updateCryptoAsset(id: number, updates: Partial<InsertCryptoAsset>): Promise<CryptoAsset | undefined>;
   upsertCryptoAsset(asset: InsertCryptoAsset): Promise<CryptoAsset>;
   getCryptoAssetsCount(): Promise<number>;
-  searchCryptoAssets(query: string): Promise<CryptoAsset[]>;
+  searchCryptoAssets(query: string, limit?: number): Promise<CryptoAsset[]>;
   
   // Alerts
   getAlerts(): Promise<Alert[]>;
@@ -311,7 +311,7 @@ export class DatabaseStorage implements IStorage {
     return result.count;
   }
 
-  async searchCryptoAssets(query: string): Promise<CryptoAsset[]> {
+  async searchCryptoAssets(query: string, limit: number = 50): Promise<CryptoAsset[]> {
     return await db.select().from(cryptoAssets)
       .where(
         or(
@@ -320,7 +320,7 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(cryptoAssets.sssScore))
-      .limit(50);
+      .limit(Math.min(limit, 100)); // Max 100 results for performance
   }
 
   async getAlerts(): Promise<Alert[]> {

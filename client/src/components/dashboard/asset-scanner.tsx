@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Download, Settings, TrendingUp, Zap, Target, Shuffle } from "lucide-react";
 import { QuickStatsGrid } from "@/components/ui/quick-stats";
 import { AssetCardSkeleton } from "@/components/ui/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CryptoSearchBar } from "@/components/ui/crypto-search-bar";
 import AssetCard from "./asset-card";
 import SSSBreakdown from "./sss-breakdown";
 import VelocityChart from "./velocity-chart";
@@ -13,7 +15,13 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function AssetScanner() {
   const [selectedAsset, setSelectedAsset] = useState<CryptoAsset | null>(null);
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  const handleSearchSelect = (asset: CryptoAsset) => {
+    // Navigate to detailed crypto page
+    setLocation(`/crypto/${asset.symbol.toLowerCase()}`);
+  };
 
   const { data: assets, isLoading, error } = useQuery<CryptoAsset[]>({
     queryKey: ["/api/assets"],
@@ -89,6 +97,16 @@ export default function AssetScanner() {
 
   return (
     <div className="p-3 md:p-4 lg:p-6">
+      {/* Search Bar at the very top */}
+      <div className="mb-6 md:mb-8">
+        <div className="flex justify-center">
+          <CryptoSearchBar 
+            onSelect={handleSearchSelect}
+            placeholder="Search through 7000+ cryptocurrencies..."
+          />
+        </div>
+      </div>
+
       {/* Header - Mobile Optimized */}
       <div className="mb-4 md:mb-6">
         <div className="flex flex-col space-y-3 md:flex-row md:justify-between md:items-center md:space-y-0 md:gap-4 mb-4 md:mb-6">
