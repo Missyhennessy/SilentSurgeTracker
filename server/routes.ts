@@ -1063,21 +1063,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all crypto assets
+  // Get random crypto assets (40 for main page)
   app.get("/api/assets", async (req, res) => {
     try {
-      // Try to get from Redis cache first
-      const cacheKey = 'crypto:assets:all';
+      // Get 40 random assets instead of all assets for better performance
+      const cacheKey = 'crypto:assets:random:40';
       const cachedAssets = await redisCacheService.getCachedCryptoAssets(cacheKey);
       
-      if (cachedAssets) {
+      if (cachedAssets && cachedAssets.length === 40) {
         // Return cached data with cache indicator
         res.set('X-Cache', 'HIT');
         return res.json(cachedAssets);
       }
 
-      // Cache miss - fetch from database
-      const assets = await storage.getCryptoAssets();
+      // Cache miss - fetch 40 random assets from database
+      const assets = await storage.getRandomCryptoAssets(40);
       
       // Cache for 2 minutes (120 seconds)
       await redisCacheService.cacheCryptoAssets(cacheKey, assets, 120);

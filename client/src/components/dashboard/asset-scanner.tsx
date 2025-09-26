@@ -1,27 +1,18 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FixedSizeGrid as Grid } from 'react-window';
-import { Search, Filter, Download, Settings, TrendingUp, Zap, Target } from "lucide-react";
-import { SearchBar } from "@/components/ui/search-bar";
+import { Download, Settings, TrendingUp, Zap, Target, Shuffle } from "lucide-react";
 import { QuickStatsGrid } from "@/components/ui/quick-stats";
 import { AssetCardSkeleton } from "@/components/ui/loading-skeleton";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import AssetCard from "./asset-card";
 import SSSBreakdown from "./sss-breakdown";
 import VelocityChart from "./velocity-chart";
-import { SSSBreakdown as EnhancedSSSBreakdown, SSSScoreBadge } from "@/components/ui/sss-breakdown";
 import { CryptoAsset } from "@/types/crypto";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AssetScanner() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [marketFilter, setMarketFilter] = useState("all");
-  const [scoreFilter, setScoreFilter] = useState("all");
   const [selectedAsset, setSelectedAsset] = useState<CryptoAsset | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { toast } = useToast();
 
   const { data: assets, isLoading, error } = useQuery<CryptoAsset[]>({
@@ -40,14 +31,14 @@ export default function AssetScanner() {
     }
   }, [error, toast]);
 
-  // Calculate quick stats
+  // Calculate quick stats for the random sample
   const quickStats = assets ? [
     {
-      title: "Total Assets",
+      title: "Random Sample",
       value: assets.length,
-      icon: Target,
+      icon: Shuffle,
       trend: 'neutral' as const,
-      subtitle: "Monitored assets"
+      subtitle: "Crypto assets shown"
     },
     {
       title: "High SSS (80+)",
@@ -59,72 +50,19 @@ export default function AssetScanner() {
     },
     {
       title: "Avg SSS Score",
-      value: (assets.reduce((acc, a) => acc + a.sssScore, 0) / assets.length).toFixed(1),
+      value: assets.length > 0 ? (assets.reduce((acc, a) => acc + a.sssScore, 0) / assets.length).toFixed(1) : "0",
       icon: Zap,
       trend: 'neutral' as const,
-      subtitle: "Market average"
+      subtitle: "Sample average"
     },
     {
-      title: "Top Performer",
-      value: `${assets.sort((a, b) => b.sssScore - a.sssScore)[0]?.symbol}`,
+      title: "Top in Sample",
+      value: assets.length > 0 ? `${assets.sort((a, b) => b.sssScore - a.sssScore)[0]?.symbol}` : "N/A",
       icon: TrendingUp,
       trend: 'up' as const,
-      subtitle: `SSS: ${assets.sort((a, b) => b.sssScore - a.sssScore)[0]?.sssScore.toFixed(1)}`
+      subtitle: assets.length > 0 ? `SSS: ${assets.sort((a, b) => b.sssScore - a.sssScore)[0]?.sssScore.toFixed(1)}` : "No data"
     }
   ] : [];
-
-  const filteredAssets = assets?.filter(asset => {
-    const matchesSearch = asset.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.name.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesScore = scoreFilter === "all" ||
-                        (scoreFilter === "high" && asset.sssScore >= 80) ||
-                        (scoreFilter === "medium" && asset.sssScore >= 60 && asset.sssScore < 80) ||
-                        (scoreFilter === "low" && asset.sssScore < 60);
-    
-    return matchesSearch && matchesScore;
-  }) || [];
-
-  // Virtual scrolling configuration
-  const { gridDimensions, columnCount } = useMemo(() => {
-    // Calculate responsive columns based on screen size
-    const getColumnCount = () => {
-      if (typeof window === 'undefined') return 4;
-      const width = window.innerWidth;
-      if (width < 640) return 1;    // sm: 1 column
-      if (width < 768) return 2;    // md: 2 columns  
-      if (width < 1024) return 3;   // lg: 3 columns
-      return 4;                     // xl: 4 columns
-    };
-
-    const cols = getColumnCount();
-    const itemWidth = 320;  // Width of each asset card
-    const itemHeight = 200; // Height of each asset card
-    const gridWidth = Math.max(cols * itemWidth, 800);
-    const gridHeight = Math.min(600, Math.ceil(filteredAssets.length / cols) * itemHeight);
-
-    return {
-      gridDimensions: { width: gridWidth, height: gridHeight, itemWidth, itemHeight },
-      columnCount: cols
-    };
-  }, [filteredAssets.length]);
-
-  // Virtual grid item renderer
-  const VirtualAssetCard = ({ columnIndex, rowIndex, style }: any) => {
-    const assetIndex = rowIndex * columnCount + columnIndex;
-    const asset = filteredAssets[assetIndex];
-    
-    if (!asset) return null;
-
-    return (
-      <div style={style} className="p-2">
-        <AssetCard 
-          asset={asset} 
-          onSelect={setSelectedAsset}
-        />
-      </div>
-    );
-  };
 
 
 
@@ -155,16 +93,23 @@ export default function AssetScanner() {
       <div className="mb-4 md:mb-6">
         <div className="flex flex-col space-y-3 md:flex-row md:justify-between md:items-center md:space-y-0 md:gap-4 mb-4 md:mb-6">
           <div>
-            <h2 className="text-xl md:text-2xl font-bold text-white mb-1 md:mb-2">Asset Scanner</h2>
-            <p className="text-sm md:text-base text-gray-400">Search and analyze crypto assets with real-time SSS scoring</p>
+            <h2 className="text-xl md:text-2xl font-bold text-white mb-1 md:mb-2">Random Asset Sample</h2>
+            <p className="text-sm md:text-base text-gray-400">Discover 40 random cryptocurrencies with real-time SSS scoring</p>
           </div>
           <div className="flex gap-2 self-start md:self-auto">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mobile-btn"
+              onClick={() => window.location.reload()}
+              data-testid="button-refresh-sample"
+            >
+              <Shuffle className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">New Sample</span>
+            </Button>
             <Button variant="outline" size="sm" className="mobile-btn">
               <Download className="h-4 w-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Export</span>
-            </Button>
-            <Button variant="outline" size="sm" className="mobile-btn">
-              <Settings className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -173,95 +118,29 @@ export default function AssetScanner() {
         <QuickStatsGrid stats={quickStats} className="mb-4 md:mb-6" />
       </div>
       
-      {/* Search and Filters - Mobile Optimized */}
-      <div className="bg-[var(--dark-panel)] rounded-xl border border-[var(--dark-border)] p-3 md:p-4 lg:p-6 mb-4 md:mb-6">
-        <div className="flex flex-col space-y-3 lg:flex-row lg:space-y-0 lg:gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)]" />
-            <SearchBar
-              value={searchTerm}
-              onChange={setSearchTerm}
-              placeholder="Search tokens (BTC, ETH, DOGE...)"
-              onClear={() => setSearchTerm("")}
-            />
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-2 lg:gap-3">
-            <Select value={marketFilter} onValueChange={setMarketFilter}>
-              <SelectTrigger className="w-full sm:w-40 bg-[var(--dark-bg)] border-[var(--dark-border)]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Markets</SelectItem>
-                <SelectItem value="high-volume">High Volume</SelectItem>
-                <SelectItem value="low-cap">Low Cap</SelectItem>
-                <SelectItem value="new-listings">New Listings</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Select value={scoreFilter} onValueChange={setScoreFilter}>
-              <SelectTrigger className="w-full sm:w-40 bg-[var(--dark-bg)] border-[var(--dark-border)]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">SSS Score: All</SelectItem>
-                <SelectItem value="high">SSS Score: 80+</SelectItem>
-                <SelectItem value="medium">SSS Score: 60-80</SelectItem>
-                <SelectItem value="low">SSS Score: 40-60</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Button className="bg-[var(--primary-blue)] hover:bg-[var(--primary-blue)]/80 text-[var(--dark-bg)] mobile-btn">
-              <Filter className="w-4 h-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Filter</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-      
-      {/* Virtual Asset Cards Grid - Optimized for 7100+ Assets */}
+      {/* Random Asset Cards Grid */}
       <div className="mb-6 md:mb-8">
-        {filteredAssets.length > 50 ? (
-          // Use virtual scrolling for large lists
-          <div className="bg-[var(--dark-panel)] rounded-xl border border-[var(--dark-border)] p-4">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-                Assets ({filteredAssets.length.toLocaleString()})
-              </h3>
-              <Badge variant="secondary">Virtual Scrolling Active</Badge>
-            </div>
-            <Grid
-              columnCount={columnCount}
-              rowCount={Math.ceil(filteredAssets.length / columnCount)}
-              columnWidth={gridDimensions.itemWidth}
-              rowHeight={gridDimensions.itemHeight}
-              height={gridDimensions.height}
-              width={gridDimensions.width}
-              className="mx-auto"
-              overscanRowCount={2}
-              overscanColumnCount={1}
-            >
-              {VirtualAssetCard}
-            </Grid>
-          </div>
-        ) : (
-          // Use regular grid for smaller lists
-          <div className="asset-grid">
-            {filteredAssets.map((asset) => (
-              <AssetCard 
-                key={asset.id} 
-                asset={asset} 
-                onSelect={setSelectedAsset}
-              />
-            ))}
-          </div>
-        )}
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+            Random Assets ({assets?.length || 0})
+          </h3>
+          <Badge variant="secondary">Random Sample</Badge>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" data-testid="assets-grid">
+          {assets?.map((asset) => (
+            <AssetCard 
+              key={asset.id} 
+              asset={asset} 
+              onSelect={setSelectedAsset}
+            />
+          ))}
+        </div>
       </div>
       
       {/* Detailed Analysis Panel - Mobile Optimized */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 lg:gap-6">
-        <SSSBreakdown asset={selectedAsset || filteredAssets[0]} />
-        <VelocityChart asset={selectedAsset || filteredAssets[0]} />
+        <SSSBreakdown asset={selectedAsset || assets?.[0]} />
+        <VelocityChart asset={selectedAsset || assets?.[0]} />
       </div>
     </div>
   );
