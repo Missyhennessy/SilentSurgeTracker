@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { FixedSizeGrid as Grid } from 'react-window';
 import { Search, Filter, Download, Settings, TrendingUp, Zap, Target } from "lucide-react";
 import { SearchBar } from "@/components/ui/search-bar";
 import { QuickStatsGrid } from "@/components/ui/quick-stats";
@@ -83,6 +84,47 @@ export default function AssetScanner() {
     
     return matchesSearch && matchesScore;
   }) || [];
+
+  // Virtual scrolling configuration
+  const { gridDimensions, columnCount } = useMemo(() => {
+    // Calculate responsive columns based on screen size
+    const getColumnCount = () => {
+      if (typeof window === 'undefined') return 4;
+      const width = window.innerWidth;
+      if (width < 640) return 1;    // sm: 1 column
+      if (width < 768) return 2;    // md: 2 columns  
+      if (width < 1024) return 3;   // lg: 3 columns
+      return 4;                     // xl: 4 columns
+    };
+
+    const cols = getColumnCount();
+    const itemWidth = 320;  // Width of each asset card
+    const itemHeight = 200; // Height of each asset card
+    const gridWidth = Math.max(cols * itemWidth, 800);
+    const gridHeight = Math.min(600, Math.ceil(filteredAssets.length / cols) * itemHeight);
+
+    return {
+      gridDimensions: { width: gridWidth, height: gridHeight, itemWidth, itemHeight },
+      columnCount: cols
+    };
+  }, [filteredAssets.length]);
+
+  // Virtual grid item renderer
+  const VirtualAssetCard = ({ columnIndex, rowIndex, style }: any) => {
+    const assetIndex = rowIndex * columnCount + columnIndex;
+    const asset = filteredAssets[assetIndex];
+    
+    if (!asset) return null;
+
+    return (
+      <div style={style} className="p-2">
+        <AssetCard 
+          asset={asset} 
+          onSelect={setSelectedAsset}
+        />
+      </div>
+    );
+  };
 
 
 
@@ -177,15 +219,43 @@ export default function AssetScanner() {
         </div>
       </div>
       
-      {/* Asset Cards Grid - Mobile Optimized */}
-      <div className="asset-grid mb-6 md:mb-8">
-        {filteredAssets.map((asset) => (
-          <AssetCard 
-            key={asset.id} 
-            asset={asset} 
-            onSelect={setSelectedAsset}
-          />
-        ))}
+      {/* Virtual Asset Cards Grid - Optimized for 7100+ Assets */}
+      <div className="mb-6 md:mb-8">
+        {filteredAssets.length > 50 ? (
+          // Use virtual scrolling for large lists
+          <div className="bg-[var(--dark-panel)] rounded-xl border border-[var(--dark-border)] p-4">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+                Assets ({filteredAssets.length.toLocaleString()})
+              </h3>
+              <Badge variant="secondary">Virtual Scrolling Active</Badge>
+            </div>
+            <Grid
+              columnCount={columnCount}
+              rowCount={Math.ceil(filteredAssets.length / columnCount)}
+              columnWidth={gridDimensions.itemWidth}
+              rowHeight={gridDimensions.itemHeight}
+              height={gridDimensions.height}
+              width={gridDimensions.width}
+              className="mx-auto"
+              overscanRowCount={2}
+              overscanColumnCount={1}
+            >
+              {VirtualAssetCard}
+            </Grid>
+          </div>
+        ) : (
+          // Use regular grid for smaller lists
+          <div className="asset-grid">
+            {filteredAssets.map((asset) => (
+              <AssetCard 
+                key={asset.id} 
+                asset={asset} 
+                onSelect={setSelectedAsset}
+              />
+            ))}
+          </div>
+        )}
       </div>
       
       {/* Detailed Analysis Panel - Mobile Optimized */}
