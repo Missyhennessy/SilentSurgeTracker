@@ -81,7 +81,16 @@ export const cryptoAssets = pgTable("crypto_assets", {
   historicalVolatility: real("historical_volatility").default(0),
   lastUpdated: timestamp("last_updated").defaultNow(),
   isWatchlisted: boolean("is_watchlisted").default(false),
-});
+}, (table) => [
+  // Performance indexes for frequently queried columns
+  index("idx_crypto_assets_symbol").on(table.symbol),
+  index("idx_crypto_assets_sss_score").on(table.sssScore),
+  index("idx_crypto_assets_last_updated").on(table.lastUpdated),
+  index("idx_crypto_assets_symbol_sss").on(table.symbol, table.sssScore), // Composite index
+  index("idx_crypto_assets_watchlisted").on(table.isWatchlisted),
+  index("idx_crypto_assets_market_cap").on(table.marketCap),
+  index("idx_crypto_assets_volume").on(table.volume24h),
+]);
 
 export const alerts = pgTable("alerts", {
   id: serial("id").primaryKey(),
@@ -90,7 +99,12 @@ export const alerts = pgTable("alerts", {
   isActive: boolean("is_active").default(true),
   alertType: text("alert_type").notNull(), // 'sss_score', 'velocity', 'price'
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  // Indexes for alert queries
+  index("idx_alerts_asset_id").on(table.assetId),
+  index("idx_alerts_is_active").on(table.isActive),
+  index("idx_alerts_asset_active").on(table.assetId, table.isActive), // Composite for active alerts
+]);
 
 export const velocityData = pgTable("velocity_data", {
   id: serial("id").primaryKey(),
@@ -99,7 +113,12 @@ export const velocityData = pgTable("velocity_data", {
   velocity: real("velocity").notNull(),
   historicalAverage: real("historical_average").notNull(),
   anomalyScore: real("anomaly_score").notNull(),
-});
+}, (table) => [
+  // Indexes for velocity data queries
+  index("idx_velocity_asset_id").on(table.assetId),
+  index("idx_velocity_timestamp").on(table.timestamp),
+  index("idx_velocity_asset_time").on(table.assetId, table.timestamp), // For time-series queries
+]);
 
 export const insertCryptoAssetSchema = createInsertSchema(cryptoAssets).omit({
   id: true,

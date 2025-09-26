@@ -16,6 +16,71 @@ import { backgroundJobService } from "./background-job-service";
 import _ from "lodash";
 import Big from "big.js";
 import * as cache from "memory-cache";
+
+// Enhanced caching system
+class APIResponseCache {
+  private memoryCache = cache;
+  private defaultTTL = 300000; // 5 minutes default
+
+  // Cache keys for different data types
+  private static CACHE_KEYS = {
+    ASSETS: 'api:assets',
+    ASSET_BY_SYMBOL: 'api:asset:symbol:',
+    BEHAVIORAL_HEATMAP: 'api:behavioral:',
+    MARKET_OVERVIEW: 'api:market:overview',
+    USER_PORTFOLIOS: 'api:portfolios:user:',
+    TRADING_SIGNALS: 'api:signals:active',
+    SENTIMENT: 'api:sentiment:overall'
+  };
+
+  // Get cached response or execute function
+  async getCached<T>(key: string, fetchFn: () => Promise<T>, ttl: number = this.defaultTTL): Promise<T> {
+    // Check memory cache first
+    const cached = this.memoryCache.get(key);
+    if (cached) {
+      return cached;
+    }
+
+    // Execute function and cache result
+    const result = await fetchFn();
+    this.memoryCache.put(key, result, ttl);
+    return result;
+  }
+
+  // Invalidate specific cache keys
+  invalidate(pattern: string): void {
+    this.memoryCache.keys().forEach(key => {
+      if (key.includes(pattern)) {
+        this.memoryCache.del(key);
+      }
+    });
+  }
+
+  // Clear all cache
+  clear(): void {
+    this.memoryCache.clear();
+  }
+
+  // Get cache stats
+  getStats() {
+    return {
+      size: this.memoryCache.size(),
+      keys: this.memoryCache.keys().length,
+      memoryUsage: this.memoryCache.memsize()
+    };
+  }
+
+  static getInstance(): APIResponseCache {
+    if (!APIResponseCache.instance) {
+      APIResponseCache.instance = new APIResponseCache();
+    }
+    return APIResponseCache.instance;
+  }
+
+  private static instance: APIResponseCache;
+}
+
+const apiCache = APIResponseCache.getInstance();
 import Stripe from "stripe";
 
 export async function registerRoutes(app: Express): Promise<Server> {
