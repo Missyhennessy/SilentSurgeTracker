@@ -6,6 +6,7 @@ import { eq, desc, count, ilike, or, sql, gte } from "drizzle-orm";
 export interface IStorage {
   // Crypto Assets
   getCryptoAssets(): Promise<CryptoAsset[]>;
+  getRandomCryptoAssets(limit: number): Promise<CryptoAsset[]>;
   getCryptoAsset(id: number): Promise<CryptoAsset | undefined>;
   getCryptoAssetBySymbol(symbol: string): Promise<CryptoAsset | undefined>;
   createCryptoAsset(asset: InsertCryptoAsset): Promise<CryptoAsset>;
@@ -243,6 +244,10 @@ export class DatabaseStorage implements IStorage {
 
   async getCryptoAssets(): Promise<CryptoAsset[]> {
     return await db.select().from(cryptoAssets);
+  }
+
+  async getRandomCryptoAssets(limit: number): Promise<CryptoAsset[]> {
+    return await db.select().from(cryptoAssets).orderBy(sql`RANDOM()`).limit(limit);
   }
 
   async getCryptoAsset(id: number): Promise<CryptoAsset | undefined> {
