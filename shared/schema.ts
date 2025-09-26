@@ -656,6 +656,100 @@ export const insertBacktestResultSchema = createInsertSchema(backtestResults).om
   createdAt: true,
 });
 
+// Sentiment Analysis Tables
+export const newsArticles = pgTable("news_articles", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  url: text("url").unique(),
+  source: varchar("source").notNull(), // e.g., 'CoinDesk', 'Reuters', 'CoinTelegraph'
+  author: varchar("author"),
+  publishedAt: timestamp("published_at").notNull(),
+  cryptoSymbols: jsonb("crypto_symbols").$type<string[]>().notNull().default('[]'), // Related cryptocurrencies
+  category: varchar("category").notNull().default('general'), // 'general', 'regulation', 'adoption', 'technology'
+  isBreaking: boolean("is_breaking").default(false),
+  sentimentScore: real("sentiment_score"), // -1 to 1 (negative to positive)
+  sentimentLabel: varchar("sentiment_label"), // 'positive', 'negative', 'neutral'
+  sentimentConfidence: real("sentiment_confidence"), // 0 to 1
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const socialMediaPosts = pgTable("social_media_posts", {
+  id: serial("id").primaryKey(),
+  platform: varchar("platform").notNull(), // 'twitter', 'reddit', 'discord', 'telegram'
+  postId: varchar("post_id").unique(), // Platform-specific post ID
+  username: varchar("username").notNull(),
+  content: text("content").notNull(),
+  url: text("url"),
+  cryptoSymbols: jsonb("crypto_symbols").$type<string[]>().notNull().default('[]'),
+  followerCount: integer("follower_count").default(0),
+  isVerified: boolean("is_verified").default(false),
+  isInfluencer: boolean("is_influencer").default(false),
+  engagement: jsonb("engagement").$type<{
+    likes?: number;
+    retweets?: number;
+    replies?: number;
+    views?: number;
+  }>().default('{}'),
+  sentimentScore: real("sentiment_score"), // -1 to 1
+  sentimentLabel: varchar("sentiment_label"), // 'positive', 'negative', 'neutral'
+  sentimentConfidence: real("sentiment_confidence"), // 0 to 1
+  postedAt: timestamp("posted_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const sentimentAnalysis = pgTable("sentiment_analysis", {
+  id: serial("id").primaryKey(),
+  contentType: varchar("content_type").notNull(), // 'news', 'social_media'
+  contentId: integer("content_id").notNull(), // References newsArticles.id or socialMediaPosts.id
+  assetSymbol: varchar("asset_symbol").notNull(),
+  sentimentScore: real("sentiment_score").notNull(), // -1 to 1
+  sentimentLabel: varchar("sentiment_label").notNull(), // 'positive', 'negative', 'neutral'
+  confidence: real("confidence").notNull(), // 0 to 1
+  emotions: jsonb("emotions").$type<{
+    joy?: number;
+    anger?: number;
+    fear?: number;
+    sadness?: number;
+    surprise?: number;
+    trust?: number;
+  }>(),
+  keywords: jsonb("keywords").$type<string[]>().default('[]'),
+  aiModel: varchar("ai_model").notNull().default('gpt-5'), // OpenAI model used
+  processingTime: integer("processing_time"), // milliseconds
+  rawResponse: jsonb("raw_response"), // Store full AI response for debugging
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_sentiment_analysis_asset").on(table.assetSymbol),
+  index("idx_sentiment_analysis_type").on(table.contentType),
+  index("idx_sentiment_analysis_created").on(table.createdAt),
+  index("idx_sentiment_analysis_asset_created").on(table.assetSymbol, table.createdAt),
+]);
+
+// Insert schemas for sentiment analysis
+export const insertNewsArticleSchema = createInsertSchema(newsArticles).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSocialMediaPostSchema = createInsertSchema(socialMediaPosts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSentimentAnalysisSchema = createInsertSchema(sentimentAnalysis).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for sentiment analysis
+export type NewsArticle = typeof newsArticles.$inferSelect;
+export type InsertNewsArticle = z.infer<typeof insertNewsArticleSchema>;
+export type SocialMediaPost = typeof socialMediaPosts.$inferSelect;
+export type InsertSocialMediaPost = z.infer<typeof insertSocialMediaPostSchema>;
+export type SentimentAnalysis = typeof sentimentAnalysis.$inferSelect;
+export type InsertSentimentAnalysis = z.infer<typeof insertSentimentAnalysisSchema>;
+
 // Insert types
 export type InsertMarketSentiment = z.infer<typeof insertMarketSentimentSchema>;
 export type InsertPortfolio = z.infer<typeof insertPortfolioSchema>;
