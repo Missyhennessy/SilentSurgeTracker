@@ -2555,5 +2555,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Behavioral Heatmap API endpoint
+  app.get('/api/behavioral-heatmap/:symbol', async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      if (!symbol) {
+        return res.status(400).json({ error: 'Symbol parameter is required' });
+      }
+
+      const heatmapData = await storage.getBehavioralHeatmapData(symbol.toUpperCase());
+      res.json(heatmapData);
+    } catch (error: any) {
+      console.error('Error fetching behavioral heatmap data:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: `Asset ${req.params.symbol} not found` });
+      } else {
+        res.status(500).json({ error: 'Failed to fetch behavioral heatmap data' });
+      }
+    }
+  });
+
   return httpServer;
 }
